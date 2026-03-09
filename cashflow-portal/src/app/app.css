@@ -1,0 +1,159 @@
+.app-shell {
+	min-height: 100vh;
+	background: #f7f9fc;
+	display: flex;
+}
+
+/* Side Menu Styles */
+.side-menu {
+	position: fixed;
+	left: 0;
+	top: 0;
+	height: 100vh;
+	background: #1f2937;
+	box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
+	transition: width 0.3s ease;
+	z-index: 1000;
+	width: 240px;
+	overflow: hidden;
+}
+
+.side-menu.collapsed {
+	width: 60px;
+}
+
+.menu-header {
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+	border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+	padding: 0.5rem;
+}
+
+.menu-toggle {
+	padding: 0.5rem;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	cursor: pointer;
+	transition: background-color 0.2s ease;
+	border-radius: 8px;
+	flex-shrink: 0;
+}
+
+.menu-toggle:hover {
+	background-color: rgba(255, 255, 255, 0.1);
+}
+
+.menu-icon {
+	width: 28px;
+	height: 28px;
+	display: block;
+	transition: all 0.3s ease;
+	color: #e5e7eb;
+}
+
+.menu-icon.hovered {
+	color: #60a5fa;
+	transform: scale(1.1);
+}
+
+.side-menu:hover .menu-icon {
+	transform: scale(1.1);
+}
+
+.menu-title {
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+	flex: 1;
+	opacity: 1;
+	transition: opacity 0.3s ease;
+}
+
+.side-menu.collapsed .menu-title {
+	opacity: 0;
+	pointer-events: none;
+}
+
+.menu-logo {
+	width: 32px;
+	height: 32px;
+	object-fit: contain;
+	display: block;
+}
+
+.menu-title-text {
+	margin: 0;
+	font-size: 1.15rem;
+	font-weight: 600;
+	color: #ffffff;
+	white-space: nowrap;
+}
+
+.menu-content {
+	padding: 1rem 0;
+	opacity: 1;
+	transition: opacity 0.3s ease;
+}
+
+.side-menu.collapsed .menu-content {
+	opacity: 0;
+	pointer-events: none;
+}
+
+.menu-list {
+	list-style: none;
+	padding: 0;
+	margin: 0;
+}
+
+.menu-item {
+	margin: 0.25rem 0;
+}
+
+.menu-link {
+	display: flex;
+	align-items: center;
+	padding: 0.875rem 1.25rem;
+	color: #e5e7eb;
+	text-decoration: none;
+	transition: all 0.2s ease;
+	position: relative;
+}
+
+.menu-link:hover {
+	background-color: rgba(255, 255, 255, 0.1);
+	color: #ffffff;
+}
+
+.menu-link:hover::before {
+	content: '';
+	position: absolute;
+	left: 0;
+	top: 0;
+	bottom: 0;
+	width: 3px;
+	background-color: #3b82f6;
+}
+
+.menu-text {
+	font-size: 0.95rem;
+	font-weight: 500;
+	white-space: nowrap;
+}
+
+/* Main Content Wrapper */
+.main-wrapper {
+	flex: 1;
+	margin-left: 60px;
+	transition: margin-left 0.3s ease;
+	min-height: 100vh;
+	display: flex;
+	flex-direction: column;
+}
+
+.page-content {
+	padding: 1.5rem 2rem;
+	flex: 1;
+}
