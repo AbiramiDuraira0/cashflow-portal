@@ -18,13 +18,13 @@
     </div>
   </header>
 
-  @if (loading) {
+  <!-- @if (loading) {
     <div class="grid" aria-hidden="true">
       @for (_item of skeletons; track $index) {
         <div class="card skeleton"></div>
       }
     </div>
-  } @else {
+  } @else { -->
     @if (filtered.length > 0) {
       <div class="grid">
         @for (cat of filtered; track cat.id) {
@@ -81,5 +81,5 @@
         </div>
       </div>
     }
-  }
+  <!-- } -->
 </section>
