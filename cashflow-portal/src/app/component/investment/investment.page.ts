@@ -21,36 +21,69 @@ import { CommonModule } from '@angular/common';
   styles: [`
     .page-container {
       padding: 24px;
-      color: #e5e7eb;
+      color: #1f2937;
+
+      @media (max-width: 768px) {
+        padding: 16px;
+      }
     }
     .page-header h1 {
       margin: 0 0 8px;
       font-size: 28px;
+
+      @media (max-width: 768px) {
+        font-size: 24px;
+      }
     }
     .page-header .subtitle {
       margin: 0;
-      color: #94a3b8;
+      color: #6b7280;
       font-size: 14px;
+
+      @media (max-width: 768px) {
+        font-size: 13px;
+      }
     }
     .coming-soon {
       margin-top: 60px;
       text-align: center;
       padding: 60px 20px;
-      background: radial-gradient(120% 120% at 10% 10%, rgba(255,255,255,.04), transparent 60%), #121935;
-      border: 1px solid #1f274a;
-      border-radius: 14px;
+      background: linear-gradient(135deg, #faf5ff 0%, #ffffff 100%);
+      border: 1px solid #e5e7eb;
+      border-radius: 16px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+
+      @media (max-width: 768px) {
+        margin-top: 40px;
+        padding: 40px 16px;
+        border-radius: 12px;
+      }
     }
     .coming-soon .icon {
       font-size: 64px;
       margin-bottom: 16px;
+
+      @media (max-width: 768px) {
+        font-size: 48px;
+      }
     }
     .coming-soon h2 {
       margin: 0 0 8px;
       font-size: 24px;
+      color: #1f2937;
+
+      @media (max-width: 768px) {
+        font-size: 20px;
+      }
     }
     .coming-soon p {
-      color: #94a3b8;
+      color: #6b7280;
       margin: 0;
+      font-size: 14px;
+
+      @media (max-width: 768px) {
+        font-size: 13px;
+      }
     }
   `]
 })
