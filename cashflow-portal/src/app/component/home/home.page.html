@@ -1,0 +1,125 @@
+<section class="dashboard">
+  <header class="dashboard-header">
+    <div class="welcome">
+      <p class="subtitle">Welcome back! Here's your financial overview</p>
+    </div>
+    <div class="date-info">
+      <span class="current-date">{{ 'March 9, 2026' }}</span>
+    </div>
+  </header>
+
+  @if (loading) {
+    <div class="widget-grid" aria-hidden="true">
+      @for (item of [1,2,3,4,5,6]; track item) {
+        <div class="widget skeleton"></div>
+      }
+    </div>
+  } @else {
+    <!-- Widgets Grid -->
+    <div class="widget-grid">
+      @for (widget of widgets; track widget.id) {
+        <article class="widget" [routerLink]="widget.route" [style.--widget-color]="widget.color">
+          <div class="widget-header">
+            <div class="widget-icon" [style.background]="widget.color">
+              {{ widget.icon }}
+            </div>
+            @if (widget.trend !== undefined) {
+              <div class="trend" [class.positive]="widget.trend > 0" [class.negative]="widget.trend < 0">
+                <span class="trend-icon">{{ widget.trend > 0 ? '↑' : '↓' }}</span>
+                <span class="trend-value">{{ widget.trend > 0 ? '+' : '' }}{{ widget.trend }}%</span>
+              </div>
+            }
+          </div>
+          <div class="widget-content">
+            <h3 class="widget-title">{{ widget.title }}</h3>
+            <div class="widget-value">{{ widget.value }}</div>
+            @if (widget.subtitle) {
+              <p class="widget-subtitle">{{ widget.subtitle }}</p>
+            }
+          </div>
+        </article>
+      }
+    </div>
+
+    <!-- Two Column Layout -->
+    <div class="dashboard-grid">
+      <!-- Recent Transactions -->
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">Recent Transactions</h2>
+          <a routerLink="/report" class="view-all">View all →</a>
+        </div>
+        <div class="transactions-list">
+          @for (txn of recentTransactions; track txn.id) {
+            <div class="transaction-item">
+              <div class="transaction-icon" [class.income]="txn.type === 'income'" [class.expense]="txn.type === 'expense'">
+                {{ txn.type === 'income' ? '↓' : '↑' }}
+              </div>
+              <div class="transaction-info">
+                <div class="transaction-category">{{ txn.category }}</div>
+                <div class="transaction-date">{{ formatDate(txn.date) }}</div>
+              </div>
+              <div class="transaction-amount" [class.income]="txn.type === 'income'" [class.expense]="txn.type === 'expense'">
+                {{ txn.type === 'income' ? '+' : '' }}₹{{ txn.amount.toLocaleString('en-IN') }}
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Budget Overview -->
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">Budget Overview</h2>
+          <a routerLink="/category" class="view-all">Manage →</a>
+        </div>
+        <div class="budget-list">
+          @for (category of budgetCategories; track category.name) {
+            <div class="budget-item">
+              <div class="budget-header">
+                <span class="budget-name">{{ category.name }}</span>
+                <span class="budget-amounts">
+                  ₹{{ category.spent.toLocaleString('en-IN') }} / ₹{{ category.budget.toLocaleString('en-IN') }}
+                </span>
+              </div>
+              <div class="progress-bar">
+                <div 
+                  class="progress-fill" 
+                  [style.width.%]="getPercentage(category.spent, category.budget)"
+                  [style.background]="category.color"
+                  [class.over-budget]="getPercentage(category.spent, category.budget) >= 100">
+                </div>
+              </div>
+              <div class="budget-percentage" [class.warn]="getPercentage(category.spent, category.budget) >= 80">
+                {{ getPercentage(category.spent, category.budget) }}% used
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="quick-actions">
+      <h2 class="section-title">Quick Actions</h2>
+      <div class="actions-grid">
+        <button class="action-btn" routerLink="/income">
+          <span class="action-icon">➕</span>
+          <span class="action-text">Add Income</span>
+        </button>
+        <button class="action-btn" routerLink="/expense">
+          <span class="action-icon">➖</span>
+          <span class="action-text">Add Expense</span>
+        </button>
+        <button class="action-btn" routerLink="/category">
+          <span class="action-icon">📁</span>
+          <span class="action-text">Manage Categories</span>
+        </button>
+        <button class="action-btn" routerLink="/report">
+          <span class="action-icon">📊</span>
+          <span class="action-text">View Reports</span>
+        </button>
+      </div>
+    </div>
+  }
+</section>

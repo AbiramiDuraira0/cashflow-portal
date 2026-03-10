@@ -1,0 +1,85 @@
+<section class="category">
+  <header class="toolbar">
+    <div class="titles">
+      <h1>Categories</h1>
+      <p class="subtitle">Manage and track your budget categories.</p>
+    </div>
+
+    <div class="actions">
+      <label class="search" aria-label="Search categories">
+        <span class="search-icon">🔎</span>
+        <input
+          type="text"
+          placeholder="Search categories"
+          [(ngModel)]="query"
+        />
+      </label>
+      <button class="btn primary" type="button" (click)="onAdd()">+ Add Category</button>
+    </div>
+  </header>
+
+  @if (loading) {
+    <div class="grid" aria-hidden="true">
+      @for (_item of skeletons; track $index) {
+        <div class="card skeleton"></div>
+      }
+    </div>
+  } @else {
+    @if (filtered.length > 0) {
+      <div class="grid">
+        @for (cat of filtered; track cat.id) {
+          <article class="card" tabindex="0" (click)="onOpen(cat)" (keyup.enter)="onOpen(cat)">
+            <div class="chip" [style.--chip]="cat.color">
+              <div class="avatar" [style.background]="cat.color">{{ cat.icon || '📁' }}</div>
+
+              <div class="meta">
+                <h3>{{ cat.name }}</h3>
+                <p>{{ cat.count ?? 0 }} transactions</p>
+              </div>
+
+              <div class="menu" (click)="$event.stopPropagation()">
+                <button class="icon" type="button" (click)="onEdit(cat)" aria-label="Edit category">✏️</button>
+                <button class="icon danger" type="button" (click)="onDelete(cat)" aria-label="Delete category">🗑️</button>
+              </div>
+            </div>
+
+            <div class="content">
+              <div class="row">
+                <span class="label">Budget</span>
+                <strong>{{ cat.budget ?? 0 }}</strong>
+              </div>
+              <div class="row">
+                <span class="label">Spent</span>
+                <strong>{{ cat.spent ?? 0 }}</strong>
+              </div>
+
+              @if (percentSpent(cat) !== null) {
+                <div class="progress">
+                  <div class="bar">
+                    <div class="fill" [style.width.%]="percentSpent(cat)" [style.background]="cat.color"></div>
+                  </div>
+                  <span class="progress-text" [class.warn]="(percentSpent(cat) ?? 0) >= 80">
+                    {{ percentSpent(cat) }}%
+                  </span>
+                </div>
+              } @else {
+                <div class="row">
+                  <span class="muted">No budget set</span>
+                </div>
+              }
+            </div>
+          </article>
+        }
+      </div>
+    } @else {
+      <div class="empty">
+        <div class="empty-card">
+          <div class="emoji">📭</div>
+          <h2>No categories found</h2>
+          <p>Try a different search or create a new category.</p>
+          <button class="btn" type="button" (click)="onAdd()">Create category</button>
+        </div>
+      </div>
+    }
+  }
+</section>

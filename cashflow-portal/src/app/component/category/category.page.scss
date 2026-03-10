@@ -1,0 +1,382 @@
+/* =========================================
+   THEME VARIABLES
+========================================= */
+
+:root{
+  --bg:#ffffff;
+  --card:#ffffff;
+  --text:#1f2937;
+  --muted:#6b7280;
+  --border:#e5e7eb;
+  --primary:#3b82f6;
+
+  --shadow-soft:0 2px 6px rgba(0,0,0,0.06);
+  --shadow-card:0 8px 24px rgba(0,0,0,0.08);
+}
+
+/* =========================================
+   PAGE BACKGROUND
+========================================= */
+
+body{
+  margin:0;
+  font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;
+  background:
+    radial-gradient(circle at 20% 20%, #f0f7ff 0%, transparent 40%),
+    radial-gradient(circle at 80% 80%, #f6faff 0%, transparent 40%),
+    #ffffff;
+  color:var(--text);
+}
+
+/* =========================================
+   CATEGORY CONTAINER
+========================================= */
+
+.category{
+  padding:clamp(16px,2vw,24px);
+}
+
+/* =========================================
+   TOOLBAR
+========================================= */
+
+.toolbar{
+  display:grid;
+  grid-template-columns:1fr auto;
+  gap:16px;
+  align-items:center;
+  margin-bottom:20px;
+}
+
+/* =========================================
+   TITLES
+========================================= */
+
+.titles h1{
+  margin:0;
+  font-size:clamp(20px,2.2vw,28px);
+  letter-spacing:.2px;
+}
+
+.subtitle{
+  margin-top:4px;
+  color:var(--muted);
+  font-size:13.5px;
+}
+
+/* =========================================
+   ACTION AREA
+========================================= */
+
+.actions{
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+
+/* =========================================
+   SEARCH
+========================================= */
+
+.search{
+  position:relative;
+  width:min(340px,46vw);
+}
+
+.search input{
+  width:100%;
+  padding:10px 12px 10px 34px;
+  border-radius:10px;
+  border:1px solid var(--border);
+  background:var(--card);
+  outline:none;
+}
+
+.search input:focus{
+  border-color:var(--primary);
+  box-shadow:0 0 0 3px rgba(59,130,246,.15);
+}
+
+.search-icon{
+  position:absolute;
+  left:10px;
+  top:50%;
+  transform:translateY(-50%);
+  opacity:.6;
+}
+
+/* =========================================
+   BUTTON
+========================================= */
+
+.btn{
+  border:none;
+  padding:10px 14px;
+  border-radius:10px;
+  cursor:pointer;
+  font-weight:600;
+  color:#fff;
+
+  background:linear-gradient(
+      180deg,
+      #60a5fa,
+      var(--primary)
+  );
+
+  box-shadow:var(--shadow-soft);
+
+  transition:transform .1s ease,filter .2s ease;
+}
+
+.btn:hover{
+  filter:brightness(1.05);
+}
+
+.btn:active{
+  transform:translateY(1px);
+}
+
+/* =========================================
+   GRID
+========================================= */
+
+.grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(260px,1fr));
+  gap:18px;
+}
+
+/* =========================================
+   CARD / WIDGET
+========================================= */
+
+.card{
+  position:relative;
+
+  background:
+      linear-gradient(145deg,#ffffff 0%,#f8fbff 60%,#f1f5f9 100%);
+
+  border:1px solid rgba(0,0,0,.05);
+  border-radius:14px;
+  padding:14px;
+
+  box-shadow:
+      0 2px 6px rgba(0,0,0,0.06),
+      0 8px 20px rgba(0,0,0,0.05);
+
+  cursor:pointer;
+
+  transition:
+      transform .2s ease,
+      box-shadow .25s ease,
+      border-color .2s ease,
+      background .3s ease;
+}
+
+/* gradient accent line */
+
+.card::before{
+  content:"";
+  position:absolute;
+  left:0;
+  top:0;
+  width:100%;
+  height:4px;
+
+  border-radius:14px 14px 0 0;
+
+  background:linear-gradient(
+      90deg,
+      #3b82f6,
+      #60a5fa,
+      #93c5fd
+  );
+
+  opacity:.7;
+}
+
+.card:hover{
+  transform:translateY(-4px);
+
+  background:linear-gradient(
+      145deg,
+      #ffffff 0%,
+      #eef6ff 60%,
+      #e8f1ff 100%
+  );
+
+  border-color:rgba(59,130,246,.35);
+
+  box-shadow:
+      0 6px 18px rgba(0,0,0,.10),
+      0 18px 40px rgba(59,130,246,.15);
+}
+
+/* =========================================
+   CHIP
+========================================= */
+
+.chip{
+  display:grid;
+  grid-template-columns:auto 1fr auto;
+  align-items:center;
+  gap:10px;
+
+  padding:8px;
+  border-radius:10px;
+
+  background:#f9fafb;
+  border:1px solid var(--border);
+}
+
+/* =========================================
+   AVATAR
+========================================= */
+
+.avatar{
+  width:38px;
+  height:38px;
+
+  display:grid;
+  place-items:center;
+
+  font-size:20px;
+  border-radius:9px;
+
+  color:#fff;
+
+  box-shadow:
+      inset 0 0 0 2px rgba(255,255,255,.15),
+      0 4px 10px rgba(59,130,246,.25);
+}
+
+/* =========================================
+   CONTENT
+========================================= */
+
+.content{
+  margin-top:10px;
+}
+
+.row{
+  display:flex;
+  justify-content:space-between;
+  margin-bottom:6px;
+  font-size:13px;
+}
+
+.label{
+  color:var(--muted);
+}
+
+.row strong{
+  font-weight:600;
+}
+
+/* =========================================
+   PROGRESS BAR
+========================================= */
+
+.progress{
+  margin-top:10px;
+}
+
+.bar{
+  height:6px;
+  background:#f3f4f6;
+  border-radius:8px;
+  overflow:hidden;
+  margin-bottom:6px;
+}
+
+.fill{
+  height:100%;
+  border-radius:8px;
+  transition:width .4s cubic-bezier(.4,0,.2,1);
+}
+
+.progress-text{
+  font-size:11px;
+  color:var(--muted);
+  font-weight:600;
+}
+
+/* =========================================
+   SKELETON LOADING
+========================================= */
+
+@keyframes skeleton{
+  0%{background-position:200% 0}
+  100%{background-position:-200% 0}
+}
+
+.card.skeleton{
+  height:170px;
+
+  background:
+    linear-gradient(
+      90deg,
+      #f3f4f6 25%,
+      #e5e7eb 37%,
+      #f3f4f6 63%
+    );
+
+  background-size:400% 100%;
+
+  animation:skeleton 1.2s infinite;
+}
+
+/* =========================================
+   EMPTY STATE
+========================================= */
+
+.empty{
+  display:grid;
+  place-items:center;
+  text-align:center;
+  padding:60px 20px;
+}
+
+.empty-card{
+  max-width:400px;
+}
+
+.empty-card .emoji{
+  font-size:64px;
+  margin-bottom:16px;
+}
+
+.empty-card h2{
+  margin:0 0 8px;
+  font-size:22px;
+}
+
+.empty-card p{
+  color:var(--muted);
+  margin-bottom:20px;
+}
+
+/* =========================================
+   RESPONSIVE
+========================================= */
+
+@media(max-width:768px){
+
+.toolbar{
+  grid-template-columns:1fr;
+}
+
+.actions{
+  width:100%;
+  justify-content:space-between;
+}
+
+.search{
+  width:100%;
+}
+
+.grid{
+  grid-template-columns:1fr;
+}
+
+}
