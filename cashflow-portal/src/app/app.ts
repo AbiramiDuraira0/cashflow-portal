@@ -16,6 +16,9 @@ export class App {
   protected showMenu = false; // Hide menu on login page
 
   constructor(private router: Router) {
+    // Set initial value based on current URL
+    this.showMenu = !this.router.url.includes('/login');
+    
     // Check if we're on login page
     this.router.events.pipe(
       filter(event => event instanceof NavigationEnd)
