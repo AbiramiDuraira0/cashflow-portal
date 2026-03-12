@@ -14,15 +14,23 @@ export class LoginPage {
   passcode: string = '';
   showError: boolean = false;
   isShaking: boolean = false;
+  isLoading: boolean = false;
 
   constructor(private router: Router) {}
 
   onSubmit() {
     if (this.passcode === 'Abibee') {
+      // Show loading state
+      this.isLoading = true;
+      
       // Store authentication state
       sessionStorage.setItem('isAuthenticated', 'true');
+      
       // Navigate to dashboard
-      this.router.navigate(['/dashboard']);
+      this.router.navigate(['/dashboard']).then(() => {
+        // Reset loading state after navigation
+        this.isLoading = false;
+      });
     } else {
       this.showError = true;
       this.isShaking = true;

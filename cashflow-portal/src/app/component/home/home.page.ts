@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 
@@ -29,9 +29,10 @@ type RecentTransaction = {
   styleUrls: ['./home.page.scss']
 })
 export class HomePage implements OnInit {
-  loading = true;
+  // Set loading to false immediately since data is pre-initialized
+  loading = signal(false);
 
-  // Dashboard widgets
+  // Dashboard widgets - Pre-initialized for instant display
   widgets: Widget[] = [
     {
       id: '1',
@@ -112,10 +113,11 @@ export class HomePage implements OnInit {
   ];
 
   ngOnInit(): void {
-    // Simulate data loading
-    setTimeout(() => {
-      this.loading = false;
-    }, 800);
+    // Data is pre-initialized, no loading delay needed
+    // When you integrate real API calls, use:
+    // this.loading.set(true);
+    // await this.fetchData();
+    // this.loading.set(false);
   }
 
   getPercentage(spent: number, budget: number): number {
