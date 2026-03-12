@@ -18,19 +18,22 @@ html, body {
   overflow-x: hidden;
 }
 
-/* Custom Material Tooltip Styles */
+/* Custom Material Tooltip Styles - Oval Shape */
 .mat-mdc-tooltip {
-  background-color: #7190bb !important;
-  color: #ffffff !important;
-  font-size: 12px !important;
-  padding: 6px 14px !important;
-  border-radius: 16px !important;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25) !important;
-  font-weight: 500 !important;
-  white-space: nowrap !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
 }
 
 .mat-mdc-tooltip .mdc-tooltip__surface {
-  background-color: #7190bb !important;
-  color: #ffffff !important;
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%) !important;
+  border: 1px solid #bae6fd !important;
+  color: #0369a1 !important;
+  font-size: 13px !important;
+  padding: 8px 16px !important;
+  border-radius: 20px !important;
+  box-shadow: 0 2px 8px rgba(3, 105, 161, 0.1) !important;
+  font-weight: 600 !important;
+  white-space: nowrap !important;
 }
