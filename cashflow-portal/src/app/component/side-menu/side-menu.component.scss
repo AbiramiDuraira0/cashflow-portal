@@ -1,0 +1,250 @@
+/* Side Menu Component Styles */
+.side-menu {
+  position: fixed;
+  left: 0;
+  top: 0;
+  height: 100vh;
+  background: #1f2937;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
+  transition: width 0.3s ease, opacity 0.2s ease;
+  z-index: 1000;
+  width: 240px;
+  overflow: hidden;
+  animation: slideInFromLeft 0.3s ease-out;
+}
+
+@keyframes slideInFromLeft {
+  from {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.side-menu.collapsed {
+  width: 64px;
+}
+
+.menu-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 0.5rem;
+  height: 60px;
+  justify-content: space-between;
+}
+
+.side-menu.collapsed .menu-header {
+  padding: 0.5rem 0.25rem;
+  justify-content: center;
+}
+
+/* When expanded, center the title and push toggle to right */
+.side-menu:not(.collapsed) .menu-header {
+  padding: 0.5rem 0.75rem;
+}
+
+.side-menu:not(.collapsed) .menu-title {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  padding-left: 0.5rem;
+}
+
+.menu-toggle {
+  padding: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  border-radius: 8px;
+  flex-shrink: 0;
+  min-width: 40px;
+  min-height: 40px;
+}
+
+.menu-toggle:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.menu-icon {
+  width: 28px;
+  height: 28px;
+  display: block;
+  transition: all 0.3s ease;
+  color: #e5e7eb;
+}
+
+.menu-icon.hovered {
+  color: #60a5fa;
+  transform: scale(1.1);
+}
+
+.side-menu:hover .menu-icon {
+  transform: scale(1.1);
+}
+
+.menu-title {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 0 1 auto;
+  opacity: 1;
+  transition: opacity 0.3s ease;
+}
+
+.side-menu.collapsed .menu-title {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.menu-title-text {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: #ffffff;
+  white-space: nowrap;
+}
+
+.menu-content {
+  padding: 1rem 0;
+  opacity: 1;
+  transition: opacity 0.3s ease;
+}
+
+/* Keep menu content visible when collapsed to show icons */
+.side-menu.collapsed .menu-content {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.menu-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.menu-item {
+  margin: 0.25rem 0;
+}
+
+.menu-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0.875rem 1.25rem;
+  color: #e5e7eb;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  position: relative;
+  border-radius: 8px;
+  margin: 0 8px;
+  min-height: 44px;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+/* Center icons when menu is collapsed */
+.side-menu.collapsed .menu-link {
+  justify-content: center;
+  padding: 0.75rem 0.5rem;
+  margin: 0 4px;
+  gap: 0;
+}
+
+.menu-link:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+}
+
+/* Active indicator line (only when not collapsed) */
+.side-menu:not(.collapsed) .menu-link.active::before {
+  content: '';
+  position: absolute;
+  left: -8px;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background-color: #3b82f6;
+  border-radius: 0 2px 2px 0;
+}
+
+.menu-link.active {
+  background-color: rgba(59, 130, 246, 0.15);
+  color: #3b82f6;
+}
+
+.menu-icon {
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+/* Consistent icon size when menu is collapsed */
+.side-menu.collapsed .menu-icon {
+  font-size: 22px;
+  width: 28px;
+  height: 28px;
+}
+
+.menu-text {
+  font-size: 0.95rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* Menu divider */
+.menu-divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.1);
+  margin: 0.5rem 1rem;
+}
+
+.side-menu.collapsed .menu-divider {
+  margin: 0.5rem 8px;
+}
+
+/* Logout link */
+.logout-link {
+  cursor: pointer;
+}
+
+.logout-link:hover {
+  background-color: rgba(239, 68, 68, 0.15) !important;
+  color: #ef4444 !important;
+}
+
+.logout-link:hover::before {
+  background-color: #ef4444 !important;
+}
+
+.logout-icon {
+  width: 20px;
+  height: 20px;
+  transition: all 0.2s ease;
+}
+
+/* Consistent logout icon when menu is collapsed */
+.side-menu.collapsed .logout-icon {
+  width: 22px;
+  height: 22px;
+}
+
+.logout-link:hover .logout-icon {
+  stroke: #ef4444;
+  transform: translateX(2px);
+}
+
+.side-menu.collapsed .logout-link:hover .logout-icon {
+  transform: translateX(0) scale(1.1);
+}

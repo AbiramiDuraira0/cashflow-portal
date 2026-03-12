@@ -1,5 +1,8 @@
 /* You can add global styles to this file, and also import other style files */
 
+/* Angular Material Theme */
+@import '@angular/material/prebuilt-themes/indigo-pink.css';
+
 /* Remove default margins and padding to prevent white space */
 * {
   margin: 0;
@@ -13,4 +16,24 @@ html, body {
   width: 100%;
   height: 100%;
   overflow-x: hidden;
+}
+
+/* Custom Material Tooltip Styles - Oval Shape */
+.mat-mdc-tooltip {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+
+.mat-mdc-tooltip .mdc-tooltip__surface {
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%) !important;
+  border: 1px solid #bae6fd !important;
+  color: #0369a1 !important;
+  font-size: 13px !important;
+  padding: 8px 16px !important;
+  border-radius: 20px !important;
+  box-shadow: 0 2px 8px rgba(3, 105, 161, 0.1) !important;
+  font-weight: 600 !important;
+  white-space: nowrap !important;
 }
