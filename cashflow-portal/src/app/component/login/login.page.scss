@@ -1,7 +1,13 @@
 .login-container {
   min-height: 100vh;
+  height: 100vh;
+  width: 100vw;
   display: flex;
-  position: relative;
+  position: fixed;
+  top: 0;
+  left: 0;
+  margin: 0;
+  padding: 0;
   overflow: hidden;
 }
 
@@ -10,9 +16,11 @@
   flex: 2; // Increased from 1.5 to 2 (66.7% width)
   background-image: url('/Login-bg-v1.png');
   background-size: cover;
-  background-position: center;
+  background-position: center center;
   background-repeat: no-repeat;
   position: relative;
+  margin: 0;
+  padding: 0;
   
   // Optional: subtle overlay to enhance text contrast if needed
   &::after {
