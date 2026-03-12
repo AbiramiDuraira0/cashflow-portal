@@ -25,7 +25,7 @@
 }
 
 .side-menu.collapsed {
-  width: 60px;
+  width: 64px;
 }
 
 .menu-header {
@@ -34,6 +34,12 @@
   gap: 0.75rem;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   padding: 0.5rem;
+  height: 60px;
+}
+
+.side-menu.collapsed .menu-header {
+  padding: 0.5rem 0.25rem;
+  justify-content: center;
 }
 
 .menu-toggle {
@@ -45,6 +51,8 @@
   transition: background-color 0.2s ease;
   border-radius: 8px;
   flex-shrink: 0;
+  min-width: 40px;
+  min-height: 40px;
 }
 
 .menu-toggle:hover {
@@ -123,12 +131,17 @@
   position: relative;
   border-radius: 8px;
   margin: 0 8px;
+  min-height: 44px;
+  cursor: pointer;
+  pointer-events: auto;
 }
 
 /* Center icons when menu is collapsed */
 .side-menu.collapsed .menu-link {
   justify-content: center;
-  padding: 0.875rem 0;
+  padding: 0.75rem 0.5rem;
+  margin: 0 4px;
+  gap: 0;
 }
 
 .menu-link:hover {
@@ -159,13 +172,16 @@
   align-items: center;
   justify-content: center;
   width: 24px;
+  height: 24px;
   flex-shrink: 0;
-  transition: font-size 0.2s ease;
+  transition: all 0.2s ease;
 }
 
-/* Smaller icons when menu is collapsed */
+/* Consistent icon size when menu is collapsed */
 .side-menu.collapsed .menu-icon {
-  font-size: 18px;
+  font-size: 22px;
+  width: 28px;
+  height: 28px;
 }
 
 .menu-text {
@@ -182,7 +198,7 @@
 }
 
 .side-menu.collapsed .menu-divider {
-  margin: 0.5rem 0.5rem;
+  margin: 0.5rem 8px;
 }
 
 /* Logout link */
@@ -205,13 +221,17 @@
   transition: all 0.2s ease;
 }
 
-/* Smaller logout icon when menu is collapsed */
+/* Consistent logout icon when menu is collapsed */
 .side-menu.collapsed .logout-icon {
-  width: 18px;
-  height: 18px;
+  width: 22px;
+  height: 22px;
 }
 
 .logout-link:hover .logout-icon {
   stroke: #ef4444;
   transform: translateX(2px);
+}
+
+.side-menu.collapsed .logout-link:hover .logout-icon {
+  transform: translateX(0) scale(1.1);
 }

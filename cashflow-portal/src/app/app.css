@@ -18,9 +18,14 @@
 	margin-left: 0;
 }
 
-/* When menu is present, add margin */
+/* When menu is present, add margin for expanded menu (default) */
 .app-shell:has(app-side-menu) .main-wrapper {
 	margin-left: 240px;
+}
+
+/* When menu is collapsed, reduce margin */
+.app-shell:has(app-side-menu .side-menu.collapsed) .main-wrapper {
+	margin-left: 64px;
 }
 
 .page-content {

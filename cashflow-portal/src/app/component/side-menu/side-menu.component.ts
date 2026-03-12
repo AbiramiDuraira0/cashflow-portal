@@ -33,6 +33,15 @@ export class SideMenuComponent {
     this.isMenuCollapsed.set(true);
   }
 
+  navigateTo(route: string, event?: MouseEvent) {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    this.router.navigate([route]);
+    this.onMenuItemClick();
+  }
+
   logout() {
     sessionStorage.removeItem('isAuthenticated');
     this.router.navigate(['/login']);
