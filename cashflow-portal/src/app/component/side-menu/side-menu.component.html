@@ -30,51 +30,75 @@
   <nav class="menu-content">
     <ul class="menu-list">
       <li class="menu-item">
-        <a routerLink="/dashboard" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" class="menu-link" (click)="onMenuItemClick()" data-tooltip="Dashboard" title="">
-          <span class="menu-icon">🏠</span>
+        <a routerLink="/dashboard" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" class="menu-link" (click)="onMenuItemClick()">
+          <span class="menu-icon" 
+                [matTooltip]="isMenuCollapsed() ? 'Dashboard' : ''"
+                matTooltipPosition="right"
+                [matTooltipDisabled]="!isMenuCollapsed()">🏠</span>
           <span class="menu-text" *ngIf="!isMenuCollapsed()">Dashboard</span>
         </a>
       </li>
       <li class="menu-item">
-        <a routerLink="/income" routerLinkActive="active" class="menu-link" (click)="onMenuItemClick()" data-tooltip="Income" title="">
-          <span class="menu-icon">💰</span>
+        <a routerLink="/income" routerLinkActive="active" class="menu-link" (click)="onMenuItemClick()">
+          <span class="menu-icon"
+                [matTooltip]="isMenuCollapsed() ? 'Income' : ''"
+                matTooltipPosition="right"
+                [matTooltipDisabled]="!isMenuCollapsed()">💰</span>
           <span class="menu-text" *ngIf="!isMenuCollapsed()">Income</span>
         </a>
       </li>
       <li class="menu-item">
-        <a routerLink="/expense" routerLinkActive="active" class="menu-link" (click)="onMenuItemClick()" data-tooltip="Expense" title="">
-          <span class="menu-icon">💸</span>
+        <a routerLink="/expense" routerLinkActive="active" class="menu-link" (click)="onMenuItemClick()">
+          <span class="menu-icon"
+                [matTooltip]="isMenuCollapsed() ? 'Expense' : ''"
+                matTooltipPosition="right"
+                [matTooltipDisabled]="!isMenuCollapsed()">💸</span>
           <span class="menu-text" *ngIf="!isMenuCollapsed()">Expense</span>
         </a>
       </li>
       <li class="menu-item">
-        <a routerLink="/category" routerLinkActive="active" class="menu-link" (click)="onMenuItemClick()" data-tooltip="Category" title="">
-          <span class="menu-icon">📁</span>
+        <a routerLink="/category" routerLinkActive="active" class="menu-link" (click)="onMenuItemClick()">
+          <span class="menu-icon"
+                [matTooltip]="isMenuCollapsed() ? 'Category' : ''"
+                matTooltipPosition="right"
+                [matTooltipDisabled]="!isMenuCollapsed()">📁</span>
           <span class="menu-text" *ngIf="!isMenuCollapsed()">Category</span>
         </a>
       </li>
       <li class="menu-item">
-        <a routerLink="/investment" routerLinkActive="active" class="menu-link" (click)="onMenuItemClick()" data-tooltip="Investment" title="">
-          <span class="menu-icon">📈</span>
+        <a routerLink="/investment" routerLinkActive="active" class="menu-link" (click)="onMenuItemClick()">
+          <span class="menu-icon"
+                [matTooltip]="isMenuCollapsed() ? 'Investment' : ''"
+                matTooltipPosition="right"
+                [matTooltipDisabled]="!isMenuCollapsed()">📈</span>
           <span class="menu-text" *ngIf="!isMenuCollapsed()">Investment</span>
         </a>
       </li>
       <li class="menu-item">
-        <a routerLink="/debts" routerLinkActive="active" class="menu-link" (click)="onMenuItemClick()" data-tooltip="Debts" title="">
-          <span class="menu-icon">🏦</span>
+        <a routerLink="/debts" routerLinkActive="active" class="menu-link" (click)="onMenuItemClick()">
+          <span class="menu-icon"
+                [matTooltip]="isMenuCollapsed() ? 'Debts' : ''"
+                matTooltipPosition="right"
+                [matTooltipDisabled]="!isMenuCollapsed()">🏦</span>
           <span class="menu-text" *ngIf="!isMenuCollapsed()">Debts</span>
         </a>
       </li>
       <li class="menu-item">
-        <a routerLink="/report" routerLinkActive="active" class="menu-link" (click)="onMenuItemClick()" data-tooltip="Report" title="">
-          <span class="menu-icon">📊</span>
+        <a routerLink="/report" routerLinkActive="active" class="menu-link" (click)="onMenuItemClick()">
+          <span class="menu-icon"
+                [matTooltip]="isMenuCollapsed() ? 'Report' : ''"
+                matTooltipPosition="right"
+                [matTooltipDisabled]="!isMenuCollapsed()">📊</span>
           <span class="menu-text" *ngIf="!isMenuCollapsed()">Report</span>
         </a>
       </li>
       <li class="menu-item menu-divider"></li>
       <li class="menu-item">
-        <a class="menu-link logout-link" (click)="logout()" data-tooltip="Logout" title="">
-          <span class="menu-icon">
+        <a class="menu-link logout-link" (click)="logout()">
+          <span class="menu-icon"
+                [matTooltip]="isMenuCollapsed() ? 'Logout' : ''"
+                matTooltipPosition="right"
+                [matTooltipDisabled]="!isMenuCollapsed()">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="logout-icon">
               <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
               <polyline points="16 17 21 12 16 7"></polyline>

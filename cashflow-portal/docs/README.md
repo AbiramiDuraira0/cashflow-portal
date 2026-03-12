@@ -13,7 +13,7 @@ This folder contains all documentation for the Cashflow Portal project, organize
 ### `/features`
 Documentation for major features and functionality implementations:
 - **[DASHBOARD_UPDATE.md](./features/DASHBOARD_UPDATE.md)** - Dashboard component updates and enhancements
-- **[LOGIN_SIDEMENU_UPDATE.md](./features/LOGIN_SIDEMENU_UPDATE.md)** - ✅ v3.0 - Login screen and side menu implementation (consolidated with version history)
+- **[LOGIN_SIDEMENU_UPDATE.md](./features/LOGIN_SIDEMENU_UPDATE.md)** - ✅ v4.0 - Login screen and side menu with Angular Material tooltips
 
 ### `/ui-updates`
 UI/UX improvements and styling updates:
@@ -58,6 +58,8 @@ Setup guides, design documentation, and best practices:
 
 | Date | Document | Version | Description |
 |------|----------|---------|-------------|
+| Mar 12, 2026 | LOGIN_SIDEMENU_UPDATE.md | v4.0 | **Implemented Angular Material UI tooltips for side menu** |
+| Mar 12, 2026 | LOGIN_SIDEMENU_UPDATE.md | v3.1 | Enhanced tooltips with arrows, removed browser tooltips (superseded) |
 | Jan 2025 | DOCUMENTATION_GUIDELINES.md | v1.0 | Created comprehensive documentation standards |
 | Jan 2025 | LOGIN_SIDEMENU_UPDATE.md | v3.0 | Consolidated menu visibility fixes with version history |
 | Jan 2025 | DASHBOARD_UPDATE.md | v2.0 | Optimized loading and added loading indicators |

@@ -1,5 +1,88 @@
 # Login & Side Menu Updates - Implementation Summary
 
+> **Version:** 4.0  
+> **Last Updated:** March 12, 2026  
+> **Status:** ✅ Active
+
+## Version History
+
+| Version | Date | Changes |
+|---------|------|---------|
+| v4.0 | Mar 12, 2026 | **Implemented Angular Material UI tooltips** - Professional tooltip solution |
+| v3.1 | Mar 12, 2026 | Enhanced tooltips with arrow indicators, removed browser default tooltips |
+| v3.0 | Jan 2025 | Fixed menu visibility with three-state logic |
+| v2.0 | Jan 2025 | Extracted side menu to separate component |
+| v1.0 | Jan 2025 | Initial login and side menu implementation |
+
+---
+
+## Latest Changes (v4.0) 🆕🎉
+
+### Angular Material UI Tooltip Integration
+
+**Problem:** CSS-based tooltips were not working properly when the menu is collapsed.
+
+**Solution:** Implemented **Angular Material UI tooltips** for professional, reliable tooltip functionality.
+
+#### **What Was Done:**
+
+1. **Installed Angular Material**
+   ```bash
+   npm install @angular/material @angular/cdk @angular/animations --legacy-peer-deps
+   ```
+
+2. **Updated Component Files:**
+   - **`side-menu.component.ts`** - Imported `MatTooltipModule`
+   - **`side-menu.component.html`** - Added Material tooltip directives to each icon:
+     ```html
+     <span class="menu-icon" 
+           [matTooltip]="isMenuCollapsed() ? 'Dashboard' : ''"
+           matTooltipPosition="right"
+           [matTooltipDisabled]="!isMenuCollapsed()">🏠</span>
+     ```
+   - **`side-menu.component.scss`** - Removed old CSS-based tooltip styles
+   - **`styles.css`** - Added Material theme and custom tooltip styling
+   - **`app.config.ts`** - Added `provideAnimations()` for Material animations
+
+#### **Key Features:**
+
+✅ **Smart tooltips** - Only show when menu is collapsed  
+✅ **Position control** - Tooltips appear on the right side  
+✅ **Conditional rendering** - `[matTooltipDisabled]` when menu is expanded  
+✅ **Professional styling** - Material Design with custom dark theme  
+✅ **Smooth animations** - Built-in Material animations  
+✅ **No browser tooltips** - No URL previews or bottom-left text  
+
+#### **Material Tooltip Properties Used:**
+
+| Property | Value | Purpose |
+|----------|-------|---------|
+| `[matTooltip]` | `"Menu Name"` | Tooltip text content |
+| `matTooltipPosition` | `"right"` | Position relative to element |
+| `[matTooltipDisabled]` | `!isMenuCollapsed()` | Disable when menu expanded |
+
+#### **Custom Styling:**
+```css
+.mat-mdc-tooltip {
+  background-color: #1f2937 !important;
+  font-size: 14px !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+}
+```
+
+**Result:** Professional, reliable Material UI tooltips that work perfectly when the side menu is collapsed! ✨
+
+---
+
+## Previous Version Notes
+
+### v3.1 Changes (Superseded by v4.0)
+- Attempted CSS-based tooltip solution with arrows
+- Not working properly - replaced with Material UI solution
+
+---
+
 ## Changes Implemented
 
 ### 1. **Side Menu Auto-Collapse Feature** ✅
