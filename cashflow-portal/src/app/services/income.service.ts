@@ -1,4 +1,6 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, signal, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { firstValueFrom } from 'rxjs';
 
 export type IncomeEntry = {
   id: string;
@@ -18,21 +20,44 @@ type IncomeData = {
   providedIn: 'root'
 })
 export class IncomeService {
+  private http = inject(HttpClient);
   private incomeData = signal<IncomeEntry[]>([]);
+  private dataLoadedPromise: Promise<void>;
 
   constructor() {
-    this.loadIncomeData();
+    this.dataLoadedPromise = this.loadIncomeData();
   }
 
   /**
-   * Load income data from JSON file
+   * Load income data - Priority: localStorage > JSON file
+   * JSON file only used as initial seed data if localStorage is empty
    * Note: In production, this will be replaced with Supabase query
    */
   private async loadIncomeData(): Promise<void> {
     try {
-      // Import the JSON file
-      const data = await import('../../data/income-data.json');
-      const entries = (data as any).default?.incomeEntries || data.incomeEntries || [];
+      // FIRST: Check if we have data in localStorage (user's changes)
+      const stored = localStorage.getItem('cashflow_income_data');
+      
+      if (stored) {
+        // Use localStorage data (has user modifications)
+        try {
+          const data: IncomeData = JSON.parse(stored);
+          this.incomeData.set(data.incomeEntries || []);
+          console.log('💾 Loaded income data from localStorage:', data.incomeEntries?.length || 0, 'entries');
+          return; // Exit early - we have user data
+        } catch (parseError) {
+          console.error('Error parsing localStorage data:', parseError);
+          // Continue to load from JSON if localStorage is corrupted
+        }
+      }
+
+      // SECOND: If no localStorage data, load from JSON file (initial seed)
+      console.log('📄 No localStorage data found, loading initial data from JSON file...');
+      const data = await firstValueFrom(
+        this.http.get<IncomeData>('/assets/data/income-data.json')
+      );
+      
+      const entries = data.incomeEntries || [];
       
       // Convert date strings to proper format if needed
       const processedEntries = entries.map((entry: any) => ({
@@ -41,6 +66,10 @@ export class IncomeService {
       }));
       
       this.incomeData.set(processedEntries);
+      
+      // Save to localStorage so next time we use this
+      await this.saveToFile();
+      console.log('📄 Loaded and saved initial data from JSON file:', processedEntries.length, 'entries');
     } catch (error) {
       console.error('Error loading income data:', error);
       this.incomeData.set([]);
@@ -48,10 +77,33 @@ export class IncomeService {
   }
 
   /**
-   * Get all income entries
+   * Load from localStorage as fallback (DEPRECATED - now part of main load)
    */
-  getAllEntries(): IncomeEntry[] {
-    return this.incomeData();
+  private loadFromLocalStorage(): void {
+    const stored = localStorage.getItem('cashflow_income_data');
+    if (stored) {
+      try {
+        const data: IncomeData = JSON.parse(stored);
+        this.incomeData.set(data.incomeEntries || []);
+        console.log('💾 Fallback: Loaded from localStorage:', data.incomeEntries?.length || 0, 'entries');
+      } catch (error) {
+        console.error('Error loading from localStorage:', error);
+        this.incomeData.set([]);
+      }
+    } else {
+      this.incomeData.set([]);
+    }
+  }
+
+  /**
+   * Get all income entries
+   * Waits for initial data load to complete before returning
+   */
+  async getAllEntries(): Promise<IncomeEntry[]> {
+    await this.dataLoadedPromise;
+    const entries = this.incomeData();
+    console.log('📊 getAllEntries() returning:', entries.length, 'entries');
+    return entries;
   }
 
   /**
@@ -73,9 +125,14 @@ export class IncomeService {
     };
 
     const currentEntries = this.incomeData();
+    console.log('➕ Adding new entry. Current count:', currentEntries.length);
+    console.log('➕ New entry:', newEntry);
+    
     this.incomeData.set([...currentEntries, newEntry]);
     
-    // Save to file (simulated)
+    console.log('➕ After add, total count:', this.incomeData().length);
+    
+    // Save to localStorage
     await this.saveToFile();
     
     return newEntry;
@@ -164,9 +221,13 @@ export class IncomeService {
 
   /**
    * Check if month/year combination already exists
+   * Waits for data to load before checking
    */
-  entryExists(month: string, year: number): boolean {
-    return this.incomeData().some(entry => entry.month === month && entry.year === year);
+  async entryExists(month: string, year: number): Promise<boolean> {
+    await this.dataLoadedPromise;
+    const exists = this.incomeData().some(entry => entry.month === month && entry.year === year);
+    console.log(`🔍 Checking if ${month} ${year} exists:`, exists);
+    return exists;
   }
 
   /**

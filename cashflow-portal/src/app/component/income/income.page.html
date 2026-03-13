@@ -4,7 +4,7 @@
     <div class="header-content">
       <div class="title-section">
         <h1>💰 Income Tracker</h1>
-        <p class="subtitle">Track your monthly income from August 2021 onwards</p>
+        <p class="subtitle">Track your monthly income</p>
       </div>
       <button class="btn-add" (click)="openAddForm()">
         <span class="icon">+</span>
@@ -27,7 +27,7 @@
     <div class="summary-card year">
       <div class="card-icon">📅</div>
       <div class="card-content">
-        <p class="card-label">{{ selectedYear() }} Total</p>
+        <p class="card-label">Current Year Total ({{ currentYear() }})</p>
         <h2 class="card-value">{{ formatCurrency(yearlyTotal()) }}</h2>
         <p class="card-subtitle">{{ filteredEntries().length }} entries</p>
       </div>
@@ -36,9 +36,9 @@
     <div class="summary-card average">
       <div class="card-icon">📊</div>
       <div class="card-content">
-        <p class="card-label">Monthly Average</p>
-        <h2 class="card-value">{{ formatCurrency(monthlyAverage()) }}</h2>
-        <p class="card-subtitle">For {{ selectedYear() }}</p>
+        <p class="card-label">Year Wise Total Earnings</p>
+        <h2 class="card-value year-totals">{{ getYearWiseTotalsText() }}</h2>
+        <p class="card-subtitle">All years breakdown</p>
       </div>
     </div>
   </div>
@@ -127,38 +127,25 @@
                 name="month"
                 required
                 class="form-control">
-                @if (editingEntry()) {
-                  <!-- When editing, show all months -->
-                  @for (month of months; track month) {
-                    <option [value]="month">{{ month }}</option>
-                  }
-                } @else {
-                  <!-- When adding new, only show available months -->
-                  @if (availableMonths().length === 0) {
-                    <option value="">All months tracked</option>
-                  }
-                  @for (monthYear of availableMonths(); track monthYear.displayText) {
-                    <option [value]="monthYear.month">{{ monthYear.displayText }}</option>
-                  }
+                @for (month of months; track month) {
+                  <option [value]="month">{{ month }}</option>
                 }
               </select>
             </div>
 
-            @if (editingEntry()) {
-              <div class="form-group">
-                <label for="year">Year</label>
-                <select 
-                  id="year" 
-                  [(ngModel)]="selectedYearForm"
-                  name="year"
-                  required
-                  class="form-control">
-                  @for (year of availableYears(); track year) {
-                    <option [value]="year">{{ year }}</option>
-                  }
-                </select>
-              </div>
-            }
+            <div class="form-group">
+              <label for="year">Year</label>
+              <select 
+                id="year" 
+                [(ngModel)]="selectedYearForm"
+                name="year"
+                required
+                class="form-control">
+                @for (year of availableYears(); track year) {
+                  <option [value]="year">{{ year }}</option>
+                }
+              </select>
+            </div>
           </div>
 
           <!-- Amount -->

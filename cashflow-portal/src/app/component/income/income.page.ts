@@ -1,16 +1,7 @@
-import { Component, signal, computed, OnInit } from '@angular/core';
+import { Component, signal, computed, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-
-type IncomeEntry = {
-  id: string;
-  month: string;
-  year: number;
-  amount: number;
-  source: string;
-  notes?: string;
-  date: Date;
-};
+import { IncomeService, IncomeEntry } from '../../services/income.service';
 
 type MonthYear = {
   month: string;
@@ -26,12 +17,15 @@ type MonthYear = {
   styleUrls: ['./income.page.scss']
 })
 export class IncomePage implements OnInit {
-  // State signals
-  protected incomeEntries = signal<IncomeEntry[]>([]);
+  private incomeService = inject(IncomeService);
+  
+  // State signals - Use service's signal directly for reactivity
+  protected incomeEntries = this.incomeService.getEntriesSignal();
   protected showAddForm = signal(false);
   protected editingEntry = signal<IncomeEntry | null>(null);
   protected selectedYear = signal<number>(new Date().getFullYear());
   protected viewMode = signal<'list' | 'chart'>('list');
+  protected isLoading = signal(false);
   
   // Form fields
   protected selectedMonth = signal<string>('');
@@ -59,9 +53,11 @@ export class IncomePage implements OnInit {
   });
 
   protected filteredEntries = computed(() => {
-    return this.incomeEntries()
-      .filter(entry => entry.year === this.selectedYear())
-      .sort((a, b) => b.date.getTime() - a.date.getTime());
+    const allEntries = this.incomeEntries();
+    const year = this.selectedYear();
+    const filtered = allEntries.filter(entry => entry.year === year);
+    console.log(`🔍 Filtered for year ${year}:`, filtered.length, 'of', allEntries.length, 'total entries');
+    return filtered.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   });
 
   protected yearlyTotal = computed(() => {
@@ -75,6 +71,19 @@ export class IncomePage implements OnInit {
 
   protected totalEarnings = computed(() => {
     return this.incomeEntries().reduce((sum, entry) => sum + entry.amount, 0);
+  });
+
+  protected currentYear = computed(() => {
+    return new Date().getFullYear();
+  });
+
+  protected yearWiseTotals = computed(() => {
+    const totals = new Map<number, number>();
+    this.incomeEntries().forEach(entry => {
+      const current = totals.get(entry.year) || 0;
+      totals.set(entry.year, current + entry.amount);
+    });
+    return totals;
   });
 
   protected availableMonths = computed(() => {
@@ -115,6 +124,22 @@ export class IncomePage implements OnInit {
     this.selectedYearForm.set(now.getFullYear());
   }
 
+  private async loadIncomeData(): Promise<void> {
+    this.isLoading.set(true);
+    try {
+      console.log('🔄 Component: Ensuring service data is loaded...');
+      // Just ensure the service has loaded its data
+      // The component's incomeEntries signal is already pointing to service's signal
+      await this.incomeService.getAllEntries();
+      console.log('✅ Component: Service data ready');
+    } catch (error) {
+      console.error('Error loading income data:', error);
+      alert('Failed to load income data. Please refresh the page.');
+    } finally {
+      this.isLoading.set(false);
+    }
+  }
+
   protected openAddForm(): void {
     this.showAddForm.set(true);
     this.editingEntry.set(null);
@@ -127,46 +152,56 @@ export class IncomePage implements OnInit {
     this.resetForm();
   }
 
-  protected saveIncome(): void {
+  protected async saveIncome(): Promise<void> {
     if (!this.selectedMonth() || this.amount() <= 0) {
       alert('Please enter valid month and amount');
       return;
     }
 
+    this.isLoading.set(true);
     const editing = this.editingEntry();
     
-    if (editing) {
-      // Update existing entry
-      const updatedEntries = this.incomeEntries().map(entry => 
-        entry.id === editing.id
-          ? {
-              ...entry,
-              month: this.selectedMonth(),
-              year: this.selectedYearForm(),
-              amount: this.amount(),
-              source: this.source(),
-              notes: this.notes(),
-              date: this.getDateFromMonthYear(this.selectedMonth(), this.selectedYearForm())
-            }
-          : entry
-      );
-      this.incomeEntries.set(updatedEntries);
-    } else {
-      // Add new entry
-      const newEntry: IncomeEntry = {
-        id: this.generateId(),
-        month: this.selectedMonth(),
-        year: this.selectedYearForm(),
-        amount: this.amount(),
-        source: this.source(),
-        notes: this.notes(),
-        date: this.getDateFromMonthYear(this.selectedMonth(), this.selectedYearForm())
-      };
-      this.incomeEntries.set([...this.incomeEntries(), newEntry]);
-    }
+    try {
+      if (editing) {
+        // Update existing entry
+        await this.incomeService.updateEntry(editing.id, {
+          month: this.selectedMonth(),
+          year: this.selectedYearForm(),
+          amount: this.amount(),
+          source: this.source(),
+          notes: this.notes()
+        });
+      } else {
+        // Check for duplicates - now using both selected month and year
+        const exists = await this.incomeService.entryExists(this.selectedMonth(), this.selectedYearForm());
+        if (exists) {
+          alert(`Income for ${this.selectedMonth()} ${this.selectedYearForm()} already exists!`);
+          this.isLoading.set(false);
+          return;
+        }
+        
+        // Add new entry
+        await this.incomeService.addEntry({
+          month: this.selectedMonth(),
+          year: this.selectedYearForm(),
+          amount: this.amount(),
+          source: this.source(),
+          notes: this.notes()
+        });
+      }
 
-    this.saveIncomeData();
-    this.closeAddForm();
+      // Signal automatically updates reactively - no need to reload!
+      this.closeAddForm();
+      
+      // Show success message
+      const action = editing ? 'updated' : 'added';
+      console.log(`✅ Income entry ${action} successfully! Total entries:`, this.incomeEntries().length);
+    } catch (error) {
+      console.error('Error saving income:', error);
+      alert('Failed to save income entry. Please try again.');
+    } finally {
+      this.isLoading.set(false);
+    }
   }
 
   protected editIncome(entry: IncomeEntry): void {
@@ -179,12 +214,21 @@ export class IncomePage implements OnInit {
     this.showAddForm.set(true);
   }
 
-  protected deleteIncome(entry: IncomeEntry): void {
-    if (confirm(`Delete income entry for ${entry.month} ${entry.year}?`)) {
-      this.incomeEntries.set(
-        this.incomeEntries().filter(e => e.id !== entry.id)
-      );
-      this.saveIncomeData();
+  protected async deleteIncome(entry: IncomeEntry): Promise<void> {
+    if (!confirm(`Delete income entry for ${entry.month} ${entry.year}?`)) {
+      return;
+    }
+
+    this.isLoading.set(true);
+    try {
+      await this.incomeService.deleteEntry(entry.id);
+      await this.loadIncomeData();
+      console.log('✅ Income entry deleted successfully!');
+    } catch (error) {
+      console.error('Error deleting income:', error);
+      alert('Failed to delete income entry. Please try again.');
+    } finally {
+      this.isLoading.set(false);
     }
   }
 
@@ -208,6 +252,21 @@ export class IncomePage implements OnInit {
     }).format(amount);
   }
 
+  protected getYearWiseTotalsText(): string {
+    const totals = this.yearWiseTotals();
+    const entries: string[] = [];
+    
+    // Get sorted years
+    const years = Array.from(totals.keys()).sort((a, b) => b - a);
+    
+    for (const year of years) {
+      const amount = totals.get(year) || 0;
+      entries.push(`${year}: ${this.formatCurrency(amount)}`);
+    }
+    
+    return entries.join(' | ');
+  }
+
   private resetForm(): void {
     const now = new Date();
     this.selectedMonth.set(this.months[now.getMonth()]);
@@ -215,31 +274,5 @@ export class IncomePage implements OnInit {
     this.amount.set(0);
     this.source.set('Salary');
     this.notes.set('');
-  }
-
-  private generateId(): string {
-    return `income_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-  }
-
-  private getDateFromMonthYear(month: string, year: number): Date {
-    const monthIndex = this.months.indexOf(month);
-    return new Date(year, monthIndex, 1);
-  }
-
-  private loadIncomeData(): void {
-    const stored = localStorage.getItem('cashflow_income_entries');
-    if (stored) {
-      const parsed = JSON.parse(stored);
-      // Reconstruct Date objects
-      const entries = parsed.map((entry: any) => ({
-        ...entry,
-        date: new Date(entry.date)
-      }));
-      this.incomeEntries.set(entries);
-    }
-  }
-
-  private saveIncomeData(): void {
-    localStorage.setItem('cashflow_income_entries', JSON.stringify(this.incomeEntries()));
   }
 }

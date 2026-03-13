@@ -1,8 +1,94 @@
 # Income Tracking Feature
 
-> **Version:** 1.0  
+> **Version:** 1.1.1  
 > **Last Updated:** March 13, 2026  
 > **Status:** ✅ Active
+
+## Version History
+
+| Version | Date | Changes |
+|---------|------|---------|
+| v1.1.1 | Mar 13, 2026 | **Critical fix** - Data persistence now works correctly (localStorage priority) |
+| v1.1 | Mar 13, 2026 | **Bug fixes** - Layout positioning, label updates, form improvements |
+| v1.0 | Mar 13, 2026 | Initial implementation with JSON file storage |
+
+---
+
+## Latest Changes (v1.1.1) 🔴 CRITICAL FIX
+
+### Data Persistence Bug Fix
+
+**Problem:**
+- ✗ Edited income reverting to old value on page refresh
+- ✗ Newly added income not appearing in UI
+- ✗ All changes lost after refresh
+
+**Root Cause:**
+- Service loaded JSON file FIRST every time, overwriting localStorage
+- User modifications in localStorage were ignored
+
+**Solution:**
+Changed data loading priority in `IncomeService`:
+
+**Before (Wrong):**
+```
+1. Load JSON file → 2. Overwrite everything → 3. Ignore localStorage
+```
+
+**After (Correct):**
+```
+1. Check localStorage FIRST (has user changes)
+   ↓ If found → USE IT and STOP
+2. If empty → Load JSON file (initial seed only)
+   ↓ Then save to localStorage
+```
+
+**Files Modified:**
+- `income.service.ts` - Reversed loading priority logic
+
+**Result:**
+- ✅ Edit operations persist correctly
+- ✅ Add operations show immediately and persist
+- ✅ Data survives page refresh
+- ✅ JSON file only used as initial seed (first run)
+
+---
+
+## Latest Changes (v1.1) 🆕
+
+### Bug Fixes
+
+#### 1. **Layout Positioning Fix**
+- **Issue:** Income page not properly aligned with side menu
+- **Fix:** Removed `max-width` and adjusted padding to float content left next to side menu
+- **Result:** Content properly flows with collapsible side menu (64px collapsed, 240px expanded)
+
+#### 2. **Summary Card Label Updates**
+- **"2026 Total" → "Current Year Total (2026)"**
+  - Now dynamically shows current year
+  - Updates automatically year after year
+  
+- **"Monthly Average" → "Year Wise Total Earnings"**
+  - Changed from average to show breakdown of all years
+  - Format: `2026: ₹113,000 | 2021: ₹90,000`
+  - Better overview of earning history
+
+#### 3. **Form Improvements - Month & Year Selection**
+- **Issue:** Year dropdown only showed in edit mode
+- **Fix:** Now shows BOTH month and year dropdowns in both add and edit modes
+- **Benefit:** More flexible - can add income for any past month/year
+
+#### 4. **Typography Enhancement**
+- Added special styling for year-wise totals (`.year-totals` class)
+- Smaller font, better line height for multi-year display
+- Responsive font sizing for mobile
+
+### Files Modified
+- `income.page.ts` - Added `currentYear()` and `yearWiseTotals()` computed properties
+- `income.page.html` - Updated labels and form structure
+- `income.page.scss` - Fixed padding, removed max-width, added year-totals styling
+
+---
 
 ## Overview
 
