@@ -1,0 +1,219 @@
+<section class="income-page">
+  <!-- Page Header -->
+  <header class="page-header">
+    <div class="header-content">
+      <div class="title-section">
+        <h1>💰 Income Tracker</h1>
+        <p class="subtitle">Track your monthly income from August 2021 onwards</p>
+      </div>
+      <button class="btn-add" (click)="openAddForm()">
+        <span class="icon">+</span>
+        Add Income
+      </button>
+    </div>
+  </header>
+
+  <!-- Summary Cards -->
+  <div class="summary-cards">
+    <div class="summary-card total">
+      <div class="card-icon">💵</div>
+      <div class="card-content">
+        <p class="card-label">Total Earnings</p>
+        <h2 class="card-value">{{ formatCurrency(totalEarnings()) }}</h2>
+        <p class="card-subtitle">Since Aug 2021</p>
+      </div>
+    </div>
+
+    <div class="summary-card year">
+      <div class="card-icon">📅</div>
+      <div class="card-content">
+        <p class="card-label">{{ selectedYear() }} Total</p>
+        <h2 class="card-value">{{ formatCurrency(yearlyTotal()) }}</h2>
+        <p class="card-subtitle">{{ filteredEntries().length }} entries</p>
+      </div>
+    </div>
+
+    <div class="summary-card average">
+      <div class="card-icon">📊</div>
+      <div class="card-content">
+        <p class="card-label">Monthly Average</p>
+        <h2 class="card-value">{{ formatCurrency(monthlyAverage()) }}</h2>
+        <p class="card-subtitle">For {{ selectedYear() }}</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Year Filter -->
+  <div class="filter-section">
+    <div class="year-tabs">
+      @for (year of availableYears(); track year) {
+        <button 
+          class="year-tab"
+          [class.active]="selectedYear() === year"
+          (click)="changeYear(year)">
+          {{ year }}
+        </button>
+      }
+    </div>
+  </div>
+
+  <!-- Income Entries List -->
+  <div class="entries-container">
+    @if (filteredEntries().length === 0) {
+      <div class="empty-state">
+        <div class="empty-icon">📝</div>
+        <h3>No income entries for {{ selectedYear() }}</h3>
+        <p>Add your first income entry to start tracking</p>
+        <button class="btn-primary" (click)="openAddForm()">Add Income</button>
+      </div>
+    } @else {
+      <div class="entries-grid">
+        @for (entry of filteredEntries(); track entry.id) {
+          <div class="income-entry">
+            <div class="entry-header">
+              <div class="entry-month">
+                <span class="month-name">{{ entry.month }}</span>
+                <span class="month-year">{{ entry.year }}</span>
+              </div>
+              <div class="entry-actions">
+                <button class="btn-icon" (click)="editIncome(entry)" title="Edit">
+                  ✏️
+                </button>
+                <button class="btn-icon delete" (click)="deleteIncome(entry)" title="Delete">
+                  🗑️
+                </button>
+              </div>
+            </div>
+            
+            <div class="entry-amount">
+              {{ formatCurrency(entry.amount) }}
+            </div>
+            
+            <div class="entry-details">
+              <div class="detail-item">
+                <span class="detail-label">Source:</span>
+                <span class="detail-value">{{ entry.source }}</span>
+              </div>
+              @if (entry.notes) {
+                <div class="detail-item notes">
+                  <span class="detail-label">Notes:</span>
+                  <span class="detail-value">{{ entry.notes }}</span>
+                </div>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </div>
+
+  <!-- Add/Edit Income Modal -->
+  @if (showAddForm()) {
+    <div class="modal-overlay" (click)="closeAddForm()">
+      <div class="modal-content" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2>{{ editingEntry() ? 'Edit Income' : 'Add Income' }}</h2>
+          <button class="btn-close" (click)="closeAddForm()">✕</button>
+        </div>
+
+        <form class="income-form" (ngSubmit)="saveIncome()">
+          <!-- Month & Year Selection -->
+          <div class="form-row">
+            <div class="form-group">
+              <label for="month">Month</label>
+              <select 
+                id="month" 
+                [(ngModel)]="selectedMonth"
+                name="month"
+                required
+                class="form-control">
+                @if (editingEntry()) {
+                  <!-- When editing, show all months -->
+                  @for (month of months; track month) {
+                    <option [value]="month">{{ month }}</option>
+                  }
+                } @else {
+                  <!-- When adding new, only show available months -->
+                  @if (availableMonths().length === 0) {
+                    <option value="">All months tracked</option>
+                  }
+                  @for (monthYear of availableMonths(); track monthYear.displayText) {
+                    <option [value]="monthYear.month">{{ monthYear.displayText }}</option>
+                  }
+                }
+              </select>
+            </div>
+
+            @if (editingEntry()) {
+              <div class="form-group">
+                <label for="year">Year</label>
+                <select 
+                  id="year" 
+                  [(ngModel)]="selectedYearForm"
+                  name="year"
+                  required
+                  class="form-control">
+                  @for (year of availableYears(); track year) {
+                    <option [value]="year">{{ year }}</option>
+                  }
+                </select>
+              </div>
+            }
+          </div>
+
+          <!-- Amount -->
+          <div class="form-group">
+            <label for="amount">Amount (₹)</label>
+            <input 
+              type="number" 
+              id="amount" 
+              [(ngModel)]="amount"
+              name="amount"
+              required
+              min="0"
+              step="1"
+              placeholder="Enter amount in INR"
+              class="form-control">
+          </div>
+
+          <!-- Income Source -->
+          <div class="form-group">
+            <label for="source">Income Source</label>
+            <select 
+              id="source" 
+              [(ngModel)]="source"
+              name="source"
+              required
+              class="form-control">
+              @for (src of incomeSources; track src) {
+                <option [value]="src">{{ src }}</option>
+              }
+            </select>
+          </div>
+
+          <!-- Notes -->
+          <div class="form-group">
+            <label for="notes">Notes (Optional)</label>
+            <textarea 
+              id="notes" 
+              [(ngModel)]="notes"
+              name="notes"
+              rows="3"
+              placeholder="Add any additional notes..."
+              class="form-control"></textarea>
+          </div>
+
+          <!-- Form Actions -->
+          <div class="form-actions">
+            <button type="button" class="btn-secondary" (click)="closeAddForm()">
+              Cancel
+            </button>
+            <button type="submit" class="btn-primary">
+              {{ editingEntry() ? 'Update' : 'Save' }} Income
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+</section>
