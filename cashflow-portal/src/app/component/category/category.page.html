@@ -1,136 +1,78 @@
-<section class="category"><section class="category">
-
-  <!-- Toolbar Header -->  <header class="toolbar">
-
-  <header class="toolbar">    <div class="titles">
-
-    <div class="titles">      <h1>Categories</h1>
-
-      <h1>Categories</h1>      <p class="subtitle">Manage your expense categories from database.</p>
-
-      <p class="subtitle">Manage your expense categories from database</p>    </div>
-
-    </div>    <div class="actions">
-
-    <div class="actions">      <button class="test-btn" (click)="testConnection()">🔌 Test Connection</button>
-
-      <button class="test-connection-icon" (click)="testConnection()" title="Test Database Connection">      <label class="search" aria-label="Search categories">
-
-        🔌        <span class="search-icon">🔎</span>
-
-      </button>        <input type="text" placeholder="Search categories" [value]="query()" (input)="onSearchChange($any($event.target).value)" />
-
-      <button class="add-btn" (click)="openAddModal()">      </label>
-
-        <span class="icon">➕</span>    </div>
-
-        <span class="text">Add Category</span>  </header>
-
+<section class="category">
+  <header class="toolbar">
+    <div class="titles">
+      <h1>Categories</h1>
+      <p class="subtitle">Manage your expense categories from database</p>
+    </div>
+    <div class="actions">
+      <button class="test-connection-icon" (click)="testConnection()" title="Test Database Connection">
+        🔌
       </button>
+      <button class="add-btn" (click)="openAddModal()">
+        <span class="icon">➕</span>
+        <span class="text">Add Category</span>
+      </button>
+      <label class="search" aria-label="Search categories">
+        <span class="search-icon">🔎</span>
+        <input type="text" placeholder="Search categories" [value]="query()" (input)="onSearchChange($any($event.target).value)" />
+      </label>
+    </div>
+  </header>
 
-      <label class="search" aria-label="Search categories">  @if (loading()) {
-
-        <span class="search-icon">🔎</span>    <div class="loading-state">
-
-        <input type="text" placeholder="Search categories" [value]="query()" (input)="onSearchChange($any($event.target).value)" />      <div class="spinner">🔄</div>
-
-      </label>      <p>Loading categories from database...</p>
-
-    </div>    </div>
-
-  </header>  } @else {
-
+  @if (loading()) {
+    <div class="loading-state">
+      <div class="spinner">🔄</div>
+      <p>Loading categories from database...</p>
+    </div>
+  } @else {
     @if (filtered().length > 0) {
-
-  <!-- Loading State -->      <div class="categories-list">
-
-  @if (loading()) {        <div class="list-header">
-
-    <div class="loading-state">          <span class="col-id">ID</span>
-
-      <div class="spinner">🔄</div>          <span class="col-name">Category Name</span>
-
-      <p>Loading categories from database...</p>          <span class="col-status">Status</span>
-
-    </div>          <span class="col-dates">Created</span>
-
-  } @else {          <span class="col-dates">Updated</span>
-
-    <!-- Categories Grid -->        </div>
-
-    @if (filtered().length > 0) {        @for (cat of filtered(); track cat.category_id) {
-
-      <div class="categories-grid">          <div class="category-row">
-
-        @for (cat of filtered(); track cat.category_id) {            <span class="col-id">{{ cat.category_id }}</span>
-
-          <div class="category-card">            <span class="col-name"><strong>{{ cat.category_name }}</strong></span>
-
-            <div class="card-header">            <span class="col-status">
-
-              <div class="card-title">              @if (cat.is_active) {
-
-                <span class="category-icon">📁</span>                <span class="badge active">Active</span>
-
-                <h3>{{ cat.category_name }}</h3>              } @else {
-
-              </div>                <span class="badge inactive">Inactive</span>
-
-              <span class="status-badge" [class.active]="cat.is_active">              }
-
-                {{ cat.is_active ? 'Active' : 'Inactive' }}            </span>
-
-              </span>            <span class="col-dates">{{ formatDate(cat.created_at) }}</span>
-
-            </div>            <span class="col-dates">{{ formatDate(cat.updated_at) }}</span>
-
-            <div class="card-body">          </div>
-
-              <div class="meta-info">        }
-
-                <div class="meta-item">      </div>
-
-                  <span class="meta-label">ID:</span>      <div class="summary">
-
-                  <span class="meta-value">{{ cat.category_id }}</span>        <p>Total Categories: <strong>{{ filtered().length }}</strong></p>
-
-                </div>      </div>
-
-                <div class="meta-item">    } @else {
-
-                  <span class="meta-label">Created:</span>      <div class="empty">
-
-                  <span class="meta-value">{{ formatDate(cat.created_at) }}</span>        <div class="empty-card">
-
-                </div>          <div class="emoji">📭</div>
-
-                <div class="meta-item">          <h2>No categories found</h2>
-
-                  <span class="meta-label">Updated:</span>          <p>{{ query() ? 'Try a different search term.' : 'No categories available in database.' }}</p>
-
-                  <span class="meta-value">{{ formatDate(cat.updated_at) }}</span>        </div>
-
-                </div>      </div>
-
-              </div>    }
-
-            </div>  }
-
-            <div class="card-actions"></section>
-              <button class="action-btn edit" (click)="openEditModal(cat)" title="Edit Category">
-                <span class="icon">✏️</span>
-                <span class="text">Edit</span>
-              </button>
-              <button class="action-btn delete" (click)="openDeleteModal(cat)" title="Delete Category">
-                <span class="icon">🗑️</span>
-                <span class="text">Delete</span>
-              </button>
-            </div>
-          </div>
-        }
+      <div class="table-container">
+        <table class="category-table">
+          <thead>
+            <tr>
+              <th class="col-icon">Icon</th>
+              <th class="col-name">Category Name</th>
+              <th class="col-status">Active</th>
+              <th class="col-date">Created</th>
+              <th class="col-date">Updated</th>
+              <th class="col-actions">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (cat of filtered(); track cat.category_id) {
+              <tr class="table-row">
+                <td class="col-icon">
+                  <span class="category-icon">{{ getCategoryIcon(cat.category_name) }}</span>
+                </td>
+                <td class="col-name">
+                  <span class="category-name">{{ cat.category_name }}</span>
+                </td>
+                <td class="col-status">
+                  <span class="status-badge" [class.active]="cat.is_active" [class.inactive]="!cat.is_active">
+                    {{ cat.is_active ? '✓ Active' : '✗ Inactive' }}
+                  </span>
+                </td>
+                <td class="col-date">
+                  <span class="date-value">{{ formatDate(cat.created_at) }}</span>
+                </td>
+                <td class="col-date">
+                  <span class="date-value">{{ formatDate(cat.updated_at) }}</span>
+                </td>
+                <td class="col-actions">
+                  <div class="action-buttons">
+                    <button class="action-btn edit" (click)="openEditModal(cat)" title="Edit Category">
+                      <span class="icon">✏️</span>
+                    </button>
+                    <button class="action-btn delete" (click)="openDeleteModal(cat)" title="Delete Category">
+                      <span class="icon">🗑️</span>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
       </div>
-      
-      <!-- Summary Footer -->
       <div class="summary">
         <p>
           Showing <strong>{{ filtered().length }}</strong> 
@@ -141,12 +83,11 @@
         </p>
       </div>
     } @else {
-      <!-- Empty State -->
       <div class="empty">
         <div class="empty-card">
           <div class="emoji">📭</div>
           <h2>No categories found</h2>
-          <p>{{ query() ? 'Try a different search term.' : 'Click "Add Category" to create your first category.' }}</p>
+          <p>{{ query() ? 'Try a different search term.' : 'Click Add Category to create your first category.' }}</p>
           @if (!query()) {
             <button class="empty-action-btn" (click)="openAddModal()">
               ➕ Add Your First Category
@@ -157,7 +98,6 @@
     }
   }
 
-  <!-- Test Connection Popup -->
   @if (showTestPopup()) {
     <div class="popup-overlay" (click)="closeTestPopup()">
       <div class="popup-card" [class.success]="testResult()?.success" [class.error]="!testResult()?.success" (click)="$event.stopPropagation()">
@@ -173,7 +113,6 @@
     </div>
   }
 
-  <!-- Add Category Modal -->
   @if (showAddModal()) {
     <div class="modal-overlay" (click)="closeAddModal()">
       <div class="modal-card" (click)="$event.stopPropagation()">
@@ -212,7 +151,6 @@
     </div>
   }
 
-  <!-- Edit Category Modal -->
   @if (showEditModal() && editingCategory()) {
     <div class="modal-overlay" (click)="closeEditModal()">
       <div class="modal-card" (click)="$event.stopPropagation()">
@@ -254,7 +192,6 @@
     </div>
   }
 
-  <!-- Delete Confirmation Modal -->
   @if (showDeleteModal() && deletingCategory()) {
     <div class="modal-overlay" (click)="closeDeleteModal()">
       <div class="modal-card modal-delete" (click)="$event.stopPropagation()">
@@ -266,7 +203,7 @@
           <div class="warning-box">
             <span class="warning-icon">⚠️</span>
             <p>Are you sure you want to delete <strong>"{{ deletingCategory()!.category_name }}"</strong>?</p>
-            <p class="warning-note">This action will deactivate the category. It won't be visible in the list but data will be preserved.</p>
+            <p class="warning-note">This action will deactivate the category. It will not be visible in the list but data will be preserved.</p>
           </div>
         </div>
         <div class="modal-footer">

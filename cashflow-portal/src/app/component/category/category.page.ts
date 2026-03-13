@@ -78,6 +78,66 @@ export class CategoryPage implements OnInit {
     });
   }
 
+  /**
+   * Get relevant icon for category based on name
+   */
+  protected getCategoryIcon(categoryName: string): string {
+    const name = categoryName.toLowerCase();
+    
+    // Map category names to relevant icons
+    const iconMap: Record<string, string> = {
+      'food': '🍔',
+      'groceries': '🛒',
+      'grocery': '🛒',
+      'transport': '🚗',
+      'transportation': '🚗',
+      'travel': '✈️',
+      'entertainment': '🎬',
+      'shopping': '🛍️',
+      'health': '⚕️',
+      'medical': '💊',
+      'education': '📚',
+      'utilities': '💡',
+      'rent': '🏠',
+      'housing': '🏡',
+      'insurance': '🛡️',
+      'investment': '💰',
+      'savings': '💵',
+      'salary': '💼',
+      'income': '💳',
+      'debt': '📉',
+      'loan': '🏦',
+      'restaurant': '🍽️',
+      'cafe': '☕',
+      'coffee': '☕',
+      'gas': '⛽',
+      'fuel': '⛽',
+      'clothing': '👕',
+      'gym': '💪',
+      'fitness': '🏋️',
+      'phone': '📱',
+      'internet': '🌐',
+      'subscription': '📺',
+      'gift': '🎁',
+      'charity': '🤝',
+      'pet': '🐾',
+      'beauty': '💄',
+      'personal': '👤',
+      'other': '📁',
+      'miscellaneous': '📦'
+    };
+    
+    // Find matching icon
+    for (const [key, icon] of Object.entries(iconMap)) {
+      if (name.includes(key)) {
+        return icon;
+      }
+    }
+    
+    // Default icon
+    return '📁';
+  }
+
   // ============================================
   // TEST CONNECTION
   // ============================================

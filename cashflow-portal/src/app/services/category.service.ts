@@ -52,7 +52,6 @@ export class CategoryService {
       const { data, error } = await this.supabase.db
         .from('category')
         .select('*')
-        .eq('is_active', true)
         .order('category_name', { ascending: true });
 
       if (error) {
