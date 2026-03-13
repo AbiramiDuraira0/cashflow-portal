@@ -56,7 +56,7 @@ export class ConnectionTestService {
 
       return {
         success: true,
-        message: `✅ Connected! Found ${categories?.length || 0} categories`,
+        message: `✅ Connected ! Fetched First ${categories?.length || 0} categories`,
         details: categories
       };
 

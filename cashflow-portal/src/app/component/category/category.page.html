@@ -2,13 +2,14 @@
   <header class="toolbar">
     <div class="titles">
       <h1>Categories</h1>
-      <p class="subtitle">Manage your expense categories from database</p>
+      <p class="subtitle">Manage your expense categories</p>
     </div>
     <div class="actions">
-      <button class="test-connection-icon" (click)="testConnection()" title="Test Database Connection">
-        🔌
-      </button>
-      <button class="add-btn" (click)="openAddModal()">
+      <button 
+        class="add-btn" 
+        (click)="openAddModal()"
+        [matTooltip]="'Add New Category'"
+        matTooltipPosition="below">
         <span class="icon">➕</span>
         <span class="text">Add Category</span>
       </button>
@@ -60,10 +61,18 @@
                 </td>
                 <td class="col-actions">
                   <div class="action-buttons">
-                    <button class="action-btn edit" (click)="openEditModal(cat)" title="Edit Category">
+                    <button 
+                      class="action-btn edit" 
+                      (click)="openEditModal(cat)"
+                      [matTooltip]="'Edit ' + cat.category_name"
+                      matTooltipPosition="above">
                       <span class="icon">✏️</span>
                     </button>
-                    <button class="action-btn delete" (click)="openDeleteModal(cat)" title="Delete Category">
+                    <button 
+                      class="action-btn delete" 
+                      (click)="openDeleteModal(cat)"
+                      [matTooltip]="'Delete ' + cat.category_name"
+                      matTooltipPosition="above">
                       <span class="icon">🗑️</span>
                     </button>
                   </div>
@@ -98,26 +107,11 @@
     }
   }
 
-  @if (showTestPopup()) {
-    <div class="popup-overlay" (click)="closeTestPopup()">
-      <div class="popup-card" [class.success]="testResult()?.success" [class.error]="!testResult()?.success" (click)="$event.stopPropagation()">
-        <div class="popup-header">
-          <span class="popup-icon">{{ testResult()?.success ? '✅' : '❌' }}</span>
-          <h3>{{ testResult()?.success ? 'Connection Successful' : 'Connection Failed' }}</h3>
-          <button class="close-btn" (click)="closeTestPopup()">✕</button>
-        </div>
-        <div class="popup-body">
-          <p>{{ testResult()?.message }}</p>
-        </div>
-      </div>
-    </div>
-  }
-
   @if (showAddModal()) {
     <div class="modal-overlay" (click)="closeAddModal()">
       <div class="modal-card" (click)="$event.stopPropagation()">
         <div class="modal-header">
-          <h2>➕ Add New Category</h2>
+          <h2>Add New Category</h2>
           <button class="close-btn" (click)="closeAddModal()">✕</button>
         </div>
         <div class="modal-body">
@@ -126,13 +120,19 @@
             <input 
               type="text" 
               class="form-input" 
-              placeholder="e.g., Groceries, Transport" 
+              placeholder="e.g., Groceries, Transport, Entertainment" 
               [value]="newCategoryName()"
               (input)="newCategoryName.set($any($event.target).value)"
               [disabled]="isAdding()"
               maxlength="50"
             />
           </label>
+          @if (newCategoryName()) {
+            <div class="icon-preview">
+              <span class="preview-icon">{{ getCategoryIcon(newCategoryName()) }}</span>
+              <span class="preview-text">Icon preview for "{{ newCategoryName() }}"</span>
+            </div>
+          }
         </div>
         <div class="modal-footer">
           <button class="btn btn-secondary" (click)="closeAddModal()" [disabled]="isAdding()">
@@ -170,6 +170,12 @@
               maxlength="50"
             />
           </label>
+          @if (editingCategory()!.category_name) {
+            <div class="icon-preview">
+              <span class="preview-icon">{{ getCategoryIcon(editingCategory()!.category_name) }}</span>
+              <span class="preview-text">Icon preview for "{{ editingCategory()!.category_name }}"</span>
+            </div>
+          }
           <div class="meta-display">
             <p><strong>ID:</strong> {{ editingCategory()!.category_id }}</p>
             <p><strong>Created:</strong> {{ formatDate(editingCategory()!.created_at) }}</p>

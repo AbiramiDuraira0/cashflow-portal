@@ -1,6 +1,33 @@
 import { Component, OnInit, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { FormsModule } fr      'yoga      'water':       'str      // Financial
+         'univ      'beauty': '💄',
+      'cat      'part            // Miscellaneous    // Fallback to a more generic icon
+    return '📋';     'other': '📋',
+      'miscellaneous': '📦',rk': '💼',
+      'meeting': '📊',
+      'conference': '🎤', '🎉',
+      'event': '🎊',
+      'wedding': '💒',
+      'birthday': '🎂',🐈',
+      'veterinary': '🐾',
+      'vet': '🏥',   'cosmetic': '💄',
+      'salon': '💇',
+      'haircut': '💇',ty': '🎓',
+      'course': '📖',
+      'tuition': '💳',
+      'learning': '📝',
+      'training': '📚',nvestment': '📈',
+      'savings': '💰',
+      'salary': '💼',
+      'income': '💵',
+      'wage': '💼',': '📺',
+      'netflix': '📺',
+      'spotify': '🎵',
+      'insurance': '�️',,
+      'internet': '🌐',
+      'wifi': '📶','🧘',
+      'wellness': '💚', '@angular/forms';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { CategoryService, Category } from '../../services/category.service';
 
@@ -79,7 +106,7 @@ export class CategoryPage implements OnInit {
   protected getCategoryIcon(categoryName: string): string {
     const name = categoryName.toLowerCase();
     
-    // Enhanced map with comprehensive keywords and better icons
+    // Enhanced map with more keywords and better icons
     const iconMap: Record<string, string> = {
       // Food & Dining
       'food': '🍔',
@@ -222,8 +249,8 @@ export class CategoryPage implements OnInit {
       'pet': '🐾',
       'dog': '🐕',
       'cat': '🐈',
-      'veterinary': '�',
-      'vet': '🏥',
+      'veterinary': '🐾',
+      'vet': '�',
       
       // Social
       'gift': '🎁',
@@ -256,7 +283,7 @@ export class CategoryPage implements OnInit {
       }
     }
     
-    // Enhanced default: try to guess based on common patterns
+    // Enhanced default: try to guess based on first letter or common patterns
     if (name.match(/expense|cost|spend/)) return '💸';
     if (name.match(/save|saving/)) return '💰';
     if (name.match(/earn|revenue/)) return '💵';
