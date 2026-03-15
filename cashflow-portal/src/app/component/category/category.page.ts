@@ -11,6 +11,7 @@ import {
   Status, 
   StatusHelper,
   ErrorPopupComponent,
+  IconStorageHelper,
   type ErrorType
 } from '../../shared';
 
@@ -30,7 +31,7 @@ export class CategoryPage implements OnInit {
   protected query = signal<string>('');
   
   // Sorting & Pagination
-  protected sortColumn = signal<'category_name' | 'sub_category' | 'created_at' | 'updated_at'>('category_name');
+  protected sortColumn = signal<'category_name' | 'sub_category' | 'is_active' | 'created_at' | 'updated_at'>('category_name');
   protected sortDirection = signal<'asc' | 'desc'>('asc');
   protected currentPage = signal<number>(1);
   protected pageSize = signal<number>(10);
@@ -63,7 +64,20 @@ export class CategoryPage implements OnInit {
   protected newCategoryIcon = signal<string>('');
   protected newSubCategoryIcon = signal<string>('');
   protected editingCategory = signal<Category | null>(null);
+  protected editCategoryIcon = signal<string>('');
+  protected editSubCategoryIcon = signal<string>('');
   protected deletingCategory = signal<Category | null>(null);
+  
+  // Icon picker states
+  protected showCategoryIconPicker = signal<boolean>(false);
+  protected showSubCategoryIconPicker = signal<boolean>(false);
+  protected showEditCategoryIconPicker = signal<boolean>(false);
+  protected showEditSubCategoryIconPicker = signal<boolean>(false);
+  
+  // All available icons
+  protected filteredIcons = computed(() => {
+    return IconMapper.getAllIcons();
+  });
   
   // Operation loading states
   protected isAdding = signal<boolean>(false);
@@ -133,7 +147,7 @@ export class CategoryPage implements OnInit {
     this.currentPage.set(1); // Reset to first page when changing page size
   }
 
-  protected sortBy(column: 'category_name' | 'sub_category' | 'created_at' | 'updated_at'): void {
+  protected sortBy(column: 'category_name' | 'sub_category' | 'is_active' | 'created_at' | 'updated_at'): void {
     if (this.sortColumn() === column) {
       // Toggle direction if same column
       this.sortDirection.set(SortingHelper.toggleDirection(this.sortDirection()));
@@ -145,7 +159,7 @@ export class CategoryPage implements OnInit {
     this.currentPage.set(1); // Reset to first page on sort
   }
 
-  protected getSortIcon(column: 'category_name' | 'sub_category' | 'created_at' | 'updated_at'): string {
+  protected getSortIcon(column: 'category_name' | 'sub_category' | 'is_active' | 'created_at' | 'updated_at'): string {
     return SortingHelper.getSortIcon(column, this.sortColumn(), this.sortDirection());
   }
 
@@ -201,10 +215,77 @@ export class CategoryPage implements OnInit {
   }
 
   /**
-   * Get relevant icon for category based on name using IconMapper
+   * Get relevant icon for category based on name
+   * First checks localStorage for user-selected icon, then falls back to IconMapper
    */
   protected getCategoryIcon(categoryName: string): string {
+    // Check if user has selected a custom icon (stored in localStorage)
+    const customIcon = IconStorageHelper.getIcon(categoryName);
+    if (customIcon) {
+      return customIcon;
+    }
+    // Fall back to auto-generated icon
     return IconMapper.getIcon(categoryName);
+  }
+
+  // ============================================
+  // ICON PICKER METHODS
+  // ============================================
+
+  protected toggleCategoryIconPicker(): void {
+    this.showCategoryIconPicker.update(v => !v);
+    if (this.showCategoryIconPicker()) {
+      this.showSubCategoryIconPicker.set(false);
+      this.showEditCategoryIconPicker.set(false);
+      this.showEditSubCategoryIconPicker.set(false);
+    }
+  }
+
+  protected toggleSubCategoryIconPicker(): void {
+    this.showSubCategoryIconPicker.update(v => !v);
+    if (this.showSubCategoryIconPicker()) {
+      this.showCategoryIconPicker.set(false);
+      this.showEditCategoryIconPicker.set(false);
+      this.showEditSubCategoryIconPicker.set(false);
+    }
+  }
+
+  protected toggleEditCategoryIconPicker(): void {
+    this.showEditCategoryIconPicker.update(v => !v);
+    if (this.showEditCategoryIconPicker()) {
+      this.showCategoryIconPicker.set(false);
+      this.showSubCategoryIconPicker.set(false);
+      this.showEditSubCategoryIconPicker.set(false);
+    }
+  }
+
+  protected toggleEditSubCategoryIconPicker(): void {
+    this.showEditSubCategoryIconPicker.update(v => !v);
+    if (this.showEditSubCategoryIconPicker()) {
+      this.showCategoryIconPicker.set(false);
+      this.showSubCategoryIconPicker.set(false);
+      this.showEditCategoryIconPicker.set(false);
+    }
+  }
+
+  protected selectCategoryIcon(icon: string): void {
+    this.newCategoryIcon.set(icon);
+    this.showCategoryIconPicker.set(false);
+  }
+
+  protected selectSubCategoryIcon(icon: string): void {
+    this.newSubCategoryIcon.set(icon);
+    this.showSubCategoryIconPicker.set(false);
+  }
+
+  protected selectEditCategoryIcon(icon: string): void {
+    this.editCategoryIcon.set(icon);
+    this.showEditCategoryIconPicker.set(false);
+  }
+
+  protected selectEditSubCategoryIcon(icon: string): void {
+    this.editSubCategoryIcon.set(icon);
+    this.showEditSubCategoryIconPicker.set(false);
   }
 
   // ============================================
@@ -230,8 +311,6 @@ export class CategoryPage implements OnInit {
   protected async addCategory(): Promise<void> {
     const name = this.newCategoryName().trim();
     const subCategory = this.newSubCategoryName().trim();
-    const categoryIcon = this.newCategoryIcon().trim();
-    const subcategoryIcon = this.newSubCategoryIcon().trim();
     
     if (!name) {
       this.showError(
@@ -248,10 +327,17 @@ export class CategoryPage implements OnInit {
     try {
       await this.categoryService.addCategory(
         name, 
-        subCategory || undefined, 
-        categoryIcon || undefined, 
-        subcategoryIcon || undefined
+        subCategory || undefined
       );
+      
+      // Save custom icons to localStorage if user selected them
+      if (this.newCategoryIcon()) {
+        IconStorageHelper.saveIcon(name, this.newCategoryIcon());
+      }
+      if (subCategory && this.newSubCategoryIcon()) {
+        IconStorageHelper.saveIcon(subCategory, this.newSubCategoryIcon());
+      }
+      
       this.closeAddModal();
       console.log('✅ Category added successfully:', name, subCategory || '(no subcategory)');
     } catch (error: any) {
@@ -274,12 +360,16 @@ export class CategoryPage implements OnInit {
   
   protected openEditModal(category: Category): void {
     this.editingCategory.set({ ...category });
+    this.editCategoryIcon.set(''); // Reset to show auto-generated icon
+    this.editSubCategoryIcon.set(''); // Reset to show auto-generated icon
     this.showEditModal.set(true);
   }
 
   protected closeEditModal(): void {
     this.showEditModal.set(false);
     this.editingCategory.set(null);
+    this.editCategoryIcon.set('');
+    this.editSubCategoryIcon.set('');
   }
 
   protected async updateCategory(): Promise<void> {
@@ -288,8 +378,8 @@ export class CategoryPage implements OnInit {
 
     const name = cat.category_name.trim();
     const subCategory = cat.sub_category?.trim();
-    const categoryIcon = cat.category_icon?.trim();
-    const subcategoryIcon = cat.subcategory_icon?.trim();
+    const oldName = this.categories().find(c => c.category_id === cat.category_id)?.category_name;
+    const oldSubCategory = this.categories().find(c => c.category_id === cat.category_id)?.sub_category;
     
     if (!name) {
       this.showError(
@@ -307,10 +397,28 @@ export class CategoryPage implements OnInit {
       await this.categoryService.updateCategory(
         cat.category_id, 
         name, 
-        subCategory || undefined, 
-        categoryIcon || undefined, 
-        subcategoryIcon || undefined
+        subCategory || undefined
       );
+      
+      // Handle icon storage updates
+      // If category name changed, update the icon key in localStorage
+      if (oldName && oldName !== name) {
+        IconStorageHelper.updateCategoryName(oldName, name);
+      }
+      if (oldSubCategory && oldSubCategory !== subCategory) {
+        if (oldSubCategory) {
+          IconStorageHelper.removeIcon(oldSubCategory);
+        }
+      }
+      
+      // Save new custom icons if user selected them
+      if (this.editCategoryIcon()) {
+        IconStorageHelper.saveIcon(name, this.editCategoryIcon());
+      }
+      if (subCategory && this.editSubCategoryIcon()) {
+        IconStorageHelper.saveIcon(subCategory, this.editSubCategoryIcon());
+      }
+      
       this.closeEditModal();
       console.log('✅ Category updated successfully:', name, subCategory || '(no subcategory)');
     } catch (error: any) {
@@ -338,20 +446,6 @@ export class CategoryPage implements OnInit {
     const cat = this.editingCategory();
     if (cat) {
       this.editingCategory.set({ ...cat, sub_category: value });
-    }
-  }
-
-  protected onEditCategoryIconChange(value: string): void {
-    const cat = this.editingCategory();
-    if (cat) {
-      this.editingCategory.set({ ...cat, category_icon: value });
-    }
-  }
-
-  protected onEditSubCategoryIconChange(value: string): void {
-    const cat = this.editingCategory();
-    if (cat) {
-      this.editingCategory.set({ ...cat, subcategory_icon: value });
     }
   }
 

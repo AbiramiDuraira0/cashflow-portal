@@ -230,4 +230,175 @@ export class IconMapper {
     
     return CategoryIcon.DEFAULT;
   }
+
+  /**
+   * Get all available icons with their categories
+   */
+  static getAllIcons(): Array<{ category: string; icon: string; keywords: string[] }> {
+    return [
+      // Food & Dining
+      { category: 'Food & Dining', icon: '🍔', keywords: ['food', 'burger', 'meal'] },
+      { category: 'Food & Dining', icon: '🛒', keywords: ['groceries', 'shopping', 'cart'] },
+      { category: 'Food & Dining', icon: '🍽️', keywords: ['restaurant', 'dining', 'plate'] },
+      { category: 'Food & Dining', icon: '☕', keywords: ['coffee', 'cafe', 'tea'] },
+      { category: 'Food & Dining', icon: '🥤', keywords: ['drinks', 'beverage', 'juice'] },
+      
+      // Transportation
+      { category: 'Transportation', icon: '🚗', keywords: ['car', 'transport', 'vehicle'] },
+      { category: 'Transportation', icon: '✈️', keywords: ['travel', 'flight', 'airplane'] },
+      { category: 'Transportation', icon: '⛽', keywords: ['fuel', 'gas', 'petrol'] },
+      { category: 'Transportation', icon: '🅿️', keywords: ['parking', 'park'] },
+      { category: 'Transportation', icon: '🚕', keywords: ['taxi', 'cab', 'uber'] },
+      { category: 'Transportation', icon: '🚌', keywords: ['bus', 'public transport'] },
+      { category: 'Transportation', icon: '🚆', keywords: ['train', 'railway', 'metro'] },
+      
+      // Entertainment
+      { category: 'Entertainment', icon: '🎬', keywords: ['movie', 'cinema', 'film'] },
+      { category: 'Entertainment', icon: '🎵', keywords: ['music', 'song', 'audio'] },
+      { category: 'Entertainment', icon: '🎮', keywords: ['games', 'gaming', 'video games'] },
+      { category: 'Entertainment', icon: '⚽', keywords: ['sports', 'football', 'soccer'] },
+      { category: 'Entertainment', icon: '🎉', keywords: ['party', 'celebration', 'event'] },
+      
+      // Shopping
+      { category: 'Shopping', icon: '🛍️', keywords: ['shopping', 'bags', 'retail'] },
+      { category: 'Shopping', icon: '👕', keywords: ['clothing', 'clothes', 'apparel'] },
+      { category: 'Shopping', icon: '💻', keywords: ['electronics', 'computer', 'laptop'] },
+      { category: 'Shopping', icon: '📱', keywords: ['gadget', 'phone', 'mobile'] },
+      
+      // Health & Wellness
+      { category: 'Health & Wellness', icon: '🏥', keywords: ['health', 'hospital', 'medical'] },
+      { category: 'Health & Wellness', icon: '💊', keywords: ['medicine', 'pharmacy', 'pills'] },
+      { category: 'Health & Wellness', icon: '💪', keywords: ['gym', 'workout', 'strength'] },
+      { category: 'Health & Wellness', icon: '🏃', keywords: ['fitness', 'running', 'exercise'] },
+      
+      // Home & Utilities
+      { category: 'Home & Utilities', icon: '🏠', keywords: ['rent', 'home', 'house'] },
+      { category: 'Home & Utilities', icon: '💡', keywords: ['utilities', 'light', 'bulb'] },
+      { category: 'Home & Utilities', icon: '⚡', keywords: ['electricity', 'power', 'energy'] },
+      { category: 'Home & Utilities', icon: '💧', keywords: ['water', 'liquid'] },
+      { category: 'Home & Utilities', icon: '📡', keywords: ['internet', 'wifi', 'network'] },
+      
+      // Education
+      { category: 'Education', icon: '📚', keywords: ['education', 'books', 'learning'] },
+      { category: 'Education', icon: '🎓', keywords: ['school', 'graduation', 'university'] },
+      { category: 'Education', icon: '📖', keywords: ['book', 'reading', 'study'] },
+      { category: 'Education', icon: '📝', keywords: ['courses', 'notes', 'writing'] },
+      
+      // Finance
+      { category: 'Finance', icon: '💼', keywords: ['salary', 'work', 'job', 'briefcase'] },
+      { category: 'Finance', icon: '💰', keywords: ['income', 'money', 'savings'] },
+      { category: 'Finance', icon: '📈', keywords: ['investment', 'stocks', 'growth'] },
+      { category: 'Finance', icon: '🏦', keywords: ['bank', 'banking', 'financial'] },
+      { category: 'Finance', icon: '💸', keywords: ['expense', 'spending', 'payment'] },
+      { category: 'Finance', icon: '💵', keywords: ['cash', 'dollar', 'currency'] },
+      
+      // Personal Care
+      { category: 'Personal Care', icon: '👤', keywords: ['personal', 'user', 'profile'] },
+      { category: 'Personal Care', icon: '💄', keywords: ['beauty', 'makeup', 'cosmetics'] },
+      { category: 'Personal Care', icon: '🧴', keywords: ['hygiene', 'toiletries', 'care'] },
+      { category: 'Personal Care', icon: '💇', keywords: ['haircut', 'salon', 'hair'] },
+      
+      // Family & Kids
+      { category: 'Family & Kids', icon: '👨‍👩‍👧‍👦', keywords: ['family', 'parents', 'relatives'] },
+      { category: 'Family & Kids', icon: '👶', keywords: ['baby', 'infant', 'child'] },
+      { category: 'Family & Kids', icon: '🧸', keywords: ['toys', 'play', 'kids'] },
+      
+      // Pets
+      { category: 'Pets', icon: '🐾', keywords: ['pet', 'animal', 'paw'] },
+      { category: 'Pets', icon: '🐕', keywords: ['dog', 'puppy', 'canine'] },
+      { category: 'Pets', icon: '🐈', keywords: ['cat', 'kitten', 'feline'] },
+      
+      // Social & Gifts
+      { category: 'Social & Gifts', icon: '🎁', keywords: ['gift', 'present', 'surprise'] },
+      { category: 'Social & Gifts', icon: '🤝', keywords: ['charity', 'donation', 'help'] },
+      
+      // Insurance & Bills
+      { category: 'Insurance & Bills', icon: '🛡️', keywords: ['insurance', 'protection', 'coverage'] },
+      { category: 'Insurance & Bills', icon: '⚕️', keywords: ['health insurance', 'medical insurance'] },
+      { category: 'Insurance & Bills', icon: '📄', keywords: ['bills', 'invoice', 'payment'] },
+      { category: 'Insurance & Bills', icon: '📱', keywords: ['subscription', 'service', 'monthly'] },
+      
+      // Shopping & Fashion
+      { category: 'Shopping & Fashion', icon: '🛍️', keywords: ['shopping', 'bags', 'purchase', 'buy', 'store'] },
+      { category: 'Shopping & Fashion', icon: '👗', keywords: ['dress', 'clothing', 'fashion', 'womens wear', 'girls'] },
+      { category: 'Shopping & Fashion', icon: '👠', keywords: ['heels', 'shoes', 'high heels', 'footwear', 'ladies'] },
+      { category: 'Shopping & Fashion', icon: '👜', keywords: ['handbag', 'purse', 'bag', 'accessories', 'ladies bag'] },
+      { category: 'Shopping & Fashion', icon: '💄', keywords: ['lipstick', 'makeup', 'cosmetics', 'beauty', 'girls'] },
+      { category: 'Shopping & Fashion', icon: '👑', keywords: ['crown', 'jewelry', 'accessories', 'princess', 'luxury'] },
+      { category: 'Shopping & Fashion', icon: '💍', keywords: ['ring', 'jewelry', 'engagement', 'wedding', 'accessories'] },
+      { category: 'Shopping & Fashion', icon: '💅', keywords: ['nail polish', 'manicure', 'nails', 'beauty', 'salon'] },
+      { category: 'Shopping & Fashion', icon: '👚', keywords: ['shirt', 'top', 'blouse', 'clothing', 'womens wear'] },
+      { category: 'Shopping & Fashion', icon: '👖', keywords: ['jeans', 'pants', 'trousers', 'clothing', 'denim'] },
+      { category: 'Shopping & Fashion', icon: '🧥', keywords: ['coat', 'jacket', 'outerwear', 'clothing', 'winter'] },
+      { category: 'Shopping & Fashion', icon: '👒', keywords: ['hat', 'sunhat', 'accessories', 'summer', 'fashion'] },
+      { category: 'Shopping & Fashion', icon: '🕶️', keywords: ['sunglasses', 'shades', 'accessories', 'fashion', 'eyewear'] },
+      { category: 'Shopping & Fashion', icon: '🎀', keywords: ['ribbon', 'bow', 'gift', 'decoration', 'accessories'] },
+      { category: 'Shopping & Fashion', icon: '👘', keywords: ['kimono', 'robe', 'clothing', 'traditional', 'fashion'] },
+      { category: 'Shopping & Fashion', icon: '💎', keywords: ['diamond', 'gem', 'jewelry', 'luxury', 'precious'] },
+      
+      // People & Girls
+      { category: 'People & Girls', icon: '👧', keywords: ['girl', 'child', 'daughter', 'young girl', 'kid'] },
+      { category: 'People & Girls', icon: '👩', keywords: ['woman', 'lady', 'female', 'adult', 'person'] },
+      { category: 'People & Girls', icon: '🙋‍♀️', keywords: ['woman raising hand', 'girl', 'female', 'question', 'help'] },
+      { category: 'People & Girls', icon: '💁‍♀️', keywords: ['woman tipping hand', 'information', 'help', 'service', 'assistance'] },
+      { category: 'People & Girls', icon: '🙆‍♀️', keywords: ['woman gesturing ok', 'yes', 'approval', 'agree', 'success'] },
+      
+      // Other - Generic Icons
+      { category: 'Other', icon: '📦', keywords: ['other', 'misc', 'default', 'box', 'package'] },
+      { category: 'Letters', icon: 'A', keywords: ['letter a', 'alphabet', 'text', 'character', 'a'] },
+      { category: 'Letters', icon: 'B', keywords: ['letter b', 'alphabet', 'text', 'character', 'b'] },
+      { category: 'Letters', icon: 'C', keywords: ['letter c', 'alphabet', 'text', 'character', 'c'] },
+      { category: 'Letters', icon: 'D', keywords: ['letter d', 'alphabet', 'text', 'character', 'd'] },
+      { category: 'Letters', icon: 'E', keywords: ['letter e', 'alphabet', 'text', 'character', 'e'] },
+      { category: 'Shipping & Delivery', icon: '📦', keywords: ['package', 'box', 'parcel', 'delivery', 'shipping'] },
+      { category: 'Shipping & Delivery', icon: '📮', keywords: ['postbox', 'mail', 'postal', 'mailbox'] },
+      { category: 'Shipping & Delivery', icon: '📫', keywords: ['mailbox', 'mail', 'letterbox', 'postal'] },
+      { category: 'Shipping & Delivery', icon: '🚚', keywords: ['truck', 'delivery', 'shipping', 'transport', 'logistics'] },
+      { category: 'Shipping & Delivery', icon: '🚛', keywords: ['lorry', 'truck', 'cargo', 'freight', 'transport'] },
+      { category: 'Shipping & Delivery', icon: '📬', keywords: ['mailbox', 'mail', 'letterbox', 'open mailbox'] },
+      { category: 'Shipping & Delivery', icon: '📭', keywords: ['mailbox', 'empty', 'no mail', 'letterbox'] },
+      { category: 'Shipping & Delivery', icon: '✉️', keywords: ['envelope', 'letter', 'mail', 'message'] },
+      { category: 'Other', icon: '⭐', keywords: ['star', 'favorite', 'important', 'featured'] },
+      { category: 'Other', icon: '❤️', keywords: ['love', 'heart', 'like', 'favorite'] },
+      { category: 'Other', icon: '✅', keywords: ['check', 'done', 'complete', 'success'] },
+      { category: 'Other', icon: '🔔', keywords: ['notification', 'bell', 'alert', 'reminder'] },
+      { category: 'Other', icon: '📌', keywords: ['pin', 'important', 'mark', 'note'] },
+      { category: 'Other', icon: '🔑', keywords: ['key', 'password', 'security', 'access'] },
+      { category: 'Other', icon: '⚙️', keywords: ['settings', 'gear', 'config', 'options'] },
+      { category: 'Other', icon: '🎯', keywords: ['target', 'goal', 'objective', 'aim'] },
+      { category: 'Other', icon: '💡', keywords: ['idea', 'light', 'creative', 'solution'] },
+      { category: 'Other', icon: '🔥', keywords: ['fire', 'hot', 'trending', 'important'] },
+      { category: 'Other', icon: '⚡', keywords: ['fast', 'quick', 'energy', 'power'] },
+      { category: 'Other', icon: '🌟', keywords: ['shine', 'special', 'highlight', 'premium'] },
+      { category: 'Other', icon: '📊', keywords: ['chart', 'graph', 'analytics', 'data'] },
+      { category: 'Other', icon: '📅', keywords: ['calendar', 'date', 'schedule', 'event'] },
+      { category: 'Other', icon: '🔒', keywords: ['lock', 'secure', 'private', 'protected'] },
+      { category: 'Other', icon: '🏆', keywords: ['trophy', 'award', 'achievement', 'winner'] },
+      { category: 'Other', icon: '🎨', keywords: ['art', 'creative', 'design', 'paint'] },
+      { category: 'Other', icon: '📷', keywords: ['camera', 'photo', 'picture', 'image'] },
+      { category: 'Other', icon: '🌍', keywords: ['world', 'global', 'earth', 'international'] },
+      { category: 'Other', icon: '⏰', keywords: ['time', 'clock', 'alarm', 'schedule'] },
+      { category: 'Other', icon: '💬', keywords: ['message', 'chat', 'comment', 'talk'] },
+      { category: 'Other', icon: '📧', keywords: ['email', 'mail', 'message', 'contact'] },
+      { category: 'Other', icon: '🎵', keywords: ['audio', 'sound', 'music note', 'media'] },
+      { category: 'Other', icon: '🔗', keywords: ['link', 'chain', 'connection', 'url'] },
+      { category: 'Other', icon: '🧿', keywords: ['evil eye', 'protection', 'nazar', 'amulet', 'charm'] }
+    ];
+  }
+
+  /**
+   * Search icons by keyword
+   */
+  static searchIcons(query: string): Array<{ category: string; icon: string; keywords: string[] }> {
+    if (!query || query.trim() === '') {
+      return this.getAllIcons();
+    }
+    
+    const normalized = query.trim().toLowerCase();
+    return this.getAllIcons().filter(item => 
+      item.keywords.some(keyword => keyword.includes(normalized)) ||
+      item.category.toLowerCase().includes(normalized)
+    );
+  }
 }
+

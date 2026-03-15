@@ -7,6 +7,7 @@
 export * from './helpers/pagination.helper';
 export * from './helpers/sorting.helper';
 export * from './helpers/table-config.helper';
+export * from './helpers/icon-storage.helper';
 
 // Enums
 export * from './enums/icon.enum';
