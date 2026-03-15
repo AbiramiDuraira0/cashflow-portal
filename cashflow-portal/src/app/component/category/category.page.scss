@@ -631,12 +631,14 @@
 
 .col-status {
   width: 120px;
-  text-align: center;
+  text-align: left;
+  padding-left: 16px !important;
 }
 
 .col-date {
   width: 110px;
-  text-align: center;
+  text-align: left;
+  padding-left: 16px !important;
 }
 
 .col-date .date-value {
@@ -647,13 +649,14 @@
 
 .col-actions {
   width: 110px;
-  text-align: center;
+  text-align: left;
+  padding-left: 16px !important;
 }
 
 .action-buttons {
   display: flex;
   gap: 8px;
-  justify-content: center;
+  justify-content: flex-start;
   align-items: center;
 }
 

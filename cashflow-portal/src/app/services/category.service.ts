@@ -4,7 +4,9 @@ import { SupabaseService } from './supabase.service';
 export type Category = {
   category_id: number;
   category_name: string;
+  category_icon?: string | null;
   sub_category?: string | null;
+  subcategory_icon?: string | null;
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -91,7 +93,9 @@ export class CategoryService {
    */
   async addCategory(
     name: string, 
-    subCategory?: string
+    categoryIcon?: string,
+    subCategory?: string,
+    subcategoryIcon?: string
   ): Promise<Category> {
     try {
       console.log('➕ Adding new category:', name, subCategory || '(no subcategory)');
@@ -100,7 +104,9 @@ export class CategoryService {
         .from('category')
         .insert([{
           category_name: name,
+          category_icon: categoryIcon || null,
           sub_category: subCategory || null,
+          subcategory_icon: subcategoryIcon || null,
           is_active: true
         }])
         .select()
@@ -128,7 +134,9 @@ export class CategoryService {
   async updateCategory(
     id: number, 
     name: string, 
-    subCategory?: string
+    categoryIcon?: string,
+    subCategory?: string,
+    subcategoryIcon?: string
   ): Promise<Category> {
     try {
       console.log('✏️ Updating category:', id, name, subCategory || '(no subcategory)');
@@ -137,7 +145,9 @@ export class CategoryService {
         .from('category')
         .update({ 
           category_name: name,
+          category_icon: categoryIcon || null,
           sub_category: subCategory || null,
+          subcategory_icon: subcategoryIcon || null,
           updated_at: new Date().toISOString()
         })
         .eq('category_id', id)
@@ -241,5 +251,81 @@ export class CategoryService {
     return this.categories().filter(cat => 
       cat.category_name.toLowerCase().includes(lowerQuery)
     );
+  }
+
+  /**
+   * Update icon for ALL categories with matching category_name
+   * This ensures consistency - one category name = one icon across all records
+   */
+  async updateCategoryIconByName(categoryName: string, icon: string): Promise<void> {
+    try {
+      console.log('🎨 Updating icon for all categories named:', categoryName, '→', icon);
+      
+      const { data, error } = await this.supabase.db
+        .from('category')
+        .update({ 
+          category_icon: icon,
+          updated_at: new Date().toISOString()
+        })
+        .eq('category_name', categoryName)
+        .select();
+
+      if (error) {
+        console.error('❌ Error updating category icons:', error);
+        throw error;
+      }
+
+      // Update local signal - replace all matching categories
+      const updated = this.categories().map(cat => {
+        if (cat.category_name === categoryName) {
+          return { ...cat, category_icon: icon, updated_at: new Date().toISOString() };
+        }
+        return cat;
+      });
+      this.categories.set(updated);
+      
+      console.log(`✅ Updated ${data?.length || 0} categories with name "${categoryName}"`);
+    } catch (err: any) {
+      console.error('❌ Update category icon error:', err);
+      throw err;
+    }
+  }
+
+  /**
+   * Update icon for ALL subcategories with matching sub_category name
+   * This ensures consistency - one subcategory name = one icon across all records
+   */
+  async updateSubcategoryIconByName(subcategoryName: string, icon: string): Promise<void> {
+    try {
+      console.log('🎨 Updating icon for all subcategories named:', subcategoryName, '→', icon);
+      
+      const { data, error } = await this.supabase.db
+        .from('category')
+        .update({ 
+          subcategory_icon: icon,
+          updated_at: new Date().toISOString()
+        })
+        .eq('sub_category', subcategoryName)
+        .select();
+
+      if (error) {
+        console.error('❌ Error updating subcategory icons:', error);
+        throw error;
+      }
+
+      // Update local signal - replace all matching subcategories
+      const updated = this.categories().map(cat => {
+        if (cat.sub_category === subcategoryName) {
+          return { ...cat, subcategory_icon: icon, updated_at: new Date().toISOString() };
+        }
+        return cat;
+      });
+      this.categories.set(updated);
+      
+      console.log(`✅ Updated ${data?.length || 0} subcategories with name "${subcategoryName}"`);
+    } catch (err: any) {
+      console.error('❌ Update subcategory icon error:', err);
+      throw err;
+    }
   }
 }

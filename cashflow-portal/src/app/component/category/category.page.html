@@ -73,7 +73,7 @@
             @for (cat of paginated(); track cat.category_id) {
               <tr class="table-row">
                 <td class="col-icon">
-                  <span class="category-icon">{{ getCategoryIcon(cat.category_name) }}</span>
+                  <span class="category-icon">{{ getCategoryIcon(cat.category_name, cat.category_icon) }}</span>
                 </td>
                 <td class="col-name">
                   <span class="category-name">{{ cat.category_name }}</span>
@@ -81,7 +81,7 @@
                 <td class="col-subcategory">
                   @if (cat.sub_category) {
                     <span class="subcategory-wrapper">
-                      <span class="subcategory-icon">{{ getCategoryIcon(cat.sub_category) }}</span>
+                      <span class="subcategory-icon">{{ getCategoryIcon(cat.sub_category, cat.subcategory_icon) }}</span>
                       <span class="subcategory-name">{{ cat.sub_category }}</span>
                     </span>
                   } @else {
@@ -362,7 +362,7 @@
                   (click)="toggleEditCategoryIconPicker()"
                   [disabled]="isEditing()"
                   title="Click to select icon">
-                  {{ editCategoryIcon() || getCategoryIcon(editingCategory()!.category_name) }}
+                  {{ editCategoryIcon() || getCategoryIcon(editingCategory()!.category_name, editingCategory()!.category_icon) }}
                 </button>
                 @if (showEditCategoryIconPicker()) {
                   <div class="icon-picker-dropdown">
@@ -406,7 +406,7 @@
                     (click)="toggleEditSubCategoryIconPicker()"
                     [disabled]="isEditing()"
                     title="Click to select icon">
-                    {{ editSubCategoryIcon() || getCategoryIcon(editingCategory()!.sub_category!) }}
+                    {{ editSubCategoryIcon() || getCategoryIcon(editingCategory()!.sub_category!, editingCategory()!.subcategory_icon) }}
                   </button>
                   @if (showEditSubCategoryIconPicker()) {
                     <div class="icon-picker-dropdown">

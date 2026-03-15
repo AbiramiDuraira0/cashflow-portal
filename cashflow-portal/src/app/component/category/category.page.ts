@@ -215,11 +215,15 @@ export class CategoryPage implements OnInit {
   }
 
   /**
-   * Get relevant icon for category based on name
-   * First checks localStorage for user-selected icon, then falls back to IconMapper
+   * Get relevant icon for category based on name or database value
+   * Priority: 1) Database icon, 2) localStorage, 3) IconMapper auto-generation
    */
-  protected getCategoryIcon(categoryName: string): string {
-    // Check if user has selected a custom icon (stored in localStorage)
+  protected getCategoryIcon(categoryName: string, dbIcon?: string | null): string {
+    // First check database icon
+    if (dbIcon) {
+      return dbIcon;
+    }
+    // Then check if user has selected a custom icon (stored in localStorage)
     const customIcon = IconStorageHelper.getIcon(categoryName);
     if (customIcon) {
       return customIcon;
@@ -311,6 +315,8 @@ export class CategoryPage implements OnInit {
   protected async addCategory(): Promise<void> {
     const name = this.newCategoryName().trim();
     const subCategory = this.newSubCategoryName().trim();
+    const categoryIcon = this.newCategoryIcon() || IconMapper.getIcon(name);
+    const subcategoryIcon = subCategory ? (this.newSubCategoryIcon() || IconMapper.getIcon(subCategory)) : undefined;
     
     if (!name) {
       this.showError(
@@ -325,21 +331,24 @@ export class CategoryPage implements OnInit {
     this.isAdding.set(true);
     
     try {
+      // Add the category with icons
       await this.categoryService.addCategory(
-        name, 
-        subCategory || undefined
+        name,
+        categoryIcon,
+        subCategory || undefined,
+        subcategoryIcon
       );
       
-      // Save custom icons to localStorage if user selected them
-      if (this.newCategoryIcon()) {
-        IconStorageHelper.saveIcon(name, this.newCategoryIcon());
-      }
-      if (subCategory && this.newSubCategoryIcon()) {
-        IconStorageHelper.saveIcon(subCategory, this.newSubCategoryIcon());
+      // Update ALL existing records with the same category name to have the same icon
+      await this.categoryService.updateCategoryIconByName(name, categoryIcon);
+      
+      // Update ALL existing records with the same subcategory name to have the same icon
+      if (subCategory && subcategoryIcon) {
+        await this.categoryService.updateSubcategoryIconByName(subCategory, subcategoryIcon);
       }
       
       this.closeAddModal();
-      console.log('✅ Category added successfully:', name, subCategory || '(no subcategory)');
+      console.log('✅ Category added successfully with consistent icons across all records');
     } catch (error: any) {
       ErrorHandler.logError('Add Category', error);
       const errorResult = ErrorHandler.handleDatabaseError(error, 'add');
@@ -394,33 +403,30 @@ export class CategoryPage implements OnInit {
     this.isEditing.set(true);
     
     try {
+      const categoryIcon = this.editCategoryIcon() || cat.category_icon || IconMapper.getIcon(name);
+      const subcategoryIcon = subCategory ? (this.editSubCategoryIcon() || cat.subcategory_icon || IconMapper.getIcon(subCategory)) : undefined;
+      
+      // First update this specific record
       await this.categoryService.updateCategory(
         cat.category_id, 
-        name, 
-        subCategory || undefined
+        name,
+        categoryIcon,
+        subCategory || undefined,
+        subcategoryIcon
       );
       
-      // Handle icon storage updates
-      // If category name changed, update the icon key in localStorage
-      if (oldName && oldName !== name) {
-        IconStorageHelper.updateCategoryName(oldName, name);
-      }
-      if (oldSubCategory && oldSubCategory !== subCategory) {
-        if (oldSubCategory) {
-          IconStorageHelper.removeIcon(oldSubCategory);
-        }
+      // Then update ALL records with the same category name to have consistent icons
+      if (categoryIcon && (this.editCategoryIcon() || oldName !== name)) {
+        await this.categoryService.updateCategoryIconByName(name, categoryIcon);
       }
       
-      // Save new custom icons if user selected them
-      if (this.editCategoryIcon()) {
-        IconStorageHelper.saveIcon(name, this.editCategoryIcon());
-      }
-      if (subCategory && this.editSubCategoryIcon()) {
-        IconStorageHelper.saveIcon(subCategory, this.editSubCategoryIcon());
+      // Update ALL records with the same subcategory name to have consistent icons
+      if (subCategory && subcategoryIcon && (this.editSubCategoryIcon() || oldSubCategory !== subCategory)) {
+        await this.categoryService.updateSubcategoryIconByName(subCategory, subcategoryIcon);
       }
       
       this.closeEditModal();
-      console.log('✅ Category updated successfully:', name, subCategory || '(no subcategory)');
+      console.log('✅ Category and all matching records updated successfully with consistent icons');
     } catch (error: any) {
       ErrorHandler.logError('Update Category', error);
       const errorResult = ErrorHandler.handleDatabaseError(error, 'update');
