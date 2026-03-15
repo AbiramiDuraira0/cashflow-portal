@@ -3,12 +3,19 @@
     <div class="welcome">
       <p class="subtitle">Welcome back! Here's your financial overview</p>
     </div>
-    <div class="date-info">
+    <div class="header-actions">
       <span class="current-date">{{ 'March 9, 2026' }}</span>
+      <button 
+        class="test-connection-icon" 
+        (click)="testConnection()"
+        [matTooltip]="'Test Database Connection'"
+        matTooltipPosition="below">
+        🔌
+      </button>
     </div>
   </header>
 
-  @if (loading) {
+  @if (loading()) {
     <div class="widget-grid" aria-hidden="true">
       @for (item of [1,2,3,4,5,6]; track item) {
         <div class="widget skeleton"></div>
@@ -119,6 +126,27 @@
           <span class="action-icon">📊</span>
           <span class="action-text">View Reports</span>
         </button>
+      </div>
+    </div>
+  }
+
+  <!-- Test Connection Popup -->
+  @if (showTestPopup()) {
+    <div class="popup-overlay" (click)="closeTestPopup()">
+      <div class="popup-card" (click)="$event.stopPropagation()">
+        <div class="popup-header">
+          <span class="popup-icon">{{ testResult()?.success ? '✅' : '❌' }}</span>
+          <h3>{{ testResult()?.success ? 'Connection Successful' : 'Connection Failed' }}</h3>
+          <button class="close-btn" (click)="closeTestPopup()">✕</button>
+        </div>
+        <div class="popup-body">
+          <div class="connection-result" [class.success]="testResult()?.success" [class.error]="!testResult()?.success">
+            <p>{{ testResult()?.message }}</p>
+          </div>
+        </div>
+        <div class="popup-footer">
+          <button class="btn btn-primary" (click)="closeTestPopup()">Close</button>
+        </div>
       </div>
     </div>
   }

@@ -1,6 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { ConnectionTestService } from '../../services/connection-test.service';
 
 type Widget = {
   id: string;
@@ -24,14 +26,21 @@ type RecentTransaction = {
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, MatTooltipModule],
   templateUrl: './home.page.html',
   styleUrls: ['./home.page.scss']
 })
 export class HomePage implements OnInit {
-  loading = true;
+  private connectionTest = inject(ConnectionTestService);
+  
+  // Set loading to false immediately since data is pre-initialized
+  loading = signal(false);
+  
+  // Test connection state
+  protected showTestPopup = signal<boolean>(false);
+  protected testResult = signal<{ success: boolean; message: string; } | null>(null);
 
-  // Dashboard widgets
+  // Dashboard widgets - Pre-initialized for instant display
   widgets: Widget[] = [
     {
       id: '1',
@@ -112,10 +121,11 @@ export class HomePage implements OnInit {
   ];
 
   ngOnInit(): void {
-    // Simulate data loading
-    setTimeout(() => {
-      this.loading = false;
-    }, 800);
+    // Data is pre-initialized, no loading delay needed
+    // When you integrate real API calls, use:
+    // this.loading.set(true);
+    // await this.fetchData();
+    // this.loading.set(false);
   }
 
   getPercentage(spent: number, budget: number): number {
@@ -132,5 +142,29 @@ export class HomePage implements OnInit {
     if (days < 7) return `${days} days ago`;
     
     return date.toLocaleDateString('en-IN', { month: 'short', day: 'numeric' });
+  }
+
+  // ============================================
+  // TEST DATABASE CONNECTION
+  // ============================================
+  
+  protected async testConnection(): Promise<void> {
+    console.log('🔌 Testing database connection...');
+    const result = await this.connectionTest.testConnection();
+    
+    this.testResult.set({
+      success: result.success,
+      message: result.message
+    });
+    this.showTestPopup.set(true);
+    
+    // Auto-hide after 5 seconds
+    setTimeout(() => {
+      this.showTestPopup.set(false);
+    }, 5000);
+  }
+
+  protected closeTestPopup(): void {
+    this.showTestPopup.set(false);
   }
 }

@@ -1,0 +1,56 @@
+<!-- Error Popup Modal -->
+<div 
+  *ngIf="isOpen()" 
+  class="error-popup-backdrop" 
+  (click)="onBackdropClick($event)"
+  (keydown)="onKeyDown($event)"
+  tabindex="-1"
+  role="dialog"
+  aria-modal="true"
+  [attr.aria-labelledby]="'error-popup-title'"
+>
+  <div [class]="modalClass()">
+    <!-- Header -->
+    <div class="error-popup-header">
+      <div class="error-popup-icon">
+        {{ icon() }}
+      </div>
+      <h3 id="error-popup-title" class="error-popup-title">
+        {{ title() }}
+      </h3>
+      <button 
+        class="error-popup-close" 
+        (click)="close()"
+        aria-label="Close"
+      >
+        ×
+      </button>
+    </div>
+    
+    <!-- Body -->
+    <div class="error-popup-body">
+      <p class="error-popup-message">
+        {{ message() }}
+      </p>
+      
+      <!-- Details (expandable) -->
+      <div *ngIf="details() && showDetails()" class="error-popup-details">
+        <details>
+          <summary>Technical Details</summary>
+          <pre>{{ details() }}</pre>
+        </details>
+      </div>
+    </div>
+    
+    <!-- Footer -->
+    <div class="error-popup-footer">
+      <button 
+        class="error-popup-btn error-popup-btn-primary" 
+        (click)="close()"
+        autofocus
+      >
+        OK
+      </button>
+    </div>
+  </div>
+</div>

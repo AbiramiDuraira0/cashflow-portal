@@ -1,0 +1,404 @@
+import { Component, OnInit, signal, computed, inject } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } fr      'yoga      'water':       'str      // Financial
+         'univ      'beauty': '💄',
+      'cat      'part            // Miscellaneous    // Fallback to a more generic icon
+    return '📋';     'other': '📋',
+      'miscellaneous': '📦',rk': '💼',
+      'meeting': '📊',
+      'conference': '🎤', '🎉',
+      'event': '🎊',
+      'wedding': '💒',
+      'birthday': '🎂',🐈',
+      'veterinary': '🐾',
+      'vet': '🏥',   'cosmetic': '💄',
+      'salon': '💇',
+      'haircut': '💇',ty': '🎓',
+      'course': '📖',
+      'tuition': '💳',
+      'learning': '📝',
+      'training': '📚',nvestment': '📈',
+      'savings': '💰',
+      'salary': '💼',
+      'income': '💵',
+      'wage': '💼',': '📺',
+      'netflix': '📺',
+      'spotify': '🎵',
+      'insurance': '�️',,
+      'internet': '🌐',
+      'wifi': '📶','🧘',
+      'wellness': '💚', '@angular/forms';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { CategoryService, Category } from '../../services/category.service';
+
+@Component({
+  selector: 'app-category',
+  standalone: true,
+  imports: [CommonModule, FormsModule, MatTooltipModule],
+  templateUrl: './category.page.html',
+  styleUrls: ['./category.page.scss']
+})
+export class CategoryPage implements OnInit {
+  private categoryService = inject(CategoryService);
+  
+  // Reactive signals
+  protected categories = this.categoryService.getCategoriesSignal();
+  protected loading = this.categoryService.getLoadingSignal();
+  protected query = signal<string>('');
+  
+  // Modal states
+  protected showAddModal = signal<boolean>(false);
+  protected showEditModal = signal<boolean>(false);
+  protected showDeleteModal = signal<boolean>(false);
+  
+  // Form data
+  protected newCategoryName = signal<string>('');
+  protected editingCategory = signal<Category | null>(null);
+  protected deletingCategory = signal<Category | null>(null);
+  
+  // Operation loading states
+  protected isAdding = signal<boolean>(false);
+  protected isEditing = signal<boolean>(false);
+  protected isDeleting = signal<boolean>(false);
+
+  // Computed filtered categories
+  protected filtered = computed(() => {
+    const searchQuery = this.query().trim().toLowerCase();
+    const allCategories = this.categories();
+    
+    if (!searchQuery) return allCategories;
+    
+    return allCategories.filter(cat => 
+      cat.category_name.toLowerCase().includes(searchQuery)
+    );
+  });
+
+  protected skeletons = Array.from({ length: 6 });
+
+  async ngOnInit(): Promise<void> {
+    await this.loadCategories();
+  }
+
+  private async loadCategories(): Promise<void> {
+    try {
+      await this.categoryService.loadCategories();
+    } catch (error) {
+      console.error('Failed to load categories:', error);
+    }
+  }
+
+  protected onSearchChange(value: string): void {
+    this.query.set(value);
+  }
+
+  protected formatDate(dateStr: string): string {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('en-IN', { 
+      year: 'numeric', 
+      month: 'short', 
+      day: 'numeric' 
+    });
+  }
+
+  /**
+   * Get relevant icon for category based on name
+   */
+  protected getCategoryIcon(categoryName: string): string {
+    const name = categoryName.toLowerCase();
+    
+    // Enhanced map with more keywords and better icons
+    const iconMap: Record<string, string> = {
+      // Food & Dining
+      'food': '🍔',
+      'groceries': '🛒',
+      'grocery': '🛒',
+      'supermarket': '🛒',
+      'restaurant': '🍽️',
+      'dining': '🍽️',
+      'cafe': '☕',
+      'coffee': '☕',
+      'breakfast': '🍳',
+      'lunch': '🍱',
+      'dinner': '🍽️',
+      'snack': '🍿',
+      'drink': '🥤',
+      'beverage': '🥤',
+      
+      // Transportation
+      'transport': '🚗',
+      'transportation': '🚗',
+      'travel': '✈️',
+      'car': '🚗',
+      'vehicle': '🚗',
+      'gas': '⛽',
+      'fuel': '⛽',
+      'petrol': '⛽',
+      'parking': '🅿️',
+      'taxi': '🚕',
+      'uber': '🚕',
+      'bus': '🚌',
+      'train': '🚆',
+      'flight': '✈️',
+      'metro': '🚇',
+      
+      // Entertainment & Leisure
+      'entertainment': '🎬',
+      'movie': '🎬',
+      'cinema': '🎬',
+      'music': '🎵',
+      'game': '🎮',
+      'gaming': '🎮',
+      'sport': '⚽',
+      'sports': '⚽',
+      'hobby': '🎨',
+      'book': '📚',
+      'reading': '📖',
+      
+      // Shopping
+      'shopping': '🛍️',
+      'clothing': '👕',
+      'clothes': '👕',
+      'fashion': '👗',
+      'shoes': '👟',
+      'accessories': '👜',
+      'electronics': '💻',
+      'gadget': '📱',
+      
+      // Health & Wellness
+      'health': '🏥',
+      'healthcare': '🏥',
+      'medical': '💊',
+      'medicine': '💊',
+      'doctor': '👨‍⚕️',
+      'hospital': '🏥',
+      'pharmacy': '💊',
+      'dental': '🦷',
+      'gym': '💪',
+      'fitness': '🏋️',
+      'yoga': '🧘',
+      'wellness': '�',
+      
+      // Home & Living
+      'rent': '🏠',
+      'housing': '🏡',
+      'home': '🏠',
+      'apartment': '🏢',
+      'utilities': '💡',
+      'electricity': '⚡',
+      'water': '💧',
+      'internet': '�',
+      'wifi': '📶',
+      'phone': '📱',
+      'mobile': '📱',
+      'maintenance': '🔧',
+      'repair': '🔨',
+      'furniture': '🛋️',
+      'appliance': '🔌',
+      
+      // Bills & Services
+      'bill': '📄',
+      'subscription': '📺',
+      'streaming': '📺',
+      'netflix': '📺',
+      'spotify': '�',
+      'insurance': '🛡️',
+      'tax': '💰',
+      'fees': '💳',
+      
+      // Financial
+      'investment': '�',
+      'savings': '�',
+      'salary': '💼',
+      'income': '�',
+      'wage': '💼',
+      'bonus': '🎁',
+      'debt': '📉',
+      'loan': '🏦',
+      'bank': '🏦',
+      'credit': '💳',
+      'payment': '💳',
+      
+      // Education
+      'education': '📚',
+      'school': '🎓',
+      'college': '🎓',
+      'university': '🎓',
+      'course': '📖',
+      'tuition': '�',
+      'learning': '�',
+      'training': '📚',
+      
+      // Personal Care
+      'beauty': '💄',
+      'cosmetic': '💄',
+      'salon': '�',
+      'haircut': '💇',
+      'spa': '💆',
+      'personal': '👤',
+      'hygiene': '🧴',
+      
+      // Family & Kids
+      'child': '👶',
+      'kids': '👶',
+      'baby': '👶',
+      'family': '👨‍👩‍👧‍👦',
+      'daycare': '👶',
+      'toy': '🧸',
+      
+      // Pets
+      'pet': '🐾',
+      'dog': '🐕',
+      'cat': '🐈',
+      'veterinary': '🐾',
+      'vet': '�',
+      
+      // Social
+      'gift': '🎁',
+      'charity': '🤝',
+      'donation': '❤️',
+      'party': '🎉',
+      'event': '🎊',
+      'wedding': '�',
+      'birthday': '🎂',
+      
+      // Work & Business
+      'business': '💼',
+      'office': '🏢',
+      'work': '💼',
+      'meeting': '�',
+      'conference': '🎤',
+      
+      // Miscellaneous
+      'other': '�',
+      'miscellaneous': '📦',
+      'general': '📋',
+      'misc': '📦',
+      'emergency': '🚨'
+    };
+    
+    // Find matching icon (check if any keyword is in the category name)
+    for (const [key, icon] of Object.entries(iconMap)) {
+      if (name.includes(key)) {
+        return icon;
+      }
+    }
+    
+    // Enhanced default: try to guess based on first letter or common patterns
+    if (name.match(/expense|cost|spend/)) return '💸';
+    if (name.match(/save|saving/)) return '💰';
+    if (name.match(/earn|revenue/)) return '💵';
+    
+    // Fallback to a more generic icon
+    return '�';
+  }
+
+  // ============================================
+  // ADD CATEGORY
+  // ============================================
+  
+  protected openAddModal(): void {
+    this.newCategoryName.set('');
+    this.showAddModal.set(true);
+  }
+
+  protected closeAddModal(): void {
+    this.showAddModal.set(false);
+    this.newCategoryName.set('');
+  }
+
+  protected async addCategory(): Promise<void> {
+    const name = this.newCategoryName().trim();
+    
+    if (!name) {
+      alert('Please enter a category name');
+      return;
+    }
+
+    this.isAdding.set(true);
+    
+    try {
+      await this.categoryService.addCategory(name);
+      this.closeAddModal();
+    } catch (error: any) {
+      console.error('Failed to add category:', error);
+      alert(`Failed to add category: ${error.message}`);
+    } finally {
+      this.isAdding.set(false);
+    }
+  }
+
+  // ============================================
+  // EDIT CATEGORY
+  // ============================================
+  
+  protected openEditModal(category: Category): void {
+    this.editingCategory.set({ ...category });
+    this.showEditModal.set(true);
+  }
+
+  protected closeEditModal(): void {
+    this.showEditModal.set(false);
+    this.editingCategory.set(null);
+  }
+
+  protected async updateCategory(): Promise<void> {
+    const cat = this.editingCategory();
+    if (!cat) return;
+
+    const name = cat.category_name.trim();
+    if (!name) {
+      alert('Please enter a category name');
+      return;
+    }
+
+    this.isEditing.set(true);
+    
+    try {
+      await this.categoryService.updateCategory(cat.category_id, name);
+      this.closeEditModal();
+    } catch (error: any) {
+      console.error('Failed to update category:', error);
+      alert(`Failed to update category: ${error.message}`);
+    } finally {
+      this.isEditing.set(false);
+    }
+  }
+
+  protected onEditNameChange(value: string): void {
+    const cat = this.editingCategory();
+    if (cat) {
+      this.editingCategory.set({ ...cat, category_name: value });
+    }
+  }
+
+  // ============================================
+  // DELETE CATEGORY
+  // ============================================
+  
+  protected openDeleteModal(category: Category): void {
+    this.deletingCategory.set(category);
+    this.showDeleteModal.set(true);
+  }
+
+  protected closeDeleteModal(): void {
+    this.showDeleteModal.set(false);
+    this.deletingCategory.set(null);
+  }
+
+  protected async confirmDelete(): Promise<void> {
+    const cat = this.deletingCategory();
+    if (!cat) return;
+
+    this.isDeleting.set(true);
+    
+    try {
+      await this.categoryService.deleteCategory(cat.category_id);
+      this.closeDeleteModal();
+    } catch (error: any) {
+      console.error('Failed to delete category:', error);
+      alert(`Failed to delete category: ${error.message}`);
+    } finally {
+      this.isDeleting.set(false);
+    }
+  }
+}

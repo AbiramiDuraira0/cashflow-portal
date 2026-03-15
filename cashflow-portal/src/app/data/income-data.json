@@ -1,0 +1,40 @@
+{
+  "incomeEntries": [
+    {
+      "id": "income_sample_001",
+      "month": "August",
+      "year": 2021,
+      "amount": 45000,
+      "source": "Salary",
+      "notes": "First month - Started earning",
+      "date": "2021-08-01T00:00:00.000Z"
+    },
+    {
+      "id": "income_sample_002",
+      "month": "September",
+      "year": 2021,
+      "amount": 45000,
+      "source": "Salary",
+      "notes": "",
+      "date": "2021-09-01T00:00:00.000Z"
+    },
+    {
+      "id": "income_sample_003",
+      "month": "January",
+      "year": 2026,
+      "amount": 55000,
+      "source": "Salary",
+      "notes": "",
+      "date": "2026-01-01T00:00:00.000Z"
+    },
+    {
+      "id": "income_sample_004",
+      "month": "February",
+      "year": 2026,
+      "amount": 58000,
+      "source": "Salary",
+      "notes": "Performance bonus included",
+      "date": "2026-02-01T00:00:00.000Z"
+    }
+  ]
+}

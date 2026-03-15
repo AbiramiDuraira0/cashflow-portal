@@ -1,48 +1,39 @@
-import { Component } from '@angular/core';
-import { RouterOutlet, RouterLink, RouterLinkActive, Router, NavigationEnd } from '@angular/router';
+import { Component, signal, OnInit, inject } from '@angular/core';
+import { RouterOutlet, Router, NavigationEnd } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { filter } from 'rxjs/operators';
+import { LoadingSpinnerComponent } from './component/loading-spinner/loading-spinner.component';
+import { SideMenuComponent } from './component/side-menu/side-menu.component';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, CommonModule],
+  imports: [RouterOutlet, CommonModule, LoadingSpinnerComponent, SideMenuComponent],
   templateUrl: './app.html',
   styleUrl: './app.css'
 })
-export class App {
+export class App implements OnInit {
   protected title = 'cashflow-portal';
-  protected isMenuCollapsed = true; // Start with menu collapsed
-  protected isMenuHovered = false;
-  protected showMenu = false; // Hide menu on login page
+  // Use null initially to distinguish "not set yet" from "explicitly false"
+  protected showMenu = signal<boolean | null>(null);
+  private router = inject(Router);
 
-  constructor(private router: Router) {
-    // Check if we're on login page
+  constructor() {
+    // Listen to navigation events
     this.router.events.pipe(
       filter(event => event instanceof NavigationEnd)
     ).subscribe((event: any) => {
-      this.showMenu = !event.url.includes('/login');
+      const isLoginPage = event.url === '/' || event.url.includes('/login');
+      this.showMenu.set(!isLoginPage);
     });
   }
 
-  toggleMenu() {
-    this.isMenuCollapsed = !this.isMenuCollapsed;
-  }
-
-  onMenuMouseEnter() {
-    this.isMenuHovered = true;
-  }
-
-  onMenuMouseLeave() {
-    this.isMenuHovered = false;
-  }
-
-  onMenuItemClick() {
-    // Collapse menu when any menu item is clicked
-    this.isMenuCollapsed = true;
-  }
-
-  logout() {
-    sessionStorage.removeItem('isAuthenticated');
-    this.router.navigate(['/login']);
+  ngOnInit(): void {
+    // Small delay to ensure router has fully initialized
+    setTimeout(() => {
+      const currentUrl = this.router.url;
+      const isLoginPage = currentUrl === '/' || currentUrl.includes('/login') || currentUrl === '';
+      this.showMenu.set(!isLoginPage);
+    }, 0);
   }
 }
+/**code deploy for QA */

@@ -1,88 +1,532 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-
-type Category = {
-  id: string;
-  name: string;
-  color: string;     // accent for tile
-  icon?: string;     // e.g., "💰", "🍔"
-  count?: number;    // # of items in this category (optional)
-  budget?: number;   // monthly budget (optional)
-  spent?: number;    // spent this month (optional)
-};
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { CategoryService, Category } from '../../services/category.service';
+import { ErrorHandler } from '../../utils/error-handler.util';
+import { 
+  PaginationHelper, 
+  SortingHelper, 
+  IconMapper, 
+  Status, 
+  StatusHelper,
+  ErrorPopupComponent,
+  IconStorageHelper,
+  type ErrorType
+} from '../../shared';
 
 @Component({
   selector: 'app-category',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, MatTooltipModule, ErrorPopupComponent],
   templateUrl: './category.page.html',
   styleUrls: ['./category.page.scss']
 })
 export class CategoryPage implements OnInit {
-  // Loading state to show skeletons initially
-  loading = true;
+  private categoryService = inject(CategoryService);
+  
+  // Reactive signals
+  protected categories = this.categoryService.getCategoriesSignal();
+  protected loading = this.categoryService.getLoadingSignal();
+  protected query = signal<string>('');
+  
+  // Sorting & Pagination
+  protected sortColumn = signal<'category_name' | 'sub_category' | 'is_active' | 'created_at' | 'updated_at'>('category_name');
+  protected sortDirection = signal<'asc' | 'desc'>('asc');
+  protected currentPage = signal<number>(1);
+  protected pageSize = signal<number>(10);
+  protected readonly pageSizeOptions = PaginationHelper.PAGE_SIZE_OPTIONS;
+  
+  // Expose utilities to template
+  protected readonly Status = Status;
+  protected readonly StatusHelper = StatusHelper;
+  
+  // Expose Math to template
+  protected Math = Math;
+  
+  // Modal states
+  protected showAddModal = signal<boolean>(false);
+  protected showEditModal = signal<boolean>(false);
+  protected showDeleteModal = signal<boolean>(false);
+  
+  // Error modal state
+  protected errorModal = {
+    isOpen: signal<boolean>(false),
+    title: signal<string>(''),
+    message: signal<string>(''),
+    details: signal<string>(''),
+    type: signal<ErrorType>('error')
+  };
+  
+  // Form data
+  protected newCategoryName = signal<string>('');
+  protected newSubCategoryName = signal<string>('');
+  protected newCategoryIcon = signal<string>('');
+  protected newSubCategoryIcon = signal<string>('');
+  protected newNotes = signal<string>('');
+  protected editingCategory = signal<Category | null>(null);
+  protected editCategoryIcon = signal<string>('');
+  protected editSubCategoryIcon = signal<string>('');
+  protected editNotes = signal<string>('');
+  protected deletingCategory = signal<Category | null>(null);
+  
+  // Icon picker states
+  protected showCategoryIconPicker = signal<boolean>(false);
+  protected showSubCategoryIconPicker = signal<boolean>(false);
+  protected showEditCategoryIconPicker = signal<boolean>(false);
+  protected showEditSubCategoryIconPicker = signal<boolean>(false);
+  
+  // All available icons
+  protected filteredIcons = computed(() => {
+    return IconMapper.getAllIcons();
+  });
 
-  // Quick search/filter
-  query = '';
+  // Grouped icons for organized dropdown display
+  protected groupedIcons = computed(() => {
+    return IconMapper.getGroupedIcons();
+  });
+  
+  // Operation loading states
+  protected isAdding = signal<boolean>(false);
+  protected isEditing = signal<boolean>(false);
+  protected isDeleting = signal<boolean>(false);
 
-  // Mock data — replace with API call
-  categories: Category[] = [
-    { id: '1', name: 'Income',   color: '#22c55e', icon: '💼', count: 12, budget: 0,    spent: 0 },
-    { id: '2', name: 'Food',     color: '#f97316', icon: '🍔', count: 32, budget: 8000, spent: 5200 },
-    { id: '3', name: 'Bills',    color: '#06b6d4', icon: '💡', count: 9,  budget: 6000, spent: 4100 },
-    { id: '4', name: 'Travel',   color: '#a855f7', icon: '✈️', count: 4,  budget: 12000, spent: 2000 },
-    { id: '5', name: 'Shopping', color: '#ef4444', icon: '🛍️', count: 7,  budget: 5000, spent: 1800 },
-    { id: '6', name: 'Health',   color: '#14b8a6', icon: '❤️', count: 5,  budget: 4000, spent: 900 }
-  ];
+  // Computed filtered categories - now shows ALL categories (active and deactivated)
+  protected filtered = computed(() => {
+    const searchQuery = this.query().trim().toLowerCase();
+    const allCategories = this.categories();
+    
+    if (!searchQuery) return allCategories;
+    
+    return allCategories.filter(cat => 
+      cat.category_name.toLowerCase().includes(searchQuery) ||
+      cat.sub_category?.toLowerCase().includes(searchQuery)
+    );
+  });
 
-  skeletons = Array.from({ length: 6 });
+  // Computed sorted categories using SortingHelper
+  protected sorted = computed(() => {
+    const cats = this.filtered();
+    const col = this.sortColumn();
+    const dir = this.sortDirection();
+    
+    return SortingHelper.sort(cats, col, dir);
+  });
 
-  ngOnInit(): void {
-    // Simulate data fetch
-    setTimeout(() => (this.loading = false), 900);
+  // Computed total items
+  protected totalItems = computed(() => this.sorted().length);
+
+  // Computed paginated categories using PaginationHelper
+  protected paginationResult = computed(() => {
+    return PaginationHelper.paginate(
+      this.sorted(),
+      this.currentPage(),
+      this.pageSize()
+    );
+  });
+  
+  protected paginated = computed(() => this.paginationResult().items);
+  protected totalPages = computed(() => this.paginationResult().totalPages);
+  protected paginationInfo = computed(() => 
+    PaginationHelper.getPaginationInfo(this.paginationResult())
+  );
+
+  protected skeletons = Array.from({ length: 6 });
+
+  async ngOnInit(): Promise<void> {
+    await this.loadCategories();
   }
 
-  get filtered(): Category[] {
-    const q = this.query.trim().toLowerCase();
-    if (!q) return this.categories;
-    return this.categories.filter(c => c.name.toLowerCase().includes(q));
+  private async loadCategories(): Promise<void> {
+    try {
+      await this.categoryService.loadCategories();
+    } catch (error) {
+      console.error('Failed to load categories:', error);
+    }
   }
 
-  percentSpent(cat: Category): number | null {
-    if (!cat.budget || cat.budget <= 0) return null;
-    return Math.min(100, Math.round((cat.spent ?? 0) * 100 / cat.budget));
+  protected onSearchChange(value: string): void {
+    this.query.set(value);
+    this.currentPage.set(1); // Reset to first page on search
   }
 
-  // Actions
-  onAdd(): void {
-    const id = Date.now().toString();
-    this.categories = [
-      {
-        id,
-        name: `New Category ${this.categories.length + 1}`,
-        color: '#3b82f6',
-        icon: '📁',
-        count: 0,
-        budget: 0,
-        spent: 0
-      },
-      ...this.categories
-    ];
+  protected onPageSizeChange(): void {
+    this.currentPage.set(1); // Reset to first page when changing page size
   }
 
-  onEdit(cat: Category): void {
-    this.categories = this.categories.map(c =>
-      c.id === cat.id ? { ...c, name: `${c.name} (Edited)` } : c
+  protected sortBy(column: 'category_name' | 'sub_category' | 'is_active' | 'created_at' | 'updated_at'): void {
+    if (this.sortColumn() === column) {
+      // Toggle direction if same column
+      this.sortDirection.set(SortingHelper.toggleDirection(this.sortDirection()));
+    } else {
+      // New column, default to ascending
+      this.sortColumn.set(column);
+      this.sortDirection.set('asc');
+    }
+    this.currentPage.set(1); // Reset to first page on sort
+  }
+
+  protected getSortIcon(column: 'category_name' | 'sub_category' | 'is_active' | 'created_at' | 'updated_at'): string {
+    return SortingHelper.getSortIcon(column, this.sortColumn(), this.sortDirection());
+  }
+
+  protected goToPage(page: number): void {
+    if (page < 1 || page > this.totalPages()) return;
+    this.currentPage.set(page);
+  }
+
+  protected nextPage(): void {
+    if (PaginationHelper.canGoNext(this.currentPage(), this.totalPages())) {
+      this.currentPage.set(this.currentPage() + 1);
+    }
+  }
+
+  protected prevPage(): void {
+    if (PaginationHelper.canGoPrevious(this.currentPage())) {
+      this.currentPage.set(this.currentPage() - 1);
+    }
+  }
+
+  protected getPageNumbers(): number[] {
+    return PaginationHelper.getPageNumbers(
+      this.currentPage(),
+      this.totalPages()
     );
   }
 
-  onDelete(cat: Category): void {
-    this.categories = this.categories.filter(c => c.id !== cat.id);
+  protected formatDate(dateStr: string): string {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('en-IN', {
+      year: 'numeric', 
+      month: 'short', 
+      day: 'numeric' 
+    });
   }
 
-  onOpen(_cat: Category): void {
-    // Hook for router navigation/details drawer.
+  /**
+   * Show error popup (replaces alert)
+   */
+  private showError(title: string, message: string, details?: string, type: ErrorType = 'error'): void {
+    this.errorModal.title.set(title);
+    this.errorModal.message.set(message);
+    this.errorModal.details.set(details || '');
+    this.errorModal.type.set(type);
+    this.errorModal.isOpen.set(true);
+  }
+
+  /**
+   * Close error popup
+   */
+  protected closeErrorModal(): void {
+    this.errorModal.isOpen.set(false);
+  }
+
+  /**
+   * Get relevant icon for category based on name or database value
+   * Priority: 1) Database icon, 2) localStorage, 3) IconMapper auto-generation
+   */
+  protected getCategoryIcon(categoryName: string, dbIcon?: string | null): string {
+    // First check database icon
+    if (dbIcon) {
+      return dbIcon;
+    }
+    // Then check if user has selected a custom icon (stored in localStorage)
+    const customIcon = IconStorageHelper.getIcon(categoryName);
+    if (customIcon) {
+      return customIcon;
+    }
+    // Fall back to auto-generated icon
+    return IconMapper.getIcon(categoryName);
+  }
+
+  // ============================================
+  // ICON PICKER METHODS
+  // ============================================
+
+  protected toggleCategoryIconPicker(): void {
+    this.showCategoryIconPicker.update(v => !v);
+    if (this.showCategoryIconPicker()) {
+      this.showSubCategoryIconPicker.set(false);
+      this.showEditCategoryIconPicker.set(false);
+      this.showEditSubCategoryIconPicker.set(false);
+    }
+  }
+
+  protected toggleSubCategoryIconPicker(): void {
+    this.showSubCategoryIconPicker.update(v => !v);
+    if (this.showSubCategoryIconPicker()) {
+      this.showCategoryIconPicker.set(false);
+      this.showEditCategoryIconPicker.set(false);
+      this.showEditSubCategoryIconPicker.set(false);
+    }
+  }
+
+  protected toggleEditCategoryIconPicker(): void {
+    this.showEditCategoryIconPicker.update(v => !v);
+    if (this.showEditCategoryIconPicker()) {
+      this.showCategoryIconPicker.set(false);
+      this.showSubCategoryIconPicker.set(false);
+      this.showEditSubCategoryIconPicker.set(false);
+    }
+  }
+
+  protected toggleEditSubCategoryIconPicker(): void {
+    this.showEditSubCategoryIconPicker.update(v => !v);
+    if (this.showEditSubCategoryIconPicker()) {
+      this.showCategoryIconPicker.set(false);
+      this.showSubCategoryIconPicker.set(false);
+      this.showEditCategoryIconPicker.set(false);
+    }
+  }
+
+  protected selectCategoryIcon(icon: string): void {
+    this.newCategoryIcon.set(icon);
+    this.showCategoryIconPicker.set(false);
+  }
+
+  protected selectSubCategoryIcon(icon: string): void {
+    this.newSubCategoryIcon.set(icon);
+    this.showSubCategoryIconPicker.set(false);
+  }
+
+  protected selectEditCategoryIcon(icon: string): void {
+    this.editCategoryIcon.set(icon);
+    this.showEditCategoryIconPicker.set(false);
+  }
+
+  protected selectEditSubCategoryIcon(icon: string): void {
+    this.editSubCategoryIcon.set(icon);
+    this.showEditSubCategoryIconPicker.set(false);
+  }
+
+  // ============================================
+  // ADD CATEGORY
+  // ============================================
+  
+  protected openAddModal(): void {
+    this.newCategoryName.set('');
+    this.newSubCategoryName.set('');
+    this.newCategoryIcon.set('');
+    this.newSubCategoryIcon.set('');
+    this.newNotes.set('');
+    this.showAddModal.set(true);
+  }
+
+  protected closeAddModal(): void {
+    this.showAddModal.set(false);
+    this.newCategoryName.set('');
+    this.newSubCategoryName.set('');
+    this.newCategoryIcon.set('');
+    this.newSubCategoryIcon.set('');
+    this.newNotes.set('');
+  }
+
+  protected async addCategory(): Promise<void> {
+    const name = this.newCategoryName().trim();
+    const subCategory = this.newSubCategoryName().trim();
+    const categoryIcon = this.newCategoryIcon() || IconMapper.getIcon(name);
+    const subcategoryIcon = subCategory ? (this.newSubCategoryIcon() || IconMapper.getIcon(subCategory)) : undefined;
+    const notes = this.newNotes().trim();
+    
+    if (!name) {
+      this.showError(
+        'Validation Error',
+        'Category name is required.',
+        'Please enter a valid category name before submitting.',
+        'warning'
+      );
+      return;
+    }
+
+    this.isAdding.set(true);
+    
+    try {
+      // Add the category with icons and notes
+      await this.categoryService.addCategory(
+        name,
+        categoryIcon,
+        subCategory || undefined,
+        subcategoryIcon,
+        notes || undefined
+      );
+      
+      // Update ALL existing records with the same category name to have the same icon
+      await this.categoryService.updateCategoryIconByName(name, categoryIcon);
+      
+      // Update ALL existing records with the same subcategory name to have the same icon
+      if (subCategory && subcategoryIcon) {
+        await this.categoryService.updateSubcategoryIconByName(subCategory, subcategoryIcon);
+      }
+      
+      this.closeAddModal();
+      console.log('✅ Category added successfully with consistent icons across all records');
+    } catch (error: any) {
+      ErrorHandler.logError('Add Category', error);
+      const errorResult = ErrorHandler.handleDatabaseError(error, 'add');
+      this.showError(
+        errorResult.title,
+        errorResult.message,
+        errorResult.details,
+        'error'
+      );
+    } finally {
+      this.isAdding.set(false);
+    }
+  }
+
+  // ============================================
+  // EDIT CATEGORY
+  // ============================================
+  
+  protected openEditModal(category: Category): void {
+    this.editingCategory.set({ ...category });
+    this.editCategoryIcon.set(''); // Reset to show auto-generated icon
+    this.editSubCategoryIcon.set(''); // Reset to show auto-generated icon
+    this.editNotes.set(category.notes || ''); // Load existing notes
+    this.showEditModal.set(true);
+  }
+
+  protected closeEditModal(): void {
+    this.showEditModal.set(false);
+    this.editingCategory.set(null);
+    this.editCategoryIcon.set('');
+    this.editSubCategoryIcon.set('');
+    this.editNotes.set('');
+  }
+
+  protected async updateCategory(): Promise<void> {
+    const cat = this.editingCategory();
+    if (!cat) return;
+
+    const name = cat.category_name.trim();
+    const subCategory = cat.sub_category?.trim();
+    const oldName = this.categories().find(c => c.category_id === cat.category_id)?.category_name;
+    const oldSubCategory = this.categories().find(c => c.category_id === cat.category_id)?.sub_category;
+    
+    if (!name) {
+      this.showError(
+        'Validation Error',
+        'Category name is required.',
+        'Please enter a valid category name before submitting.',
+        'warning'
+      );
+      return;
+    }
+
+    this.isEditing.set(true);
+    
+    try {
+      const categoryIcon = this.editCategoryIcon() || cat.category_icon || IconMapper.getIcon(name);
+      const subcategoryIcon = subCategory ? (this.editSubCategoryIcon() || cat.subcategory_icon || IconMapper.getIcon(subCategory)) : undefined;
+      const notes = this.editNotes().trim();
+      
+      // First update this specific record
+      await this.categoryService.updateCategory(
+        cat.category_id, 
+        name,
+        categoryIcon,
+        subCategory || undefined,
+        subcategoryIcon,
+        notes || undefined
+      );
+      
+      // Then update ALL records with the same category name to have consistent icons
+      if (categoryIcon && (this.editCategoryIcon() || oldName !== name)) {
+        await this.categoryService.updateCategoryIconByName(name, categoryIcon);
+      }
+      
+      // Update ALL records with the same subcategory name to have consistent icons
+      if (subCategory && subcategoryIcon && (this.editSubCategoryIcon() || oldSubCategory !== subCategory)) {
+        await this.categoryService.updateSubcategoryIconByName(subCategory, subcategoryIcon);
+      }
+      
+      this.closeEditModal();
+      console.log('✅ Category and all matching records updated successfully with consistent icons');
+    } catch (error: any) {
+      ErrorHandler.logError('Update Category', error);
+      const errorResult = ErrorHandler.handleDatabaseError(error, 'update');
+      this.showError(
+        errorResult.title,
+        errorResult.message,
+        errorResult.details,
+        'error'
+      );
+    } finally {
+      this.isEditing.set(false);
+    }
+  }
+
+  protected onEditNameChange(value: string): void {
+    const cat = this.editingCategory();
+    if (cat) {
+      this.editingCategory.set({ ...cat, category_name: value });
+    }
+  }
+
+  protected onEditSubCategoryChange(value: string): void {
+    const cat = this.editingCategory();
+    if (cat) {
+      this.editingCategory.set({ ...cat, sub_category: value });
+    }
+  }
+
+  // ============================================
+  // DELETE CATEGORY (Soft Delete)
+  // ============================================
+  
+  protected openDeleteModal(category: Category): void {
+    this.deletingCategory.set(category);
+    this.showDeleteModal.set(true);
+  }
+
+  protected closeDeleteModal(): void {
+    this.showDeleteModal.set(false);
+    this.deletingCategory.set(null);
+  }
+
+  protected async confirmDelete(): Promise<void> {
+    const cat = this.deletingCategory();
+    if (!cat) return;
+
+    this.isDeleting.set(true);
+    
+    try {
+      await this.categoryService.deleteCategory(cat.category_id);
+      this.closeDeleteModal();
+      console.log('✅ Category deactivated successfully:', cat.category_name);
+    } catch (error: any) {
+      ErrorHandler.logError('Delete Category', error);
+      const errorResult = ErrorHandler.handleDatabaseError(error, 'delete');
+      this.showError(
+        errorResult.title,
+        errorResult.message,
+        errorResult.details,
+        'error'
+      );
+    } finally {
+      this.isDeleting.set(false);
+    }
+  }
+
+  // ============================================
+  // ACTIVATE CATEGORY
+  // ============================================
+  
+  protected async activateCategory(category: Category): Promise<void> {
+    if (category.is_active) return; // Already active
+
+    try {
+      await this.categoryService.activateCategory(category.category_id);
+      console.log('✅ Category activated successfully:', category.category_name);
+    } catch (error: any) {
+      ErrorHandler.logError('Activate Category', error);
+      const errorResult = ErrorHandler.handleDatabaseError(error, 'update');
+      this.showError(
+        errorResult.title,
+        errorResult.message,
+        errorResult.details,
+        'error'
+      );
+    }
   }
 }
-``
