@@ -2,84 +2,576 @@
   <header class="toolbar">
     <div class="titles">
       <h1>Categories</h1>
-      <p class="subtitle">Manage and track your budget categories.</p>
+      <p class="subtitle">Manage your expense categories</p>
     </div>
-
     <div class="actions">
       <label class="search" aria-label="Search categories">
         <span class="search-icon">🔎</span>
-        <input
-          type="text"
-          placeholder="Search categories"
-          [(ngModel)]="query"
-        />
+        <input type="text" placeholder="Search categories" [value]="query()" (input)="onSearchChange($any($event.target).value)" />
       </label>
-      <button class="btn primary" type="button" (click)="onAdd()">+ Add Category</button>
+      
+      <button 
+        class="add-btn" 
+        (click)="openAddModal()">
+        <span class="text">Add Category</span>
+      </button>
+      
+      <!-- Category Count Badge -->
+      <div class="category-count-badge">
+        <span class="count">{{ filtered().length }}</span>
+        <span class="label">{{ filtered().length === 1 ? 'Category' : 'Categories' }}</span>
+      </div>
     </div>
   </header>
 
-  @if (loading) {
-    <div class="grid" aria-hidden="true">
-      @for (_item of skeletons; track $index) {
-        <div class="card skeleton"></div>
-      }
+  @if (loading()) {
+    <div class="loading-state">
+     <div class="spinner">⏳</div>
+      <p>Loading categories from database...</p>
     </div>
   } @else {
-    @if (filtered.length > 0) {
-      <div class="grid">
-        @for (cat of filtered; track cat.id) {
-          <article class="card" tabindex="0" (click)="onOpen(cat)" (keyup.enter)="onOpen(cat)">
-            <div class="chip" [style.--chip]="cat.color">
-              <div class="avatar" [style.background]="cat.color">{{ cat.icon || '📁' }}</div>
-
-              <div class="meta">
-                <h3>{{ cat.name }}</h3>
-                <p>{{ cat.count ?? 0 }} transactions</p>
-              </div>
-
-              <div class="menu" (click)="$event.stopPropagation()">
-                <button class="icon" type="button" (click)="onEdit(cat)" aria-label="Edit category">✏️</button>
-                <button class="icon danger" type="button" (click)="onDelete(cat)" aria-label="Delete category">🗑️</button>
-              </div>
-            </div>
-
-            <div class="content">
-              <div class="row">
-                <span class="label">Budget</span>
-                <strong>{{ cat.budget ?? 0 }}</strong>
-              </div>
-              <div class="row">
-                <span class="label">Spent</span>
-                <strong>{{ cat.spent ?? 0 }}</strong>
-              </div>
-
-              @if (percentSpent(cat) !== null) {
-                <div class="progress">
-                  <div class="bar">
-                    <div class="fill" [style.width.%]="percentSpent(cat)" [style.background]="cat.color"></div>
+    @if (filtered().length > 0) {
+      <div class="table-container">
+        <table class="category-table">
+          <thead>
+            <tr>
+              <th class="col-icon">Icon</th>
+              <th class="col-name sortable" (click)="sortBy('category_name')">
+                <div class="header-content">
+                  <span>Category</span>
+                  <span class="sort-icon">{{ getSortIcon('category_name') }}</span>
+                </div>
+              </th>
+              <th class="col-subcategory sortable" (click)="sortBy('sub_category')">
+                <div class="header-content">
+                  <span>Sub Category</span>
+                  <span class="sort-icon">{{ getSortIcon('sub_category') }}</span>
+                </div>
+              </th>
+              <th class="col-status sortable" (click)="sortBy('is_active')">
+                <div class="header-content">
+                  <span>Status</span>
+                  <span class="sort-icon">{{ getSortIcon('is_active') }}</span>
+                </div>
+              </th>
+              <th class="col-date sortable" (click)="sortBy('created_at')">
+                <div class="header-content">
+                  <span>Created</span>
+                  <span class="sort-icon">{{ getSortIcon('created_at') }}</span>
+                </div>
+              </th>
+              <th class="col-date sortable" (click)="sortBy('updated_at')">
+                <div class="header-content">
+                  <span>Updated</span>
+                  <span class="sort-icon">{{ getSortIcon('updated_at') }}</span>
+                </div>
+              </th>
+              <th class="col-notes">Notes</th>
+              <th class="col-actions">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (cat of paginated(); track cat.category_id) {
+              <tr class="table-row">
+                <td class="col-icon">
+                  <span class="category-icon">{{ getCategoryIcon(cat.category_name, cat.category_icon) }}</span>
+                </td>
+                <td class="col-name">
+                  <span class="category-name">{{ cat.category_name }}</span>
+                </td>
+                <td class="col-subcategory">
+                  @if (cat.sub_category) {
+                    <span class="subcategory-wrapper">
+                      <span class="subcategory-icon">{{ getCategoryIcon(cat.sub_category, cat.subcategory_icon) }}</span>
+                      <span class="subcategory-name">{{ cat.sub_category }}</span>
+                    </span>
+                  } @else {
+                    <span class="subcategory-name">-</span>
+                  }
+                </td>
+                <td class="col-status">
+                  @if (cat.is_active) {
+                    <span class="status-badge status-active">
+                      <span class="status-badge-icon">✓</span>
+                      Active
+                    </span>
+                  } @else {
+                    <span class="status-badge status-deactivated">
+                      <span class="status-badge-icon">⊗</span>
+                      Deactivated
+                    </span>
+                  }
+                </td>
+                <td class="col-date">
+                  <span class="date-value">{{ formatDate(cat.created_at) }}</span>
+                </td>
+                <td class="col-date">
+                  <span class="date-value">{{ formatDate(cat.updated_at) }}</span>
+                </td>
+                <td class="col-notes">
+                  @if (cat.notes) {
+                    <span class="notes-text" [matTooltip]="cat.notes" matTooltipPosition="above">
+                      {{ cat.notes.length > 50 ? cat.notes.substring(0, 50) + '...' : cat.notes }}
+                    </span>
+                  } @else {
+                    <span class="notes-empty">-</span>
+                  }
+                </td>
+                <td class="col-actions">
+                  <div class="action-buttons">
+                    <button 
+                      class="action-btn edit" 
+                      (click)="openEditModal(cat)"
+                      [matTooltip]="'Edit ' + cat.category_name"
+                      matTooltipPosition="above">
+                      <span class="icon">✏️</span>
+                    </button>
+                    @if (cat.is_active) {
+                      <button 
+                        class="action-btn deactivate" 
+                        (click)="openDeleteModal(cat)"
+                        [matTooltip]="'Deactivate ' + cat.category_name"
+                        matTooltipPosition="above">
+                        <span class="icon">🚫</span>
+                      </button>
+                    } @else {
+                      <button 
+                        class="action-btn activate" 
+                        (click)="activateCategory(cat)"
+                        [matTooltip]="'Activate ' + cat.category_name"
+                        matTooltipPosition="above">
+                        <span class="icon">✅</span>
+                      </button>
+                    }
                   </div>
-                  <span class="progress-text" [class.warn]="(percentSpent(cat) ?? 0) >= 80">
-                    {{ percentSpent(cat) }}%
-                  </span>
-                </div>
-              } @else {
-                <div class="row">
-                  <span class="muted">No budget set</span>
-                </div>
-              }
-            </div>
-          </article>
-        }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
       </div>
+      
+      <!-- Pagination Controls -->
+      @if (filtered().length > 0) {
+        <div class="pagination-container">
+          <div class="pagination-info">
+            {{ paginationInfo() }}
+          </div>
+          
+          <div class="page-size-selector">
+            <label for="pageSize">Show:</label>
+            <select id="pageSize" [value]="pageSize()" (change)="pageSize.set(+$any($event.target).value); onPageSizeChange()">
+              @for (size of pageSizeOptions; track size) {
+                <option [value]="size">{{ size }}</option>
+              }
+            </select>
+          </div>
+          
+          <div class="pagination-controls">
+            <button 
+              class="page-btn" 
+              (click)="prevPage()" 
+              [disabled]="currentPage() === 1"
+              [matTooltip]="'Previous Page'"
+              matTooltipPosition="above">
+              ◀
+            </button>
+            
+            @for (pageNum of getPageNumbers(); track pageNum) {
+              @if (pageNum === currentPage()) {
+                <button class="page-btn active">{{ pageNum }}</button>
+              } @else {
+                <button class="page-btn" (click)="goToPage(pageNum)">{{ pageNum }}</button>
+              }
+            }
+            
+            <button 
+              class="page-btn" 
+              (click)="nextPage()" 
+              [disabled]="currentPage() === totalPages()"
+              [matTooltip]="'Next Page'"
+              matTooltipPosition="above">
+              ▶
+            </button>
+          </div>
+        </div>
+      }
     } @else {
       <div class="empty">
         <div class="empty-card">
           <div class="emoji">📭</div>
           <h2>No categories found</h2>
-          <p>Try a different search or create a new category.</p>
-          <button class="btn" type="button" (click)="onAdd()">Create category</button>
+          <p>{{ query() ? 'Try a different search term.' : 'Click Add Category to create your first category.' }}</p>
+          @if (!query()) {
+            <button class="empty-action-btn" (click)="openAddModal()">
+              ➕ Add Your First Category
+            </button>
+          }
         </div>
       </div>
     }
   }
+
+  @if (showAddModal()) {
+    <div class="modal-overlay" (click)="closeAddModal()">
+      <div class="modal-card modal-wide" 
+           [class.modal-expanded]="showCategoryIconPicker() || showSubCategoryIconPicker()"
+           (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2>Add New Category</h2>
+          <button class="close-btn" (click)="closeAddModal()">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-row">
+            <label class="form-label">
+              Category Name & Icon
+              <span class="required">*</span>
+            </label>
+            <div class="form-inline-group">
+              <input 
+                type="text" 
+                class="form-input form-input-flex" 
+                placeholder="e.g., Food, Transport, Entertainment" 
+                [value]="newCategoryName()"
+                (input)="newCategoryName.set($any($event.target).value)"
+                [disabled]="isAdding()"
+                maxlength="50"
+              />
+              <div class="icon-picker-wrapper">
+                <button 
+                  type="button"
+                  class="icon-picker-btn" 
+                  (click)="toggleCategoryIconPicker()"
+                  [disabled]="isAdding()"
+                  title="Click to select icon">
+                  {{ newCategoryIcon() || getCategoryIcon(newCategoryName()) }}
+                </button>
+                @if (showCategoryIconPicker()) {
+                  <div class="icon-picker-dropdown">
+                    <div class="icon-grid-grouped">
+                      @for (group of groupedIcons(); track group.category) {
+                        <div class="icon-category-group">
+                          <div class="category-label">{{ group.category }}</div>
+                          <div class="icon-grid">
+                            @for (item of group.icons; track item.icon) {
+                              <button 
+                                type="button"
+                                class="icon-grid-item" 
+                                (click)="selectCategoryIcon(item.icon)"
+                                [title]="group.category">
+                                {{ item.icon }}
+                              </button>
+                            }
+                          </div>
+                        </div>
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
+            </div>
+          </div>
+          
+          <div class="form-row">
+            <label class="form-label">
+              Sub Category & Icon
+              <span class="optional">(Optional)</span>
+            </label>
+            <div class="form-inline-group">
+              <input 
+                type="text" 
+                class="form-input form-input-flex" 
+                placeholder="e.g., Groceries, Restaurants, Gas" 
+                [value]="newSubCategoryName()"
+                (input)="newSubCategoryName.set($any($event.target).value)"
+                [disabled]="isAdding()"
+                maxlength="50"
+              />
+              @if (newSubCategoryName()) {
+                <div class="icon-picker-wrapper">
+                  <button 
+                    type="button"
+                    class="icon-picker-btn" 
+                    (click)="toggleSubCategoryIconPicker()"
+                    [disabled]="isAdding()"
+                    title="Click to select icon">
+                    {{ newSubCategoryIcon() || getCategoryIcon(newSubCategoryName()) }}
+                  </button>
+                  @if (showSubCategoryIconPicker()) {
+                    <div class="icon-picker-dropdown">
+                      <div class="icon-grid-grouped">
+                        @for (group of groupedIcons(); track group.category) {
+                          <div class="icon-category-group">
+                            <div class="category-label">{{ group.category }}</div>
+                            <div class="icon-grid">
+                              @for (item of group.icons; track item.icon) {
+                                <button 
+                                  type="button"
+                                  class="icon-grid-item" 
+                                  (click)="selectSubCategoryIcon(item.icon)"
+                                  [title]="group.category">
+                                  {{ item.icon }}
+                                </button>
+                              }
+                            </div>
+                          </div>
+                        }
+                      </div>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          </div>
+          
+          <div class="form-row">
+            <label class="form-label">
+              Notes
+              <span class="optional">(Optional)</span>
+            </label>
+            <textarea 
+              class="form-textarea" 
+              placeholder="Add any additional notes or description for this category..." 
+              rows="3"
+              [value]="newNotes()"
+              (input)="newNotes.set($any($event.target).value)"
+              [disabled]="isAdding()"
+              maxlength="500"></textarea>
+            <div class="char-count">{{ newNotes().length }} / 500</div>
+          </div>
+          
+          @if (newCategoryName()) {
+            <div class="icon-preview">
+              <span class="preview-icon">{{ newCategoryIcon() || getCategoryIcon(newCategoryName()) }}</span>
+              <span class="preview-text">
+                <strong>{{ newCategoryName() }}</strong>
+                @if (newSubCategoryName()) {
+                  <span class="subcategory-arrow">→</span>
+                  <span class="preview-icon-small">{{ newSubCategoryIcon() || getCategoryIcon(newSubCategoryName()) }}</span>
+                  <span>{{ newSubCategoryName() }}</span>
+                }
+              </span>
+            </div>
+          }
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" (click)="closeAddModal()" [disabled]="isAdding()">
+            Cancel
+          </button>
+          <button class="btn btn-primary" (click)="addCategory()" [disabled]="isAdding()">
+            @if (isAdding()) {
+              <span class="spinner-small">⏳</span>
+              <span>Adding...</span>
+            } @else {
+              <span>Add Category</span>
+            }
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  @if (showEditModal() && editingCategory()) {
+    <div class="modal-overlay" (click)="closeEditModal()">
+      <div class="modal-card modal-wide" 
+           [class.modal-expanded]="showEditCategoryIconPicker() || showEditSubCategoryIconPicker()"
+           (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2>✏️ Edit Category</h2>
+          <button class="close-btn" (click)="closeEditModal()">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-row">
+            <label class="form-label">
+              Category Name & Icon
+              <span class="required">*</span>
+            </label>
+            <div class="form-inline-group">
+              <input 
+                type="text" 
+                class="form-input form-input-flex" 
+                [value]="editingCategory()!.category_name"
+                (input)="onEditNameChange($any($event.target).value)"
+                [disabled]="isEditing()"
+                maxlength="50"
+              />
+              <div class="icon-picker-wrapper">
+                <button 
+                  type="button"
+                  class="icon-picker-btn" 
+                  (click)="toggleEditCategoryIconPicker()"
+                  [disabled]="isEditing()"
+                  title="Click to select icon">
+                  {{ editCategoryIcon() || getCategoryIcon(editingCategory()!.category_name, editingCategory()!.category_icon) }}
+                </button>
+                @if (showEditCategoryIconPicker()) {
+                  <div class="icon-picker-dropdown">
+                    <div class="icon-grid-grouped">
+                      @for (group of groupedIcons(); track group.category) {
+                        <div class="icon-category-group">
+                          <div class="category-label">{{ group.category }}</div>
+                          <div class="icon-grid">
+                            @for (item of group.icons; track item.icon) {
+                              <button 
+                                type="button"
+                                class="icon-grid-item" 
+                                (click)="selectEditCategoryIcon(item.icon)"
+                                [title]="group.category">
+                                {{ item.icon }}
+                              </button>
+                            }
+                          </div>
+                        </div>
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
+            </div>
+          </div>
+          
+          <div class="form-row">
+            <label class="form-label">
+              Sub Category & Icon
+              <span class="optional">(Optional)</span>
+            </label>
+            <div class="form-inline-group">
+              <input 
+                type="text" 
+                class="form-input form-input-flex" 
+                placeholder="e.g., Groceries, Restaurants, Gas"
+                [value]="editingCategory()!.sub_category || ''"
+                (input)="onEditSubCategoryChange($any($event.target).value)"
+                [disabled]="isEditing()"
+                maxlength="50"
+              />
+              @if (editingCategory()!.sub_category) {
+                <div class="icon-picker-wrapper">
+                  <button 
+                    type="button"
+                    class="icon-picker-btn" 
+                    (click)="toggleEditSubCategoryIconPicker()"
+                    [disabled]="isEditing()"
+                    title="Click to select icon">
+                    {{ editSubCategoryIcon() || getCategoryIcon(editingCategory()!.sub_category!, editingCategory()!.subcategory_icon) }}
+                  </button>
+                  @if (showEditSubCategoryIconPicker()) {
+                    <div class="icon-picker-dropdown">
+                      <div class="icon-grid-grouped">
+                        @for (group of groupedIcons(); track group.category) {
+                          <div class="icon-category-group">
+                            <div class="category-label">{{ group.category }}</div>
+                            <div class="icon-grid">
+                              @for (item of group.icons; track item.icon) {
+                                <button 
+                                  type="button"
+                                  class="icon-grid-item" 
+                                  (click)="selectEditSubCategoryIcon(item.icon)"
+                                  [title]="group.category">
+                                  {{ item.icon }}
+                                </button>
+                              }
+                            </div>
+                          </div>
+                        }
+                      </div>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          </div>
+          
+          <div class="form-row">
+            <label class="form-label">
+              Notes
+              <span class="optional">(Optional)</span>
+            </label>
+            <textarea 
+              class="form-textarea" 
+              placeholder="Add any additional notes or description for this category..." 
+              rows="3"
+              [value]="editNotes()"
+              (input)="editNotes.set($any($event.target).value)"
+              [disabled]="isEditing()"
+              maxlength="500"></textarea>
+            <div class="char-count">{{ editNotes().length }} / 500</div>
+          </div>
+          
+          @if (editingCategory()!.category_name) {
+            <div class="icon-preview">
+              <span class="preview-icon">{{ editCategoryIcon() || getCategoryIcon(editingCategory()!.category_name) }}</span>
+              <span class="preview-text">
+                <strong>{{ editingCategory()!.category_name }}</strong>
+                @if (editingCategory()!.sub_category) {
+                  <span class="subcategory-arrow">→</span>
+                  <span class="preview-icon-small">{{ editSubCategoryIcon() || getCategoryIcon(editingCategory()!.sub_category!) }}</span>
+                  <span>{{ editingCategory()!.sub_category }}</span>
+                }
+              </span>
+            </div>
+          }
+          <div class="meta-display">
+            <p><strong>ID:</strong> {{ editingCategory()!.category_id }}</p>
+            <p><strong>Created:</strong> {{ formatDate(editingCategory()!.created_at) }}</p>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" (click)="closeEditModal()" [disabled]="isEditing()">
+            Cancel
+          </button>
+          <button class="btn btn-primary" (click)="updateCategory()" [disabled]="isEditing()">
+            @if (isEditing()) {
+              <span class="spinner-small">⏳</span>
+              <span>Updating...</span>
+            } @else {
+              <span>Save Changes</span>
+            }
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  @if (showDeleteModal() && deletingCategory()) {
+    <div class="modal-overlay" (click)="closeDeleteModal()">
+      <div class="modal-card modal-delete" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2>� Deactivate Category</h2>
+          <button class="close-btn" (click)="closeDeleteModal()">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="warning-box">
+            <span class="warning-icon">⚠️</span>
+            <p>Are you sure you want to deactivate <strong>"{{ deletingCategory()!.category_name }}"</strong>?</p>
+            <p class="warning-note">This category will be marked as deactivated and will remain visible in the list with a "Deactivated" status. You can reactivate it anytime.</p>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" (click)="closeDeleteModal()" [disabled]="isDeleting()">
+            Cancel
+          </button>
+          <button class="btn btn-danger" (click)="confirmDelete()" [disabled]="isDeleting()">
+            @if (isDeleting()) {
+              <span class="spinner-small">⏳</span>
+              <span>Deactivating...</span>
+            } @else {
+              <span>Deactivate Category</span>
+            }
+          </button>
+        </div>
+      </div>
+    </div>
+  }
 </section>
+
+<!-- Error Popup Component -->
+<app-error-popup
+  [isOpen]="errorModal.isOpen()"
+  [title]="errorModal.title()"
+  [message]="errorModal.message()"
+  [details]="errorModal.details()"
+  [type]="errorModal.type()"
+  [showDetails]="true"
+  (closed)="closeErrorModal()"
+/>

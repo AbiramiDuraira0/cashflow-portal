@@ -1,0 +1,661 @@
+.income-page {
+  padding: 12px 16px;
+  color: #1f2937;
+
+  @media (min-width: 768px) {
+    padding: 16px 20px;
+  }
+
+  @media (min-width: 1024px) {
+    padding: 16px 24px;
+  }
+}
+
+// ============================================
+// Page Header
+// ============================================
+.page-header {
+  margin-bottom: 24px;
+
+  .header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .title-section {
+    h1 {
+      margin: 0 0 6px;
+      font-size: 28px;
+      font-weight: 700;
+      color: #111827;
+
+      @media (max-width: 768px) {
+        font-size: 24px;
+      }
+    }
+
+    .subtitle {
+      margin: 0;
+      color: #6b7280;
+      font-size: 14px;
+
+      @media (max-width: 768px) {
+        font-size: 13px;
+      }
+    }
+  }
+
+  .btn-add {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+    transition: all 0.2s ease;
+
+    .icon {
+      font-size: 20px;
+      font-weight: 700;
+    }
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+    }
+
+    &:active {
+      transform: translateY(0);
+    }
+
+    @media (max-width: 768px) {
+      padding: 9px 16px;
+      font-size: 14px;
+    }
+  }
+}
+
+// ============================================
+// Summary Cards
+// ============================================
+.summary-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+  margin-bottom: 28px;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+}
+
+.summary-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e5e7eb;
+  transition: all 0.2s ease;
+
+  &:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    transform: translateY(-2px);
+  }
+
+  .card-icon {
+    font-size: 40px;
+    width: 64px;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    flex-shrink: 0;
+
+    @media (max-width: 768px) {
+      font-size: 36px;
+      width: 56px;
+      height: 56px;
+    }
+  }
+
+  .card-content {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .card-label {
+    margin: 0 0 4px;
+    font-size: 13px;
+    color: #6b7280;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .card-value {
+    margin: 0 0 4px;
+    font-size: 26px;
+    font-weight: 700;
+    color: #111827;
+    line-height: 1.2;
+
+    @media (max-width: 768px) {
+      font-size: 22px;
+    }
+
+    &.year-totals {
+      font-size: 14px;
+      font-weight: 600;
+      line-height: 1.6;
+      color: #374151;
+      white-space: normal;
+      word-break: break-word;
+
+      @media (max-width: 768px) {
+        font-size: 13px;
+      }
+    }
+  }
+
+  .card-subtitle {
+    margin: 0;
+    font-size: 12px;
+    color: #9ca3af;
+  }
+
+  &.total {
+    .card-icon {
+      background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+    }
+  }
+
+  &.year {
+    .card-icon {
+      background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+    }
+  }
+
+  &.average {
+    .card-icon {
+      background: linear-gradient(135deg, #fce7f3 0%, #fbcfe8 100%);
+    }
+  }
+
+  @media (max-width: 768px) {
+    padding: 16px;
+    gap: 12px;
+  }
+}
+
+// ============================================
+// Year Filter
+// ============================================
+.filter-section {
+  margin-bottom: 24px;
+
+  .year-tabs {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    padding: 12px;
+    background: white;
+    border-radius: 10px;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  }
+
+  .year-tab {
+    padding: 8px 20px;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #6b7280;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &:hover {
+      background: #f3f4f6;
+      border-color: #d1d5db;
+      color: #374151;
+    }
+
+    &.active {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      border-color: #10b981;
+      color: white;
+      box-shadow: 0 2px 6px rgba(16, 185, 129, 0.3);
+    }
+
+    @media (max-width: 768px) {
+      padding: 7px 16px;
+      font-size: 13px;
+    }
+  }
+}
+
+// ============================================
+// Income Entries
+// ============================================
+.entries-container {
+  margin-bottom: 24px;
+}
+
+.entries-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+}
+
+.income-entry {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 18px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  transition: all 0.2s ease;
+
+  &:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+    border-color: #10b981;
+  }
+
+  .entry-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #f3f4f6;
+  }
+
+  .entry-month {
+    display: flex;
+    flex-direction: column;
+
+    .month-name {
+      font-size: 16px;
+      font-weight: 700;
+      color: #111827;
+    }
+
+    .month-year {
+      font-size: 13px;
+      color: #6b7280;
+      font-weight: 500;
+    }
+  }
+
+  .entry-actions {
+    display: flex;
+    gap: 6px;
+  }
+
+  .btn-icon {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f3f4f6;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.2s ease;
+
+    &:hover {
+      background: #e5e7eb;
+      transform: scale(1.1);
+    }
+
+    &.delete:hover {
+      background: #fee2e2;
+      border-color: #fecaca;
+    }
+  }
+
+  .entry-amount {
+    font-size: 28px;
+    font-weight: 800;
+    color: #10b981;
+    margin-bottom: 12px;
+    letter-spacing: -0.5px;
+
+    @media (max-width: 768px) {
+      font-size: 24px;
+    }
+  }
+
+  .entry-details {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .detail-item {
+    display: flex;
+    gap: 8px;
+    font-size: 13px;
+
+    .detail-label {
+      color: #6b7280;
+      font-weight: 600;
+      min-width: 50px;
+    }
+
+    .detail-value {
+      color: #374151;
+      font-weight: 500;
+      flex: 1;
+    }
+
+    &.notes {
+      margin-top: 4px;
+      padding-top: 8px;
+      border-top: 1px solid #f3f4f6;
+
+      .detail-value {
+        font-style: italic;
+        color: #6b7280;
+      }
+    }
+  }
+
+  @media (max-width: 768px) {
+    padding: 16px;
+  }
+}
+
+// ============================================
+// Empty State
+// ============================================
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  background: linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%);
+  border: 2px dashed #d1d5db;
+  border-radius: 16px;
+  margin: 20px 0;
+
+  .empty-icon {
+    font-size: 64px;
+    margin-bottom: 16px;
+  }
+
+  h3 {
+    margin: 0 0 8px;
+    font-size: 20px;
+    color: #111827;
+  }
+
+  p {
+    margin: 0 0 20px;
+    color: #6b7280;
+    font-size: 14px;
+  }
+
+  @media (max-width: 768px) {
+    padding: 40px 16px;
+
+    .empty-icon {
+      font-size: 48px;
+    }
+
+    h3 {
+      font-size: 18px;
+    }
+  }
+}
+
+// ============================================
+// Modal
+// ============================================
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+  animation: fadeIn 0.2s ease;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+  width: 100%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+  animation: slideUp 0.3s ease;
+
+  @media (max-width: 768px) {
+    max-width: 100%;
+    border-radius: 12px;
+  }
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid #e5e7eb;
+
+  h2 {
+    margin: 0;
+    font-size: 22px;
+    font-weight: 700;
+    color: #111827;
+  }
+
+  .btn-close {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f3f4f6;
+    border: none;
+    border-radius: 8px;
+    font-size: 20px;
+    cursor: pointer;
+    color: #6b7280;
+    transition: all 0.2s ease;
+
+    &:hover {
+      background: #e5e7eb;
+      color: #111827;
+    }
+  }
+
+  @media (max-width: 768px) {
+    padding: 16px 20px;
+
+    h2 {
+      font-size: 20px;
+    }
+  }
+}
+
+// ============================================
+// Form
+// ============================================
+.income-form {
+  padding: 24px;
+
+  @media (max-width: 768px) {
+    padding: 20px;
+  }
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+
+  @media (max-width: 480px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.form-group {
+  margin-bottom: 16px;
+
+  label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #374151;
+  }
+
+  .form-control {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 15px;
+    color: #111827;
+    background: white;
+    transition: all 0.2s ease;
+
+    &:focus {
+      outline: none;
+      border-color: #10b981;
+      box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+    }
+
+    &::placeholder {
+      color: #9ca3af;
+    }
+  }
+
+  textarea.form-control {
+    resize: vertical;
+    min-height: 80px;
+    font-family: inherit;
+  }
+
+  select.form-control {
+    cursor: pointer;
+  }
+}
+
+.form-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid #e5e7eb;
+
+  @media (max-width: 480px) {
+    flex-direction: column-reverse;
+  }
+}
+
+// ============================================
+// Buttons
+// ============================================
+.btn-primary {
+  padding: 10px 24px;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.3);
+  transition: all 0.2s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+
+  @media (max-width: 480px) {
+    width: 100%;
+  }
+}
+
+.btn-secondary {
+  padding: 10px 24px;
+  background: white;
+  color: #6b7280;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: #f9fafb;
+    border-color: #9ca3af;
+    color: #374151;
+  }
+
+  @media (max-width: 480px) {
+    width: 100%;
+  }
+}
+
+// ============================================
+// Animations
+// ============================================
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
