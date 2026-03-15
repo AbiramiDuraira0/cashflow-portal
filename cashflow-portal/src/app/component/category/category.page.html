@@ -42,7 +42,12 @@
                   <span class="sort-icon">{{ getSortIcon('category_name') }}</span>
                 </div>
               </th>
-              <th class="col-subcategory">Sub Category</th>
+              <th class="col-subcategory sortable" (click)="sortBy('sub_category')">
+                <div class="header-content">
+                  <span>Sub Category</span>
+                  <span class="sort-icon">{{ getSortIcon('sub_category') }}</span>
+                </div>
+              </th>
               <th class="col-status">Active</th>
               <th class="col-date sortable" (click)="sortBy('created_at')">
                 <div class="header-content">
@@ -63,18 +68,31 @@
             @for (cat of paginated(); track cat.category_id) {
               <tr class="table-row">
                 <td class="col-icon">
-                  <span class="category-icon">{{ getCategoryIcon(cat.category_name) }}</span>
+                  <span class="category-icon">{{ cat.category_icon || getCategoryIcon(cat.category_name) }}</span>
                 </td>
                 <td class="col-name">
                   <span class="category-name">{{ cat.category_name }}</span>
                 </td>
                 <td class="col-subcategory">
-                  <span class="subcategory-name">{{ cat.sub_category || '-' }}</span>
+                  @if (cat.sub_category) {
+                    <span class="subcategory-icon">{{ cat.subcategory_icon || getCategoryIcon(cat.sub_category) }}</span>
+                    <span class="subcategory-name">{{ cat.sub_category }}</span>
+                  } @else {
+                    <span class="subcategory-name">-</span>
+                  }
                 </td>
                 <td class="col-status">
-                  <span class="status-badge" [class.active]="cat.is_active" [class.inactive]="!cat.is_active">
-                    {{ cat.is_active ? '✓ Active' : '✗ Inactive' }}
-                  </span>
+                  @if (cat.is_active) {
+                    <span class="status-badge status-active">
+                      <span class="status-badge-icon">✓</span>
+                      Active
+                    </span>
+                  } @else {
+                    <span class="status-badge status-deactivated">
+                      <span class="status-badge-icon">⊗</span>
+                      Deactivated
+                    </span>
+                  }
                 </td>
                 <td class="col-date">
                   <span class="date-value">{{ formatDate(cat.created_at) }}</span>
@@ -91,13 +109,23 @@
                       matTooltipPosition="above">
                       <span class="icon">✏️</span>
                     </button>
-                    <button 
-                      class="action-btn delete" 
-                      (click)="openDeleteModal(cat)"
-                      [matTooltip]="'Delete ' + cat.category_name"
-                      matTooltipPosition="above">
-                      <span class="icon">🗑️</span>
-                    </button>
+                    @if (cat.is_active) {
+                      <button 
+                        class="action-btn deactivate" 
+                        (click)="openDeleteModal(cat)"
+                        [matTooltip]="'Deactivate ' + cat.category_name"
+                        matTooltipPosition="above">
+                        <span class="icon">🚫</span>
+                      </button>
+                    } @else {
+                      <button 
+                        class="action-btn activate" 
+                        (click)="activateCategory(cat)"
+                        [matTooltip]="'Activate ' + cat.category_name"
+                        matTooltipPosition="above">
+                        <span class="icon">✅</span>
+                      </button>
+                    }
                   </div>
                 </td>
               </tr>
@@ -169,45 +197,89 @@
 
   @if (showAddModal()) {
     <div class="modal-overlay" (click)="closeAddModal()">
-      <div class="modal-card" (click)="$event.stopPropagation()">
+      <div class="modal-card modal-wide" (click)="$event.stopPropagation()">
         <div class="modal-header">
           <h2>Add New Category</h2>
           <button class="close-btn" (click)="closeAddModal()">✕</button>
         </div>
         <div class="modal-body">
-          <label class="form-label">
-            Category Name <span class="required">*</span>
-            <input 
-              type="text" 
-              class="form-input" 
-              placeholder="e.g., Food, Transport, Entertainment" 
-              [value]="newCategoryName()"
-              (input)="newCategoryName.set($any($event.target).value)"
-              [disabled]="isAdding()"
-              maxlength="50"
-            />
-          </label>
+          <div class="form-row">
+            <label class="form-label">
+              Category Name
+              <span class="required">*</span>
+              <input 
+                type="text" 
+                class="form-input" 
+                placeholder="e.g., Food, Transport, Entertainment" 
+                [value]="newCategoryName()"
+                (input)="newCategoryName.set($any($event.target).value)"
+                [disabled]="isAdding()"
+                maxlength="50"
+              />
+            </label>
+          </div>
           
-          <label class="form-label">
-            Sub Category <span class="optional">(Optional)</span>
-            <input 
-              type="text" 
-              class="form-input" 
-              placeholder="e.g., Groceries, Restaurants, Gas" 
-              [value]="newSubCategoryName()"
-              (input)="newSubCategoryName.set($any($event.target).value)"
-              [disabled]="isAdding()"
-              maxlength="50"
-            />
-          </label>
+          <div class="form-row">
+            <label class="form-label">
+              Category Icon
+              <span class="optional">(Auto-suggested)</span>
+              <input 
+                type="text" 
+                class="form-input icon-input" 
+                placeholder="Click to change icon" 
+                [value]="newCategoryIcon()"
+                (input)="newCategoryIcon.set($any($event.target).value)"
+                [disabled]="isAdding()"
+                maxlength="2"
+              />
+              <span class="icon-preview-inline">{{ newCategoryIcon() || getCategoryIcon(newCategoryName()) }}</span>
+            </label>
+          </div>
+          
+          <div class="form-row">
+            <label class="form-label">
+              Sub Category
+              <span class="optional">(Optional)</span>
+              <input 
+                type="text" 
+                class="form-input" 
+                placeholder="e.g., Groceries, Restaurants, Gas" 
+                [value]="newSubCategoryName()"
+                (input)="newSubCategoryName.set($any($event.target).value)"
+                [disabled]="isAdding()"
+                maxlength="50"
+              />
+            </label>
+          </div>
+          
+          @if (newSubCategoryName()) {
+            <div class="form-row">
+              <label class="form-label">
+                Sub Category Icon
+                <span class="optional">(Auto-suggested)</span>
+                <input 
+                  type="text" 
+                  class="form-input icon-input" 
+                  placeholder="Click to change icon" 
+                  [value]="newSubCategoryIcon()"
+                  (input)="newSubCategoryIcon.set($any($event.target).value)"
+                  [disabled]="isAdding()"
+                  maxlength="2"
+                />
+                <span class="icon-preview-inline">{{ newSubCategoryIcon() || getCategoryIcon(newSubCategoryName()) }}</span>
+              </label>
+            </div>
+          }
           
           @if (newCategoryName()) {
             <div class="icon-preview">
-              <span class="preview-icon">{{ getCategoryIcon(newCategoryName()) }}</span>
+              <span class="preview-icon">{{ newCategoryIcon() || getCategoryIcon(newCategoryName()) }}</span>
               <span class="preview-text">
                 <strong>{{ newCategoryName() }}</strong>
                 @if (newSubCategoryName()) {
-                  <span> → {{ newSubCategoryName() }}</span>
+                  <span class="subcategory-arrow">→</span>
+                  <span class="preview-icon-small">{{ newSubCategoryIcon() || getCategoryIcon(newSubCategoryName()) }}</span>
+                  <span>{{ newSubCategoryName() }}</span>
                 }
               </span>
             </div>
@@ -232,44 +304,88 @@
 
   @if (showEditModal() && editingCategory()) {
     <div class="modal-overlay" (click)="closeEditModal()">
-      <div class="modal-card" (click)="$event.stopPropagation()">
+      <div class="modal-card modal-wide" (click)="$event.stopPropagation()">
         <div class="modal-header">
           <h2>✏️ Edit Category</h2>
           <button class="close-btn" (click)="closeEditModal()">✕</button>
         </div>
         <div class="modal-body">
-          <label class="form-label">
-            Category Name <span class="required">*</span>
-            <input 
-              type="text" 
-              class="form-input" 
-              [value]="editingCategory()!.category_name"
-              (input)="onEditNameChange($any($event.target).value)"
-              [disabled]="isEditing()"
-              maxlength="50"
-            />
-          </label>
+          <div class="form-row">
+            <label class="form-label">
+              Category Name
+              <span class="required">*</span>
+              <input 
+                type="text" 
+                class="form-input" 
+                [value]="editingCategory()!.category_name"
+                (input)="onEditNameChange($any($event.target).value)"
+                [disabled]="isEditing()"
+                maxlength="50"
+              />
+            </label>
+          </div>
           
-          <label class="form-label">
-            Sub Category <span class="optional">(Optional)</span>
-            <input 
-              type="text" 
-              class="form-input" 
-              placeholder="e.g., Groceries, Restaurants, Gas"
-              [value]="editingCategory()!.sub_category || ''"
-              (input)="onEditSubCategoryChange($any($event.target).value)"
-              [disabled]="isEditing()"
-              maxlength="50"
-            />
-          </label>
+          <div class="form-row">
+            <label class="form-label">
+              Category Icon
+              <span class="optional">(Auto-suggested)</span>
+              <input 
+                type="text" 
+                class="form-input icon-input" 
+                placeholder="Click to change icon" 
+                [value]="editingCategory()!.category_icon || ''"
+                (input)="onEditCategoryIconChange($any($event.target).value)"
+                [disabled]="isEditing()"
+                maxlength="2"
+              />
+              <span class="icon-preview-inline">{{ editingCategory()!.category_icon || getCategoryIcon(editingCategory()!.category_name) }}</span>
+            </label>
+          </div>
+          
+          <div class="form-row">
+            <label class="form-label">
+              Sub Category
+              <span class="optional">(Optional)</span>
+              <input 
+                type="text" 
+                class="form-input" 
+                placeholder="e.g., Groceries, Restaurants, Gas"
+                [value]="editingCategory()!.sub_category || ''"
+                (input)="onEditSubCategoryChange($any($event.target).value)"
+                [disabled]="isEditing()"
+                maxlength="50"
+              />
+            </label>
+          </div>
+          
+          @if (editingCategory()!.sub_category) {
+            <div class="form-row">
+              <label class="form-label">
+                Sub Category Icon
+                <span class="optional">(Auto-suggested)</span>
+                <input 
+                  type="text" 
+                  class="form-input icon-input" 
+                  placeholder="Click to change icon" 
+                  [value]="editingCategory()!.subcategory_icon || ''"
+                  (input)="onEditSubCategoryIconChange($any($event.target).value)"
+                  [disabled]="isEditing()"
+                  maxlength="2"
+                />
+                <span class="icon-preview-inline">{{ editingCategory()!.subcategory_icon || getCategoryIcon(editingCategory()!.sub_category!) }}</span>
+              </label>
+            </div>
+          }
           
           @if (editingCategory()!.category_name) {
             <div class="icon-preview">
-              <span class="preview-icon">{{ getCategoryIcon(editingCategory()!.category_name) }}</span>
+              <span class="preview-icon">{{ editingCategory()!.category_icon || getCategoryIcon(editingCategory()!.category_name) }}</span>
               <span class="preview-text">
                 <strong>{{ editingCategory()!.category_name }}</strong>
                 @if (editingCategory()!.sub_category) {
-                  <span> → {{ editingCategory()!.sub_category }}</span>
+                  <span class="subcategory-arrow">→</span>
+                  <span class="preview-icon-small">{{ editingCategory()!.subcategory_icon || getCategoryIcon(editingCategory()!.sub_category!) }}</span>
+                  <span>{{ editingCategory()!.sub_category }}</span>
                 }
               </span>
             </div>
@@ -300,14 +416,14 @@
     <div class="modal-overlay" (click)="closeDeleteModal()">
       <div class="modal-card modal-delete" (click)="$event.stopPropagation()">
         <div class="modal-header">
-          <h2>🗑️ Delete Category</h2>
+          <h2>� Deactivate Category</h2>
           <button class="close-btn" (click)="closeDeleteModal()">✕</button>
         </div>
         <div class="modal-body">
           <div class="warning-box">
             <span class="warning-icon">⚠️</span>
-            <p>Are you sure you want to delete <strong>"{{ deletingCategory()!.category_name }}"</strong>?</p>
-            <p class="warning-note">This action will deactivate the category. It will not be visible in the list but data will be preserved.</p>
+            <p>Are you sure you want to deactivate <strong>"{{ deletingCategory()!.category_name }}"</strong>?</p>
+            <p class="warning-note">This category will be marked as deactivated and will remain visible in the list with a "Deactivated" status. You can reactivate it anytime.</p>
           </div>
         </div>
         <div class="modal-footer">
@@ -317,9 +433,9 @@
           <button class="btn btn-danger" (click)="confirmDelete()" [disabled]="isDeleting()">
             @if (isDeleting()) {
               <span class="spinner-small">⏳</span>
-              <span>Deleting...</span>
+              <span>Deactivating...</span>
             } @else {
-              <span>Delete Category</span>
+              <span>Deactivate Category</span>
             }
           </button>
         </div>

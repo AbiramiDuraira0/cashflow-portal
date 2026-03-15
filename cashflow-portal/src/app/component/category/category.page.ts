@@ -30,7 +30,7 @@ export class CategoryPage implements OnInit {
   protected query = signal<string>('');
   
   // Sorting & Pagination
-  protected sortColumn = signal<'category_name' | 'created_at' | 'updated_at'>('category_name');
+  protected sortColumn = signal<'category_name' | 'sub_category' | 'created_at' | 'updated_at'>('category_name');
   protected sortDirection = signal<'asc' | 'desc'>('asc');
   protected currentPage = signal<number>(1);
   protected pageSize = signal<number>(10);
@@ -60,6 +60,8 @@ export class CategoryPage implements OnInit {
   // Form data
   protected newCategoryName = signal<string>('');
   protected newSubCategoryName = signal<string>('');
+  protected newCategoryIcon = signal<string>('');
+  protected newSubCategoryIcon = signal<string>('');
   protected editingCategory = signal<Category | null>(null);
   protected deletingCategory = signal<Category | null>(null);
   
@@ -68,7 +70,7 @@ export class CategoryPage implements OnInit {
   protected isEditing = signal<boolean>(false);
   protected isDeleting = signal<boolean>(false);
 
-  // Computed filtered categories
+  // Computed filtered categories - now shows ALL categories (active and deactivated)
   protected filtered = computed(() => {
     const searchQuery = this.query().trim().toLowerCase();
     const allCategories = this.categories();
@@ -131,7 +133,7 @@ export class CategoryPage implements OnInit {
     this.currentPage.set(1); // Reset to first page when changing page size
   }
 
-  protected sortBy(column: 'category_name' | 'created_at' | 'updated_at'): void {
+  protected sortBy(column: 'category_name' | 'sub_category' | 'created_at' | 'updated_at'): void {
     if (this.sortColumn() === column) {
       // Toggle direction if same column
       this.sortDirection.set(SortingHelper.toggleDirection(this.sortDirection()));
@@ -143,7 +145,7 @@ export class CategoryPage implements OnInit {
     this.currentPage.set(1); // Reset to first page on sort
   }
 
-  protected getSortIcon(column: 'category_name' | 'created_at' | 'updated_at'): string {
+  protected getSortIcon(column: 'category_name' | 'sub_category' | 'created_at' | 'updated_at'): string {
     return SortingHelper.getSortIcon(column, this.sortColumn(), this.sortDirection());
   }
 
@@ -212,6 +214,8 @@ export class CategoryPage implements OnInit {
   protected openAddModal(): void {
     this.newCategoryName.set('');
     this.newSubCategoryName.set('');
+    this.newCategoryIcon.set('');
+    this.newSubCategoryIcon.set('');
     this.showAddModal.set(true);
   }
 
@@ -219,11 +223,15 @@ export class CategoryPage implements OnInit {
     this.showAddModal.set(false);
     this.newCategoryName.set('');
     this.newSubCategoryName.set('');
+    this.newCategoryIcon.set('');
+    this.newSubCategoryIcon.set('');
   }
 
   protected async addCategory(): Promise<void> {
     const name = this.newCategoryName().trim();
     const subCategory = this.newSubCategoryName().trim();
+    const categoryIcon = this.newCategoryIcon().trim();
+    const subcategoryIcon = this.newSubCategoryIcon().trim();
     
     if (!name) {
       this.showError(
@@ -238,7 +246,12 @@ export class CategoryPage implements OnInit {
     this.isAdding.set(true);
     
     try {
-      await this.categoryService.addCategory(name, subCategory || undefined);
+      await this.categoryService.addCategory(
+        name, 
+        subCategory || undefined, 
+        categoryIcon || undefined, 
+        subcategoryIcon || undefined
+      );
       this.closeAddModal();
       console.log('✅ Category added successfully:', name, subCategory || '(no subcategory)');
     } catch (error: any) {
@@ -275,6 +288,8 @@ export class CategoryPage implements OnInit {
 
     const name = cat.category_name.trim();
     const subCategory = cat.sub_category?.trim();
+    const categoryIcon = cat.category_icon?.trim();
+    const subcategoryIcon = cat.subcategory_icon?.trim();
     
     if (!name) {
       this.showError(
@@ -289,7 +304,13 @@ export class CategoryPage implements OnInit {
     this.isEditing.set(true);
     
     try {
-      await this.categoryService.updateCategory(cat.category_id, name, subCategory || undefined);
+      await this.categoryService.updateCategory(
+        cat.category_id, 
+        name, 
+        subCategory || undefined, 
+        categoryIcon || undefined, 
+        subcategoryIcon || undefined
+      );
       this.closeEditModal();
       console.log('✅ Category updated successfully:', name, subCategory || '(no subcategory)');
     } catch (error: any) {
@@ -320,8 +341,22 @@ export class CategoryPage implements OnInit {
     }
   }
 
+  protected onEditCategoryIconChange(value: string): void {
+    const cat = this.editingCategory();
+    if (cat) {
+      this.editingCategory.set({ ...cat, category_icon: value });
+    }
+  }
+
+  protected onEditSubCategoryIconChange(value: string): void {
+    const cat = this.editingCategory();
+    if (cat) {
+      this.editingCategory.set({ ...cat, subcategory_icon: value });
+    }
+  }
+
   // ============================================
-  // DELETE CATEGORY
+  // DELETE CATEGORY (Soft Delete)
   // ============================================
   
   protected openDeleteModal(category: Category): void {
@@ -343,7 +378,7 @@ export class CategoryPage implements OnInit {
     try {
       await this.categoryService.deleteCategory(cat.category_id);
       this.closeDeleteModal();
-      console.log('✅ Category deleted successfully:', cat.category_name);
+      console.log('✅ Category deactivated successfully:', cat.category_name);
     } catch (error: any) {
       ErrorHandler.logError('Delete Category', error);
       const errorResult = ErrorHandler.handleDatabaseError(error, 'delete');
@@ -355,6 +390,28 @@ export class CategoryPage implements OnInit {
       );
     } finally {
       this.isDeleting.set(false);
+    }
+  }
+
+  // ============================================
+  // ACTIVATE CATEGORY
+  // ============================================
+  
+  protected async activateCategory(category: Category): Promise<void> {
+    if (category.is_active) return; // Already active
+
+    try {
+      await this.categoryService.activateCategory(category.category_id);
+      console.log('✅ Category activated successfully:', category.category_name);
+    } catch (error: any) {
+      ErrorHandler.logError('Activate Category', error);
+      const errorResult = ErrorHandler.handleDatabaseError(error, 'update');
+      this.showError(
+        errorResult.title,
+        errorResult.message,
+        errorResult.details,
+        'error'
+      );
     }
   }
 }

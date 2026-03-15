@@ -5,6 +5,8 @@ export type Category = {
   category_id: number;
   category_name: string;
   sub_category?: string | null;
+  category_icon?: string | null;
+  subcategory_icon?: string | null;
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -89,7 +91,12 @@ export class CategoryService {
   /**
    * Add new category
    */
-  async addCategory(name: string, subCategory?: string): Promise<Category> {
+  async addCategory(
+    name: string, 
+    subCategory?: string, 
+    categoryIcon?: string, 
+    subcategoryIcon?: string
+  ): Promise<Category> {
     try {
       console.log('➕ Adding new category:', name, subCategory || '(no subcategory)');
       
@@ -98,6 +105,8 @@ export class CategoryService {
         .insert([{
           category_name: name,
           sub_category: subCategory || null,
+          category_icon: categoryIcon || null,
+          subcategory_icon: subcategoryIcon || null,
           is_active: true
         }])
         .select()
@@ -122,7 +131,13 @@ export class CategoryService {
   /**
    * Update category
    */
-  async updateCategory(id: number, name: string, subCategory?: string): Promise<Category> {
+  async updateCategory(
+    id: number, 
+    name: string, 
+    subCategory?: string, 
+    categoryIcon?: string, 
+    subcategoryIcon?: string
+  ): Promise<Category> {
     try {
       console.log('✏️ Updating category:', id, name, subCategory || '(no subcategory)');
       
@@ -131,6 +146,8 @@ export class CategoryService {
         .update({ 
           category_name: name,
           sub_category: subCategory || null,
+          category_icon: categoryIcon || null,
+          subcategory_icon: subcategoryIcon || null,
           updated_at: new Date().toISOString()
         })
         .eq('category_id', id)
@@ -163,22 +180,63 @@ export class CategoryService {
     try {
       console.log('🗑️ Deactivating category:', id);
       
-      const { error } = await this.supabase.db
+      const { data, error } = await this.supabase.db
         .from('category')
-        .update({ is_active: false })
-        .eq('category_id', id);
+        .update({ 
+          is_active: false,
+          updated_at: new Date().toISOString()
+        })
+        .eq('category_id', id)
+        .select()
+        .single();
 
       if (error) {
         console.error('❌ Error deactivating category:', error);
         throw error;
       }
 
-      // Remove from local signal
-      const filtered = this.categories().filter(cat => cat.category_id !== id);
-      this.categories.set(filtered);
+      // Update local signal with new status
+      const updated = this.categories().map(cat => 
+        cat.category_id === id ? data : cat
+      );
+      this.categories.set(updated);
       console.log('✅ Category deactivated');
     } catch (err: any) {
       console.error('❌ Delete category error:', err);
+      throw err;
+    }
+  }
+
+  /**
+   * Activate category (set is_active to true)
+   */
+  async activateCategory(id: number): Promise<void> {
+    try {
+      console.log('✅ Activating category:', id);
+      
+      const { data, error } = await this.supabase.db
+        .from('category')
+        .update({ 
+          is_active: true,
+          updated_at: new Date().toISOString()
+        })
+        .eq('category_id', id)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('❌ Error activating category:', error);
+        throw error;
+      }
+
+      // Update local signal with new status
+      const updated = this.categories().map(cat => 
+        cat.category_id === id ? data : cat
+      );
+      this.categories.set(updated);
+      console.log('✅ Category activated');
+    } catch (err: any) {
+      console.error('❌ Activate category error:', err);
       throw err;
     }
   }
