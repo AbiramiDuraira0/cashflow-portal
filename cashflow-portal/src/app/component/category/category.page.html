@@ -5,24 +5,28 @@
       <p class="subtitle">Manage your expense categories</p>
     </div>
     <div class="actions">
-      <button 
-        class="add-btn" 
-        (click)="openAddModal()"
-        [matTooltip]="'Add New Category'"
-        matTooltipPosition="below">
-        <span class="icon">➕</span>
-        <span class="text">Add Category</span>
-      </button>
       <label class="search" aria-label="Search categories">
         <span class="search-icon">🔎</span>
         <input type="text" placeholder="Search categories" [value]="query()" (input)="onSearchChange($any($event.target).value)" />
       </label>
+      
+      <button 
+        class="add-btn" 
+        (click)="openAddModal()">
+        <span class="text">Add Category</span>
+      </button>
+      
+      <!-- Category Count Badge -->
+      <div class="category-count-badge">
+        <span class="count">{{ filtered().length }}</span>
+        <span class="label">{{ filtered().length === 1 ? 'Category' : 'Categories' }}</span>
+      </div>
     </div>
   </header>
 
   @if (loading()) {
     <div class="loading-state">
-      <div class="spinner">🔄</div>
+     <div class="spinner">⏳</div>
       <p>Loading categories from database...</p>
     </div>
   } @else {
@@ -32,21 +36,40 @@
           <thead>
             <tr>
               <th class="col-icon">Icon</th>
-              <th class="col-name">Category Name</th>
+              <th class="col-name sortable" (click)="sortBy('name')">
+                <div class="header-content">
+                  <span>Category</span>
+                  <span class="sort-icon">{{ getSortIcon('name') }}</span>
+                </div>
+              </th>
+              <th class="col-subcategory">Sub Category</th>
               <th class="col-status">Active</th>
-              <th class="col-date">Created</th>
-              <th class="col-date">Updated</th>
+              <th class="col-date sortable" (click)="sortBy('created')">
+                <div class="header-content">
+                  <span>Created</span>
+                  <span class="sort-icon">{{ getSortIcon('created') }}</span>
+                </div>
+              </th>
+              <th class="col-date sortable" (click)="sortBy('updated')">
+                <div class="header-content">
+                  <span>Updated</span>
+                  <span class="sort-icon">{{ getSortIcon('updated') }}</span>
+                </div>
+              </th>
               <th class="col-actions">Actions</th>
             </tr>
           </thead>
           <tbody>
-            @for (cat of filtered(); track cat.category_id) {
+            @for (cat of paginated(); track cat.category_id) {
               <tr class="table-row">
                 <td class="col-icon">
                   <span class="category-icon">{{ getCategoryIcon(cat.category_name) }}</span>
                 </td>
                 <td class="col-name">
                   <span class="category-name">{{ cat.category_name }}</span>
+                </td>
+                <td class="col-subcategory">
+                  <span class="subcategory-name">{{ cat.sub_category || '-' }}</span>
                 </td>
                 <td class="col-status">
                   <span class="status-badge" [class.active]="cat.is_active" [class.inactive]="!cat.is_active">
@@ -82,15 +105,53 @@
           </tbody>
         </table>
       </div>
-      <div class="summary">
-        <p>
-          Showing <strong>{{ filtered().length }}</strong> 
-          {{ filtered().length === 1 ? 'category' : 'categories' }}
-          @if (query()) {
-            <span class="search-info">matching "{{ query() }}"</span>
-          }
-        </p>
-      </div>
+      
+      <!-- Pagination Controls -->
+      @if (filtered().length > 0) {
+        <div class="pagination-container">
+          <div class="pagination-info">
+            Showing {{ (currentPage() - 1) * pageSize() + 1 }} to {{ Math.min(currentPage() * pageSize(), totalItems()) }} of {{ totalItems() }} entries
+          </div>
+          
+          <div class="page-size-selector">
+            <label for="pageSize">Show:</label>
+            <select id="pageSize" [value]="pageSize()" (change)="pageSize.set(+$any($event.target).value); onPageSizeChange()">
+              <option [value]="10">10</option>
+              <option [value]="25">25</option>
+              <option [value]="50">50</option>
+              <option [value]="100">100</option>
+            </select>
+          </div>
+          
+          <div class="pagination-controls">
+            <button 
+              class="page-btn" 
+              (click)="prevPage()" 
+              [disabled]="currentPage() === 1"
+              [matTooltip]="'Previous Page'"
+              matTooltipPosition="above">
+              ◀
+            </button>
+            
+            @for (pageNum of getPageNumbers(); track pageNum) {
+              @if (pageNum === currentPage()) {
+                <button class="page-btn active">{{ pageNum }}</button>
+              } @else {
+                <button class="page-btn" (click)="goToPage(pageNum)">{{ pageNum }}</button>
+              }
+            }
+            
+            <button 
+              class="page-btn" 
+              (click)="nextPage()" 
+              [disabled]="currentPage() === totalPages()"
+              [matTooltip]="'Next Page'"
+              matTooltipPosition="above">
+              ▶
+            </button>
+          </div>
+        </div>
+      }
     } @else {
       <div class="empty">
         <div class="empty-card">
@@ -116,21 +177,40 @@
         </div>
         <div class="modal-body">
           <label class="form-label">
-            Category Name
+            Category Name <span class="required">*</span>
             <input 
               type="text" 
               class="form-input" 
-              placeholder="e.g., Groceries, Transport, Entertainment" 
+              placeholder="e.g., Food, Transport, Entertainment" 
               [value]="newCategoryName()"
               (input)="newCategoryName.set($any($event.target).value)"
               [disabled]="isAdding()"
               maxlength="50"
             />
           </label>
+          
+          <label class="form-label">
+            Sub Category <span class="optional">(Optional)</span>
+            <input 
+              type="text" 
+              class="form-input" 
+              placeholder="e.g., Groceries, Restaurants, Gas" 
+              [value]="newSubCategoryName()"
+              (input)="newSubCategoryName.set($any($event.target).value)"
+              [disabled]="isAdding()"
+              maxlength="50"
+            />
+          </label>
+          
           @if (newCategoryName()) {
             <div class="icon-preview">
               <span class="preview-icon">{{ getCategoryIcon(newCategoryName()) }}</span>
-              <span class="preview-text">Icon preview for "{{ newCategoryName() }}"</span>
+              <span class="preview-text">
+                <strong>{{ newCategoryName() }}</strong>
+                @if (newSubCategoryName()) {
+                  <span> → {{ newSubCategoryName() }}</span>
+                }
+              </span>
             </div>
           }
         </div>
@@ -160,7 +240,7 @@
         </div>
         <div class="modal-body">
           <label class="form-label">
-            Category Name
+            Category Name <span class="required">*</span>
             <input 
               type="text" 
               class="form-input" 
@@ -170,10 +250,29 @@
               maxlength="50"
             />
           </label>
+          
+          <label class="form-label">
+            Sub Category <span class="optional">(Optional)</span>
+            <input 
+              type="text" 
+              class="form-input" 
+              placeholder="e.g., Groceries, Restaurants, Gas"
+              [value]="editingCategory()!.sub_category || ''"
+              (input)="onEditSubCategoryChange($any($event.target).value)"
+              [disabled]="isEditing()"
+              maxlength="50"
+            />
+          </label>
+          
           @if (editingCategory()!.category_name) {
             <div class="icon-preview">
               <span class="preview-icon">{{ getCategoryIcon(editingCategory()!.category_name) }}</span>
-              <span class="preview-text">Icon preview for "{{ editingCategory()!.category_name }}"</span>
+              <span class="preview-text">
+                <strong>{{ editingCategory()!.category_name }}</strong>
+                @if (editingCategory()!.sub_category) {
+                  <span> → {{ editingCategory()!.sub_category }}</span>
+                }
+              </span>
             </div>
           }
           <div class="meta-display">

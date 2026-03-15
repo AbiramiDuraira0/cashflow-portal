@@ -4,6 +4,7 @@ import { SupabaseService } from './supabase.service';
 export type Category = {
   category_id: number;
   category_name: string;
+  sub_category?: string | null;
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -88,14 +89,15 @@ export class CategoryService {
   /**
    * Add new category
    */
-  async addCategory(name: string): Promise<Category> {
+  async addCategory(name: string, subCategory?: string): Promise<Category> {
     try {
-      console.log('➕ Adding new category:', name);
+      console.log('➕ Adding new category:', name, subCategory || '(no subcategory)');
       
       const { data, error } = await this.supabase.db
         .from('category')
         .insert([{
           category_name: name,
+          sub_category: subCategory || null,
           is_active: true
         }])
         .select()
@@ -120,14 +122,15 @@ export class CategoryService {
   /**
    * Update category
    */
-  async updateCategory(id: number, name: string): Promise<Category> {
+  async updateCategory(id: number, name: string, subCategory?: string): Promise<Category> {
     try {
-      console.log('✏️ Updating category:', id, name);
+      console.log('✏️ Updating category:', id, name, subCategory || '(no subcategory)');
       
       const { data, error } = await this.supabase.db
         .from('category')
         .update({ 
           category_name: name,
+          sub_category: subCategory || null,
           updated_at: new Date().toISOString()
         })
         .eq('category_id', id)
