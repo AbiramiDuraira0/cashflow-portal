@@ -63,9 +63,11 @@ export class CategoryPage implements OnInit {
   protected newSubCategoryName = signal<string>('');
   protected newCategoryIcon = signal<string>('');
   protected newSubCategoryIcon = signal<string>('');
+  protected newNotes = signal<string>('');
   protected editingCategory = signal<Category | null>(null);
   protected editCategoryIcon = signal<string>('');
   protected editSubCategoryIcon = signal<string>('');
+  protected editNotes = signal<string>('');
   protected deletingCategory = signal<Category | null>(null);
   
   // Icon picker states
@@ -306,6 +308,7 @@ export class CategoryPage implements OnInit {
     this.newSubCategoryName.set('');
     this.newCategoryIcon.set('');
     this.newSubCategoryIcon.set('');
+    this.newNotes.set('');
     this.showAddModal.set(true);
   }
 
@@ -315,6 +318,7 @@ export class CategoryPage implements OnInit {
     this.newSubCategoryName.set('');
     this.newCategoryIcon.set('');
     this.newSubCategoryIcon.set('');
+    this.newNotes.set('');
   }
 
   protected async addCategory(): Promise<void> {
@@ -322,6 +326,7 @@ export class CategoryPage implements OnInit {
     const subCategory = this.newSubCategoryName().trim();
     const categoryIcon = this.newCategoryIcon() || IconMapper.getIcon(name);
     const subcategoryIcon = subCategory ? (this.newSubCategoryIcon() || IconMapper.getIcon(subCategory)) : undefined;
+    const notes = this.newNotes().trim();
     
     if (!name) {
       this.showError(
@@ -336,12 +341,13 @@ export class CategoryPage implements OnInit {
     this.isAdding.set(true);
     
     try {
-      // Add the category with icons
+      // Add the category with icons and notes
       await this.categoryService.addCategory(
         name,
         categoryIcon,
         subCategory || undefined,
-        subcategoryIcon
+        subcategoryIcon,
+        notes || undefined
       );
       
       // Update ALL existing records with the same category name to have the same icon
@@ -376,6 +382,7 @@ export class CategoryPage implements OnInit {
     this.editingCategory.set({ ...category });
     this.editCategoryIcon.set(''); // Reset to show auto-generated icon
     this.editSubCategoryIcon.set(''); // Reset to show auto-generated icon
+    this.editNotes.set(category.notes || ''); // Load existing notes
     this.showEditModal.set(true);
   }
 
@@ -384,6 +391,7 @@ export class CategoryPage implements OnInit {
     this.editingCategory.set(null);
     this.editCategoryIcon.set('');
     this.editSubCategoryIcon.set('');
+    this.editNotes.set('');
   }
 
   protected async updateCategory(): Promise<void> {
@@ -410,6 +418,7 @@ export class CategoryPage implements OnInit {
     try {
       const categoryIcon = this.editCategoryIcon() || cat.category_icon || IconMapper.getIcon(name);
       const subcategoryIcon = subCategory ? (this.editSubCategoryIcon() || cat.subcategory_icon || IconMapper.getIcon(subCategory)) : undefined;
+      const notes = this.editNotes().trim();
       
       // First update this specific record
       await this.categoryService.updateCategory(
@@ -417,7 +426,8 @@ export class CategoryPage implements OnInit {
         name,
         categoryIcon,
         subCategory || undefined,
-        subcategoryIcon
+        subcategoryIcon,
+        notes || undefined
       );
       
       // Then update ALL records with the same category name to have consistent icons

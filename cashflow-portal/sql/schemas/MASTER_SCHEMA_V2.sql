@@ -1,7 +1,7 @@
 -- ============================================
 -- CASHFLOW PORTAL - MASTER DATABASE SCHEMA
 -- ============================================
--- Version: 2.0 (Bug Fixes V9)
+-- Version: 3.0 (Bug Fixes V10)
 -- Database: PostgreSQL 14+ / Supabase
 -- Date: March 15, 2026
 -- ============================================
@@ -22,6 +22,9 @@ CREATE TABLE IF NOT EXISTS category (
   -- Subcategory Information
   sub_category VARCHAR(255),
   subcategory_icon VARCHAR(10),                 -- Emoji icon for subcategory (e.g., 🍔, 🚕)
+  
+  -- Additional Information
+  notes TEXT,                                    -- Optional notes for the category
   
   -- Status
   is_active BOOLEAN NOT NULL DEFAULT true,

@@ -66,6 +66,7 @@
                   <span class="sort-icon">{{ getSortIcon('updated_at') }}</span>
                 </div>
               </th>
+              <th class="col-notes">Notes</th>
               <th class="col-actions">Actions</th>
             </tr>
           </thead>
@@ -106,6 +107,15 @@
                 </td>
                 <td class="col-date">
                   <span class="date-value">{{ formatDate(cat.updated_at) }}</span>
+                </td>
+                <td class="col-notes">
+                  @if (cat.notes) {
+                    <span class="notes-text" [matTooltip]="cat.notes" matTooltipPosition="above">
+                      {{ cat.notes.length > 50 ? cat.notes.substring(0, 50) + '...' : cat.notes }}
+                    </span>
+                  } @else {
+                    <span class="notes-empty">-</span>
+                  }
                 </td>
                 <td class="col-actions">
                   <div class="action-buttons">
@@ -314,6 +324,22 @@
             </div>
           </div>
           
+          <div class="form-row">
+            <label class="form-label">
+              Notes
+              <span class="optional">(Optional)</span>
+            </label>
+            <textarea 
+              class="form-textarea" 
+              placeholder="Add any additional notes or description for this category..." 
+              rows="3"
+              [value]="newNotes()"
+              (input)="newNotes.set($any($event.target).value)"
+              [disabled]="isAdding()"
+              maxlength="500"></textarea>
+            <div class="char-count">{{ newNotes().length }} / 500</div>
+          </div>
+          
           @if (newCategoryName()) {
             <div class="icon-preview">
               <span class="preview-icon">{{ newCategoryIcon() || getCategoryIcon(newCategoryName()) }}</span>
@@ -454,6 +480,22 @@
                 </div>
               }
             </div>
+          </div>
+          
+          <div class="form-row">
+            <label class="form-label">
+              Notes
+              <span class="optional">(Optional)</span>
+            </label>
+            <textarea 
+              class="form-textarea" 
+              placeholder="Add any additional notes or description for this category..." 
+              rows="3"
+              [value]="editNotes()"
+              (input)="editNotes.set($any($event.target).value)"
+              [disabled]="isEditing()"
+              maxlength="500"></textarea>
+            <div class="char-count">{{ editNotes().length }} / 500</div>
           </div>
           
           @if (editingCategory()!.category_name) {

@@ -7,6 +7,7 @@ export type Category = {
   category_icon?: string | null;
   sub_category?: string | null;
   subcategory_icon?: string | null;
+  notes?: string | null;
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -95,7 +96,8 @@ export class CategoryService {
     name: string, 
     categoryIcon?: string,
     subCategory?: string,
-    subcategoryIcon?: string
+    subcategoryIcon?: string,
+    notes?: string
   ): Promise<Category> {
     try {
       console.log('➕ Adding new category:', name, subCategory || '(no subcategory)');
@@ -107,6 +109,7 @@ export class CategoryService {
           category_icon: categoryIcon || null,
           sub_category: subCategory || null,
           subcategory_icon: subcategoryIcon || null,
+          notes: notes || null,
           is_active: true
         }])
         .select()
@@ -136,7 +139,8 @@ export class CategoryService {
     name: string, 
     categoryIcon?: string,
     subCategory?: string,
-    subcategoryIcon?: string
+    subcategoryIcon?: string,
+    notes?: string
   ): Promise<Category> {
     try {
       console.log('✏️ Updating category:', id, name, subCategory || '(no subcategory)');
@@ -148,6 +152,7 @@ export class CategoryService {
           category_icon: categoryIcon || null,
           sub_category: subCategory || null,
           subcategory_icon: subcategoryIcon || null,
+          notes: notes || null,
           updated_at: new Date().toISOString()
         })
         .eq('category_id', id)

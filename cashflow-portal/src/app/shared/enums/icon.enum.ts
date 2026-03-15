@@ -10,16 +10,22 @@ export enum CategoryIcon {
   RESTAURANT = '🍽️',
   COFFEE = '☕',
   DRINKS = '🥤',
+  CHOCOLATE = '🍫',
+  NUTS = '🥜',
   
   // Transportation
   TRANSPORT = '🚗',
   TRAVEL = '✈️',
   CAR = '🚗',
   FUEL = '⛽',
+  PETROL = '⛽',
   PARKING = '🅿️',
   TAXI = '🚕',
   BUS = '🚌',
   TRAIN = '🚆',
+  SCOOTY = '🛵',
+  REPAIR = '🔧',
+  SERVICE = '🔨',
   
   // Entertainment
   ENTERTAINMENT = '🎬',
@@ -48,12 +54,17 @@ export enum CategoryIcon {
   WATER = '💧',
   INTERNET = '📡',
   PHONE = '📱',
+  HOUSEHOLD = '🧹',
+  AC = '❄️',
+  SOFA = '🛋️',
+  CUPBOARD = '🗄️',
   
   // Education
   EDUCATION = '📚',
   SCHOOL = '🎓',
   BOOKS = '📖',
   COURSES = '📝',
+  STATIONARY = '✏️',
   
   // Finance
   SALARY = '💼',
@@ -61,6 +72,10 @@ export enum CategoryIcon {
   INVESTMENT = '📈',
   SAVINGS = '💰',
   BANK = '🏦',
+  GOLD = '🥇',
+  SILVER = '🥈',
+  GOLD_BAR = '🟨',
+  SILVER_BAR = '⬜',
   
   // Personal Care
   PERSONAL = '👤',
@@ -83,10 +98,13 @@ export enum CategoryIcon {
   GIFT = '🎁',
   CHARITY = '🤝',
   PARTY = '🎉',
+  GIRLS_GROUP = '👭',
   
   // Insurance
   INSURANCE = '🛡️',
   HEALTH_INSURANCE = '⚕️',
+  CAR_INSURANCE = '🚗',
+  LIFE_INSURANCE = '❤️',
   
   // Bills
   BILLS = '📄',
@@ -112,6 +130,12 @@ export class IconMapper {
     'coffee': CategoryIcon.COFFEE,
     'drinks': CategoryIcon.DRINKS,
     'beverage': CategoryIcon.DRINKS,
+    'chocolate': CategoryIcon.CHOCOLATE,
+    'chocolates': CategoryIcon.CHOCOLATE,
+    'sweets': CategoryIcon.CHOCOLATE,
+    'nuts': CategoryIcon.NUTS,
+    'dry fruits': CategoryIcon.NUTS,
+    'snacks': CategoryIcon.NUTS,
     
     // Transportation
     'transport': CategoryIcon.TRANSPORT,
@@ -126,6 +150,12 @@ export class IconMapper {
     'uber': CategoryIcon.TAXI,
     'bus': CategoryIcon.BUS,
     'train': CategoryIcon.TRAIN,
+    'scooty': CategoryIcon.SCOOTY,
+    'scooter': CategoryIcon.SCOOTY,
+    'bike': CategoryIcon.SCOOTY,
+    'repair': CategoryIcon.REPAIR,
+    'service': CategoryIcon.SERVICE,
+    'maintenance': CategoryIcon.SERVICE,
     
     // Entertainment
     'entertainment': CategoryIcon.ENTERTAINMENT,
@@ -158,12 +188,29 @@ export class IconMapper {
     'water': CategoryIcon.WATER,
     'internet': CategoryIcon.INTERNET,
     'phone': CategoryIcon.PHONE,
+    'household': CategoryIcon.HOUSEHOLD,
+    'household items': CategoryIcon.HOUSEHOLD,
+    'house hold': CategoryIcon.HOUSEHOLD,
+    'ac': CategoryIcon.AC,
+    'air conditioner': CategoryIcon.AC,
+    'cooling': CategoryIcon.AC,
+    'sofa': CategoryIcon.SOFA,
+    'couch': CategoryIcon.SOFA,
+    'furniture': CategoryIcon.SOFA,
+    'cupboard': CategoryIcon.CUPBOARD,
+    'cabinet': CategoryIcon.CUPBOARD,
+    'storage': CategoryIcon.CUPBOARD,
     
     // Education
     'education': CategoryIcon.EDUCATION,
     'school': CategoryIcon.SCHOOL,
     'books': CategoryIcon.BOOKS,
     'courses': CategoryIcon.COURSES,
+    'stationary': CategoryIcon.STATIONARY,
+    'stationery': CategoryIcon.STATIONARY,
+    'office supplies': CategoryIcon.STATIONARY,
+    'pens': CategoryIcon.STATIONARY,
+    'pencils': CategoryIcon.STATIONARY,
     
     // Finance
     'salary': CategoryIcon.SALARY,
@@ -171,6 +218,15 @@ export class IconMapper {
     'investment': CategoryIcon.INVESTMENT,
     'savings': CategoryIcon.SAVINGS,
     'bank': CategoryIcon.BANK,
+    'gold': CategoryIcon.GOLD,
+    'silver': CategoryIcon.SILVER,
+    'precious metals': CategoryIcon.GOLD,
+    'gold bar': CategoryIcon.GOLD_BAR,
+    'gold bars': CategoryIcon.GOLD_BAR,
+    'gold investment': CategoryIcon.GOLD_BAR,
+    'silver bar': CategoryIcon.SILVER_BAR,
+    'silver bars': CategoryIcon.SILVER_BAR,
+    'silver investment': CategoryIcon.SILVER_BAR,
     
     // Personal
     'personal': CategoryIcon.PERSONAL,
@@ -194,9 +250,17 @@ export class IconMapper {
     'gift': CategoryIcon.GIFT,
     'charity': CategoryIcon.CHARITY,
     'party': CategoryIcon.PARTY,
+    'girls group': CategoryIcon.GIRLS_GROUP,
+    'girls': CategoryIcon.GIRLS_GROUP,
+    'ladies': CategoryIcon.GIRLS_GROUP,
+    'women': CategoryIcon.GIRLS_GROUP,
+    'friends': CategoryIcon.GIRLS_GROUP,
     
     // Insurance
     'insurance': CategoryIcon.INSURANCE,
+    'car insurance': CategoryIcon.CAR_INSURANCE,
+    'vehicle insurance': CategoryIcon.CAR_INSURANCE,
+    'life insurance': CategoryIcon.LIFE_INSURANCE,
     
     // Bills
     'bills': CategoryIcon.BILLS,
@@ -238,19 +302,24 @@ export class IconMapper {
     return [
       // Food & Dining
       { category: 'Food & Dining', icon: '🍔', keywords: ['food', 'burger', 'meal'] },
-      { category: 'Food & Dining', icon: '🛒', keywords: ['groceries', 'shopping', 'cart'] },
+      { category: 'Food & Dining', icon: '🛒', keywords: ['groceries', 'shopping', 'cart', 'grocery'] },
       { category: 'Food & Dining', icon: '🍽️', keywords: ['restaurant', 'dining', 'plate'] },
       { category: 'Food & Dining', icon: '☕', keywords: ['coffee', 'cafe', 'tea'] },
       { category: 'Food & Dining', icon: '🥤', keywords: ['drinks', 'beverage', 'juice'] },
+      { category: 'Food & Dining', icon: '🍫', keywords: ['chocolate', 'sweets', 'candy', 'dessert'] },
+      { category: 'Food & Dining', icon: '🥜', keywords: ['nuts', 'dry fruits', 'snacks', 'almonds'] },
       
       // Transportation
       { category: 'Transportation', icon: '🚗', keywords: ['car', 'transport', 'vehicle'] },
       { category: 'Transportation', icon: '✈️', keywords: ['travel', 'flight', 'airplane'] },
-      { category: 'Transportation', icon: '⛽', keywords: ['fuel', 'gas', 'petrol'] },
+      { category: 'Transportation', icon: '⛽', keywords: ['fuel', 'gas', 'petrol', 'diesel'] },
       { category: 'Transportation', icon: '🅿️', keywords: ['parking', 'park'] },
       { category: 'Transportation', icon: '🚕', keywords: ['taxi', 'cab', 'uber'] },
       { category: 'Transportation', icon: '🚌', keywords: ['bus', 'public transport'] },
       { category: 'Transportation', icon: '🚆', keywords: ['train', 'railway', 'metro'] },
+      { category: 'Transportation', icon: '🛵', keywords: ['scooty', 'scooter', 'bike', 'two wheeler'] },
+      { category: 'Transportation', icon: '🔧', keywords: ['repair', 'fix', 'mechanic', 'tools'] },
+      { category: 'Transportation', icon: '🔨', keywords: ['service', 'maintenance', 'repair work'] },
       
       // Entertainment
       { category: 'Entertainment', icon: '🎬', keywords: ['movie', 'cinema', 'film'] },
@@ -277,12 +346,17 @@ export class IconMapper {
       { category: 'Home & Utilities', icon: '⚡', keywords: ['electricity', 'power', 'energy'] },
       { category: 'Home & Utilities', icon: '💧', keywords: ['water', 'liquid'] },
       { category: 'Home & Utilities', icon: '📡', keywords: ['internet', 'wifi', 'network'] },
+      { category: 'Home & Utilities', icon: '🧹', keywords: ['household', 'household items', 'cleaning', 'house hold'] },
+      { category: 'Home & Utilities', icon: '❄️', keywords: ['ac', 'air conditioner', 'cooling', 'cold'] },
+      { category: 'Home & Utilities', icon: '🛋️', keywords: ['sofa', 'couch', 'furniture', 'living room'] },
+      { category: 'Home & Utilities', icon: '🗄️', keywords: ['cupboard', 'cabinet', 'storage', 'wardrobe'] },
       
       // Education
       { category: 'Education', icon: '📚', keywords: ['education', 'books', 'learning'] },
       { category: 'Education', icon: '🎓', keywords: ['school', 'graduation', 'university'] },
       { category: 'Education', icon: '📖', keywords: ['book', 'reading', 'study'] },
       { category: 'Education', icon: '📝', keywords: ['courses', 'notes', 'writing'] },
+      { category: 'Education', icon: '✏️', keywords: ['stationary', 'stationery', 'pens', 'pencils', 'office supplies'] },
       
       // Finance
       { category: 'Finance', icon: '💼', keywords: ['salary', 'work', 'job', 'briefcase'] },
@@ -291,6 +365,10 @@ export class IconMapper {
       { category: 'Finance', icon: '🏦', keywords: ['bank', 'banking', 'financial'] },
       { category: 'Finance', icon: '💸', keywords: ['expense', 'spending', 'payment'] },
       { category: 'Finance', icon: '💵', keywords: ['cash', 'dollar', 'currency'] },
+      { category: 'Finance', icon: '🥇', keywords: ['gold', 'precious metal', 'investment', 'first'] },
+      { category: 'Finance', icon: '🥈', keywords: ['silver', 'precious metal', 'investment', 'second'] },
+      { category: 'Finance', icon: '🟨', keywords: ['gold bar', 'gold bars', 'bullion', 'gold investment'] },
+      { category: 'Finance', icon: '⬜', keywords: ['silver bar', 'silver bars', 'bullion', 'silver investment'] },
       
       // Personal Care
       { category: 'Personal Care', icon: '👤', keywords: ['personal', 'user', 'profile'] },
@@ -311,11 +389,14 @@ export class IconMapper {
       // Social & Gifts
       { category: 'Social & Gifts', icon: '🎁', keywords: ['gift', 'present', 'surprise'] },
       { category: 'Social & Gifts', icon: '🤝', keywords: ['charity', 'donation', 'help'] },
+      { category: 'Social & Gifts', icon: '👭', keywords: ['girls group', 'girls', 'ladies', 'women', 'friends', 'ladies night'] },
       
       // Insurance & Bills
       { category: 'Insurance & Bills', icon: '🛡️', keywords: ['insurance', 'protection', 'coverage'] },
       { category: 'Insurance & Bills', icon: '⚕️', keywords: ['health insurance', 'medical insurance'] },
-      { category: 'Insurance & Bills', icon: '📄', keywords: ['bills', 'invoice', 'payment'] },
+      { category: 'Insurance & Bills', icon: '�', keywords: ['car insurance', 'vehicle insurance', 'auto'] },
+      { category: 'Insurance & Bills', icon: '❤️', keywords: ['life insurance', 'family protection'] },
+      { category: 'Insurance & Bills', icon: '�📄', keywords: ['bills', 'invoice', 'payment'] },
       { category: 'Insurance & Bills', icon: '📱', keywords: ['subscription', 'service', 'monthly'] },
       
       // Shopping & Fashion
@@ -344,7 +425,7 @@ export class IconMapper {
       { category: 'Technology & Internet', icon: '💻', keywords: ['laptop', 'computer', 'pc', 'work', 'technology'] },
       { category: 'Technology & Internet', icon: '🖥️', keywords: ['desktop', 'computer', 'monitor', 'workstation', 'pc'] },
       { category: 'Technology & Internet', icon: '📡', keywords: ['wifi', 'internet', 'wireless', 'network', 'connectivity'] },
-      { category: 'Technology & Internet', icon: '🌐', keywords: ['internet', 'web', 'online', 'network', 'global'] },
+      { category: 'Technology & Internet', icon: '🌐', keywords: ['internet', 'web', 'online', 'network', 'global', 'google'] },
       { category: 'Technology & Internet', icon: '📶', keywords: ['signal', 'wifi', 'network', 'bars', 'connectivity'] },
       { category: 'Technology & Internet', icon: '⚡', keywords: ['electricity', 'power', 'energy', 'electric bill', 'fast'] },
       
