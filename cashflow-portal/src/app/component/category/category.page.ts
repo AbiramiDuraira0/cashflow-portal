@@ -78,6 +78,11 @@ export class CategoryPage implements OnInit {
   protected filteredIcons = computed(() => {
     return IconMapper.getAllIcons();
   });
+
+  // Grouped icons for organized dropdown display
+  protected groupedIcons = computed(() => {
+    return IconMapper.getGroupedIcons();
+  });
   
   // Operation loading states
   protected isAdding = signal<boolean>(false);

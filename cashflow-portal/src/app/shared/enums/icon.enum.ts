@@ -320,6 +320,9 @@ export class IconMapper {
       
       // Shopping & Fashion
       { category: 'Shopping & Fashion', icon: '🛍️', keywords: ['shopping', 'bags', 'purchase', 'buy', 'store'] },
+      { category: 'Shopping & Fashion', icon: '�', keywords: ['cart', 'shopping cart', 'online shopping', 'ecommerce', 'buy'] },
+      { category: 'Shopping & Fashion', icon: '🛵', keywords: ['scooter', 'delivery', 'food delivery', 'zomato', 'swiggy'] },
+      { category: 'Shopping & Fashion', icon: '💳', keywords: ['credit card', 'payment', 'card', 'online payment', 'transaction'] },
       { category: 'Shopping & Fashion', icon: '👗', keywords: ['dress', 'clothing', 'fashion', 'womens wear', 'girls'] },
       { category: 'Shopping & Fashion', icon: '👠', keywords: ['heels', 'shoes', 'high heels', 'footwear', 'ladies'] },
       { category: 'Shopping & Fashion', icon: '👜', keywords: ['handbag', 'purse', 'bag', 'accessories', 'ladies bag'] },
@@ -335,6 +338,15 @@ export class IconMapper {
       { category: 'Shopping & Fashion', icon: '🎀', keywords: ['ribbon', 'bow', 'gift', 'decoration', 'accessories'] },
       { category: 'Shopping & Fashion', icon: '👘', keywords: ['kimono', 'robe', 'clothing', 'traditional', 'fashion'] },
       { category: 'Shopping & Fashion', icon: '💎', keywords: ['diamond', 'gem', 'jewelry', 'luxury', 'precious'] },
+      
+      // Technology & Internet
+      { category: 'Technology & Internet', icon: '📱', keywords: ['mobile', 'phone', 'smartphone', 'device', 'cellular'] },
+      { category: 'Technology & Internet', icon: '💻', keywords: ['laptop', 'computer', 'pc', 'work', 'technology'] },
+      { category: 'Technology & Internet', icon: '🖥️', keywords: ['desktop', 'computer', 'monitor', 'workstation', 'pc'] },
+      { category: 'Technology & Internet', icon: '📡', keywords: ['wifi', 'internet', 'wireless', 'network', 'connectivity'] },
+      { category: 'Technology & Internet', icon: '🌐', keywords: ['internet', 'web', 'online', 'network', 'global'] },
+      { category: 'Technology & Internet', icon: '📶', keywords: ['signal', 'wifi', 'network', 'bars', 'connectivity'] },
+      { category: 'Technology & Internet', icon: '⚡', keywords: ['electricity', 'power', 'energy', 'electric bill', 'fast'] },
       
       // People & Girls
       { category: 'People & Girls', icon: '👧', keywords: ['girl', 'child', 'daughter', 'young girl', 'kid'] },
@@ -399,6 +411,46 @@ export class IconMapper {
       item.keywords.some(keyword => keyword.includes(normalized)) ||
       item.category.toLowerCase().includes(normalized)
     );
+  }
+
+  /**
+   * Get icons grouped by category for dropdown display
+   * Returns array of groups with category name and icons
+   */
+  static getGroupedIcons(): Array<{ category: string; icons: Array<{ icon: string; keywords: string[] }> }> {
+    const allIcons = this.getAllIcons();
+    const grouped = new Map<string, Array<{ icon: string; keywords: string[] }>>();
+
+    // Group icons by category
+    allIcons.forEach(item => {
+      if (!grouped.has(item.category)) {
+        grouped.set(item.category, []);
+      }
+      grouped.get(item.category)!.push({ icon: item.icon, keywords: item.keywords });
+    });
+
+    // Convert to array and sort by category priority
+    const categoryOrder = [
+      'Food & Dining',
+      'Transport',
+      'Entertainment',
+      'Shopping & Fashion',
+      'Technology & Internet',
+      'Health & Fitness',
+      'Bills & Utilities',
+      'Education',
+      'People & Girls',
+      'Shipping & Delivery',
+      'Letters',
+      'Other'
+    ];
+
+    return categoryOrder
+      .filter(cat => grouped.has(cat))
+      .map(cat => ({
+        category: cat,
+        icons: grouped.get(cat)!
+      }));
   }
 }
 

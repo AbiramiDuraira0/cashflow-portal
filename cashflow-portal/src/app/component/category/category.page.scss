@@ -1178,7 +1178,7 @@
 .icon-picker-dropdown {
   position: absolute;
   top: 52px;
-  right: 0;
+  right: 0;  // Back to right side
   width: 300px;
   max-height: 350px;
   background: #ffffff;
@@ -1191,19 +1191,18 @@
   animation: dropdownSlide 0.2s ease-out;
   overflow: hidden;
   
-  // Responsive positioning - switch to left if near right edge
+  // Responsive positioning
   @media (max-width: 768px) {
     right: auto;
     left: 0;
     width: 280px;
   }
   
-  // Ensure dropdown stays within viewport
+  // Ensure dropdown stays within viewport on small screens
   @media (max-width: 480px) {
     position: fixed;
     left: 50%;
     transform: translateX(-50%);
-    right: auto;
     width: 90vw;
     max-width: 320px;
   }
@@ -1220,18 +1219,13 @@
   }
 }
 
-.icon-grid {
-  display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  gap: 6px;
-  padding: 12px;
+// Grouped icon grid container
+.icon-grid-grouped {
   max-height: 350px;
   overflow-y: auto;
+  padding: 8px;
   
   @media (max-width: 480px) {
-    grid-template-columns: repeat(5, 1fr);
-    gap: 8px;
-    padding: 10px;
     max-height: 300px;
   }
   
@@ -1251,6 +1245,48 @@
     &:hover {
       background: #64748b;
     }
+  }
+}
+
+// Icon category group with separator
+.icon-category-group {
+  margin-bottom: 8px;
+  
+  &:not(:last-child) {
+    border-bottom: 2px solid #e0f2fe;
+    padding-bottom: 12px;
+  }
+  
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+// Category label styling
+.category-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #0369a1;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 6px 8px;
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+  border-radius: 6px;
+  margin-bottom: 8px;
+  text-align: center;
+  border: 1px solid #bae6fd;
+  box-shadow: 0 1px 3px rgba(3, 105, 161, 0.1);
+}
+
+.icon-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 6px;
+  padding: 4px;
+  
+  @media (max-width: 480px) {
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8px;
   }
 }
 

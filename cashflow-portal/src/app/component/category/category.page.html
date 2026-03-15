@@ -238,15 +238,22 @@
                 </button>
                 @if (showCategoryIconPicker()) {
                   <div class="icon-picker-dropdown">
-                    <div class="icon-grid">
-                      @for (item of filteredIcons(); track item.icon) {
-                        <button 
-                          type="button"
-                          class="icon-grid-item" 
-                          (click)="selectCategoryIcon(item.icon)"
-                          [title]="item.category">
-                          {{ item.icon }}
-                        </button>
+                    <div class="icon-grid-grouped">
+                      @for (group of groupedIcons(); track group.category) {
+                        <div class="icon-category-group">
+                          <div class="category-label">{{ group.category }}</div>
+                          <div class="icon-grid">
+                            @for (item of group.icons; track item.icon) {
+                              <button 
+                                type="button"
+                                class="icon-grid-item" 
+                                (click)="selectCategoryIcon(item.icon)"
+                                [title]="group.category">
+                                {{ item.icon }}
+                              </button>
+                            }
+                          </div>
+                        </div>
                       }
                     </div>
                   </div>
@@ -282,15 +289,22 @@
                   </button>
                   @if (showSubCategoryIconPicker()) {
                     <div class="icon-picker-dropdown">
-                      <div class="icon-grid">
-                        @for (item of filteredIcons(); track item.icon) {
-                          <button 
-                            type="button"
-                            class="icon-grid-item" 
-                            (click)="selectSubCategoryIcon(item.icon)"
-                            [title]="item.category">
-                            {{ item.icon }}
-                          </button>
+                      <div class="icon-grid-grouped">
+                        @for (group of groupedIcons(); track group.category) {
+                          <div class="icon-category-group">
+                            <div class="category-label">{{ group.category }}</div>
+                            <div class="icon-grid">
+                              @for (item of group.icons; track item.icon) {
+                                <button 
+                                  type="button"
+                                  class="icon-grid-item" 
+                                  (click)="selectSubCategoryIcon(item.icon)"
+                                  [title]="group.category">
+                                  {{ item.icon }}
+                                </button>
+                              }
+                            </div>
+                          </div>
                         }
                       </div>
                     </div>
@@ -366,15 +380,22 @@
                 </button>
                 @if (showEditCategoryIconPicker()) {
                   <div class="icon-picker-dropdown">
-                    <div class="icon-grid">
-                      @for (item of filteredIcons(); track item.icon) {
-                        <button 
-                          type="button"
-                          class="icon-grid-item" 
-                          (click)="selectEditCategoryIcon(item.icon)"
-                          [title]="item.category">
-                          {{ item.icon }}
-                        </button>
+                    <div class="icon-grid-grouped">
+                      @for (group of groupedIcons(); track group.category) {
+                        <div class="icon-category-group">
+                          <div class="category-label">{{ group.category }}</div>
+                          <div class="icon-grid">
+                            @for (item of group.icons; track item.icon) {
+                              <button 
+                                type="button"
+                                class="icon-grid-item" 
+                                (click)="selectEditCategoryIcon(item.icon)"
+                                [title]="group.category">
+                                {{ item.icon }}
+                              </button>
+                            }
+                          </div>
+                        </div>
                       }
                     </div>
                   </div>
@@ -410,15 +431,22 @@
                   </button>
                   @if (showEditSubCategoryIconPicker()) {
                     <div class="icon-picker-dropdown">
-                      <div class="icon-grid">
-                        @for (item of filteredIcons(); track item.icon) {
-                          <button 
-                            type="button"
-                            class="icon-grid-item" 
-                            (click)="selectEditSubCategoryIcon(item.icon)"
-                            [title]="item.category">
-                            {{ item.icon }}
-                          </button>
+                      <div class="icon-grid-grouped">
+                        @for (group of groupedIcons(); track group.category) {
+                          <div class="icon-category-group">
+                            <div class="category-label">{{ group.category }}</div>
+                            <div class="icon-grid">
+                              @for (item of group.icons; track item.icon) {
+                                <button 
+                                  type="button"
+                                  class="icon-grid-item" 
+                                  (click)="selectEditSubCategoryIcon(item.icon)"
+                                  [title]="group.category">
+                                  {{ item.icon }}
+                                </button>
+                              }
+                            </div>
+                          </div>
                         }
                       </div>
                     </div>
