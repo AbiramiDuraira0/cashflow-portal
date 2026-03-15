@@ -36,24 +36,24 @@
           <thead>
             <tr>
               <th class="col-icon">Icon</th>
-              <th class="col-name sortable" (click)="sortBy('name')">
+              <th class="col-name sortable" (click)="sortBy('category_name')">
                 <div class="header-content">
                   <span>Category</span>
-                  <span class="sort-icon">{{ getSortIcon('name') }}</span>
+                  <span class="sort-icon">{{ getSortIcon('category_name') }}</span>
                 </div>
               </th>
               <th class="col-subcategory">Sub Category</th>
               <th class="col-status">Active</th>
-              <th class="col-date sortable" (click)="sortBy('created')">
+              <th class="col-date sortable" (click)="sortBy('created_at')">
                 <div class="header-content">
                   <span>Created</span>
-                  <span class="sort-icon">{{ getSortIcon('created') }}</span>
+                  <span class="sort-icon">{{ getSortIcon('created_at') }}</span>
                 </div>
               </th>
-              <th class="col-date sortable" (click)="sortBy('updated')">
+              <th class="col-date sortable" (click)="sortBy('updated_at')">
                 <div class="header-content">
                   <span>Updated</span>
-                  <span class="sort-icon">{{ getSortIcon('updated') }}</span>
+                  <span class="sort-icon">{{ getSortIcon('updated_at') }}</span>
                 </div>
               </th>
               <th class="col-actions">Actions</th>
@@ -110,16 +110,15 @@
       @if (filtered().length > 0) {
         <div class="pagination-container">
           <div class="pagination-info">
-            Showing {{ (currentPage() - 1) * pageSize() + 1 }} to {{ Math.min(currentPage() * pageSize(), totalItems()) }} of {{ totalItems() }} entries
+            {{ paginationInfo() }}
           </div>
           
           <div class="page-size-selector">
             <label for="pageSize">Show:</label>
             <select id="pageSize" [value]="pageSize()" (change)="pageSize.set(+$any($event.target).value); onPageSizeChange()">
-              <option [value]="10">10</option>
-              <option [value]="25">25</option>
-              <option [value]="50">50</option>
-              <option [value]="100">100</option>
+              @for (size of pageSizeOptions; track size) {
+                <option [value]="size">{{ size }}</option>
+              }
             </select>
           </div>
           
@@ -328,3 +327,14 @@
     </div>
   }
 </section>
+
+<!-- Error Popup Component -->
+<app-error-popup
+  [isOpen]="errorModal.isOpen()"
+  [title]="errorModal.title()"
+  [message]="errorModal.message()"
+  [details]="errorModal.details()"
+  [type]="errorModal.type()"
+  [showDetails]="true"
+  (closed)="closeErrorModal()"
+/>

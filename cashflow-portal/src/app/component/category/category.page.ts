@@ -4,11 +4,20 @@ import { FormsModule } from '@angular/forms';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { CategoryService, Category } from '../../services/category.service';
 import { ErrorHandler } from '../../utils/error-handler.util';
+import { 
+  PaginationHelper, 
+  SortingHelper, 
+  IconMapper, 
+  Status, 
+  StatusHelper,
+  ErrorPopupComponent,
+  type ErrorType
+} from '../../shared';
 
 @Component({
   selector: 'app-category',
   standalone: true,
-  imports: [CommonModule, FormsModule, MatTooltipModule],
+  imports: [CommonModule, FormsModule, MatTooltipModule, ErrorPopupComponent],
   templateUrl: './category.page.html',
   styleUrls: ['./category.page.scss']
 })
@@ -21,10 +30,15 @@ export class CategoryPage implements OnInit {
   protected query = signal<string>('');
   
   // Sorting & Pagination
-  protected sortColumn = signal<'name' | 'created' | 'updated'>('name');
+  protected sortColumn = signal<'category_name' | 'created_at' | 'updated_at'>('category_name');
   protected sortDirection = signal<'asc' | 'desc'>('asc');
   protected currentPage = signal<number>(1);
   protected pageSize = signal<number>(10);
+  protected readonly pageSizeOptions = PaginationHelper.PAGE_SIZE_OPTIONS;
+  
+  // Expose utilities to template
+  protected readonly Status = Status;
+  protected readonly StatusHelper = StatusHelper;
   
   // Expose Math to template
   protected Math = Math;
@@ -33,13 +47,15 @@ export class CategoryPage implements OnInit {
   protected showAddModal = signal<boolean>(false);
   protected showEditModal = signal<boolean>(false);
   protected showDeleteModal = signal<boolean>(false);
-  protected showErrorModal = signal<boolean>(false);
   
-  // Error modal data
-  protected errorTitle = signal<string>('');
-  protected errorMessage = signal<string>('');
-  protected errorDetails = signal<string>('');
-  protected errorIcon = signal<string>('⚠️');
+  // Error modal state
+  protected errorModal = {
+    isOpen: signal<boolean>(false),
+    title: signal<string>(''),
+    message: signal<string>(''),
+    details: signal<string>(''),
+    type: signal<ErrorType>('error')
+  };
   
   // Form data
   protected newCategoryName = signal<string>('');
@@ -65,57 +81,32 @@ export class CategoryPage implements OnInit {
     );
   });
 
-  // Computed sorted categories
+  // Computed sorted categories using SortingHelper
   protected sorted = computed(() => {
-    const cats = [...this.filtered()];
+    const cats = this.filtered();
     const col = this.sortColumn();
     const dir = this.sortDirection();
     
-    return cats.sort((a, b) => {
-      let valA: string | Date;
-      let valB: string | Date;
-      
-      switch (col) {
-        case 'name':
-          valA = a.category_name.toLowerCase();
-          valB = b.category_name.toLowerCase();
-          break;
-        case 'created':
-          valA = new Date(a.created_at);
-          valB = new Date(b.created_at);
-          break;
-        case 'updated':
-          valA = new Date(a.updated_at);
-          valB = new Date(b.updated_at);
-          break;
-        default:
-          return 0;
-      }
-      
-      if (valA < valB) return dir === 'asc' ? -1 : 1;
-      if (valA > valB) return dir === 'asc' ? 1 : -1;
-      return 0;
-    });
+    return SortingHelper.sort(cats, col, dir);
   });
 
   // Computed total items
   protected totalItems = computed(() => this.sorted().length);
 
-  // Computed paginated categories
-  protected paginated = computed(() => {
-    const sorted = this.sorted();
-    const page = this.currentPage();
-    const perPage = this.pageSize();
-    const start = (page - 1) * perPage;
-    const end = start + perPage;
-    
-    return sorted.slice(start, end);
+  // Computed paginated categories using PaginationHelper
+  protected paginationResult = computed(() => {
+    return PaginationHelper.paginate(
+      this.sorted(),
+      this.currentPage(),
+      this.pageSize()
+    );
   });
-
-  // Computed total pages
-  protected totalPages = computed(() => {
-    return Math.ceil(this.sorted().length / this.pageSize());
-  });
+  
+  protected paginated = computed(() => this.paginationResult().items);
+  protected totalPages = computed(() => this.paginationResult().totalPages);
+  protected paginationInfo = computed(() => 
+    PaginationHelper.getPaginationInfo(this.paginationResult())
+  );
 
   protected skeletons = Array.from({ length: 6 });
 
@@ -140,10 +131,10 @@ export class CategoryPage implements OnInit {
     this.currentPage.set(1); // Reset to first page when changing page size
   }
 
-  protected sortBy(column: 'name' | 'created' | 'updated'): void {
+  protected sortBy(column: 'category_name' | 'created_at' | 'updated_at'): void {
     if (this.sortColumn() === column) {
       // Toggle direction if same column
-      this.sortDirection.set(this.sortDirection() === 'asc' ? 'desc' : 'asc');
+      this.sortDirection.set(SortingHelper.toggleDirection(this.sortDirection()));
     } else {
       // New column, default to ascending
       this.sortColumn.set(column);
@@ -152,9 +143,8 @@ export class CategoryPage implements OnInit {
     this.currentPage.set(1); // Reset to first page on sort
   }
 
-  protected getSortIcon(column: 'name' | 'created' | 'updated'): string {
-    if (this.sortColumn() !== column) return '↕️';
-    return this.sortDirection() === 'asc' ? '↑' : '↓';
+  protected getSortIcon(column: 'category_name' | 'created_at' | 'updated_at'): string {
+    return SortingHelper.getSortIcon(column, this.sortColumn(), this.sortDirection());
   }
 
   protected goToPage(page: number): void {
@@ -163,36 +153,22 @@ export class CategoryPage implements OnInit {
   }
 
   protected nextPage(): void {
-    if (this.currentPage() < this.totalPages()) {
+    if (PaginationHelper.canGoNext(this.currentPage(), this.totalPages())) {
       this.currentPage.set(this.currentPage() + 1);
     }
   }
 
   protected prevPage(): void {
-    if (this.currentPage() > 1) {
+    if (PaginationHelper.canGoPrevious(this.currentPage())) {
       this.currentPage.set(this.currentPage() - 1);
     }
   }
 
   protected getPageNumbers(): number[] {
-    const total = this.totalPages();
-    const current = this.currentPage();
-    const pages: number[] = [];
-    
-    // Always show first page
-    pages.push(1);
-    
-    // Show pages around current page
-    for (let i = Math.max(2, current - 1); i <= Math.min(total - 1, current + 1); i++) {
-      if (!pages.includes(i)) pages.push(i);
-    }
-    
-    // Always show last page
-    if (total > 1 && !pages.includes(total)) {
-      pages.push(total);
-    }
-    
-    return pages;
+    return PaginationHelper.getPageNumbers(
+      this.currentPage(),
+      this.totalPages()
+    );
   }
 
   protected formatDate(dateStr: string): string {
@@ -205,195 +181,28 @@ export class CategoryPage implements OnInit {
   }
 
   /**
-   * Get relevant icon for category based on name
+   * Show error popup (replaces alert)
+   */
+  private showError(title: string, message: string, details?: string, type: ErrorType = 'error'): void {
+    this.errorModal.title.set(title);
+    this.errorModal.message.set(message);
+    this.errorModal.details.set(details || '');
+    this.errorModal.type.set(type);
+    this.errorModal.isOpen.set(true);
+  }
+
+  /**
+   * Close error popup
+   */
+  protected closeErrorModal(): void {
+    this.errorModal.isOpen.set(false);
+  }
+
+  /**
+   * Get relevant icon for category based on name using IconMapper
    */
   protected getCategoryIcon(categoryName: string): string {
-    const name = categoryName.toLowerCase();
-    
-    // Enhanced map with comprehensive keywords and better icons
-    const iconMap: Record<string, string> = {
-      // Food & Dining
-      'food': '🍔',
-      'groceries': '🛒',
-      'grocery': '🛒',
-      'supermarket': '🛒',
-      'restaurant': '🍽️',
-      'dining': '🍽️',
-      'cafe': '☕',
-      'coffee': '☕',
-      'breakfast': '🍳',
-      'lunch': '🍱',
-      'dinner': '🍽️',
-      'snack': '🍿',
-      'drink': '🥤',
-      'beverage': '🥤',
-      
-      // Transportation
-      'transport': '🚗',
-      'transportation': '🚗',
-      'travel': '✈️',
-      'car': '🚗',
-      'vehicle': '🚗',
-      'gas': '⛽',
-      'fuel': '⛽',
-      'petrol': '⛽',
-      'parking': '🅿️',
-      'taxi': '🚕',
-      'uber': '🚕',
-      'bus': '🚌',
-      'train': '🚆',
-      'flight': '✈️',
-      'metro': '🚇',
-      
-      // Entertainment & Leisure
-      'entertainment': '🎬',
-      'movie': '🎬',
-      'cinema': '🎬',
-      'music': '🎵',
-      'game': '🎮',
-      'gaming': '🎮',
-      'sport': '⚽',
-      'sports': '⚽',
-      'hobby': '🎨',
-      'book': '📚',
-      'reading': '📖',
-      
-      // Shopping
-      'shopping': '🛍️',
-      'clothing': '👕',
-      'clothes': '👕',
-      'fashion': '👗',
-      'shoes': '👟',
-      'accessories': '👜',
-      'electronics': '💻',
-      'gadget': '📱',
-      
-      // Health & Wellness
-      'health': '🏥',
-      'healthcare': '🏥',
-      'medical': '💊',
-      'medicine': '💊',
-      'doctor': '👨‍⚕️',
-      'hospital': '🏥',
-      'pharmacy': '💊',
-      'dental': '🦷',
-      'gym': '💪',
-      'fitness': '🏋️',
-      'yoga': '🧘',
-      'wellness': '�',
-      
-      // Home & Living
-      'rent': '🏠',
-      'housing': '🏡',
-      'home': '🏠',
-      'apartment': '🏢',
-      'utilities': '💡',
-      'electricity': '⚡',
-      'water': '💧',
-      'internet': '�',
-      'wifi': '📶',
-      'phone': '📱',
-      'mobile': '📱',
-      'maintenance': '🔧',
-      'repair': '🔨',
-      'furniture': '🛋️',
-      'appliance': '🔌',
-      
-      // Bills & Services
-      'bill': '📄',
-      'subscription': '📺',
-      'streaming': '📺',
-      'netflix': '📺',
-      'spotify': '�',
-      'insurance': '🛡️',
-      'tax': '💰',
-      'fees': '💳',
-      
-      // Financial
-      'investment': '�',
-      'savings': '�',
-      'salary': '💼',
-      'income': '�',
-      'wage': '💼',
-      'bonus': '🎁',
-      'debt': '📉',
-      'loan': '🏦',
-      'bank': '🏦',
-      'credit': '💳',
-      'payment': '💳',
-      
-      // Education
-      'education': '📚',
-      'school': '🎓',
-      'college': '🎓',
-      'university': '🎓',
-      'course': '📖',
-      'tuition': '�',
-      'learning': '�',
-      'training': '📚',
-      
-      // Personal Care
-      'beauty': '💄',
-      'cosmetic': '💄',
-      'salon': '�',
-      'haircut': '💇',
-      'spa': '💆',
-      'personal': '👤',
-      'hygiene': '🧴',
-      
-      // Family & Kids
-      'child': '👶',
-      'kids': '👶',
-      'baby': '👶',
-      'family': '👨‍👩‍👧‍👦',
-      'daycare': '👶',
-      'toy': '🧸',
-      
-      // Pets
-      'pet': '🐾',
-      'dog': '🐕',
-      'cat': '🐈',
-      'veterinary': '�',
-      'vet': '🏥',
-      
-      // Social
-      'gift': '🎁',
-      'charity': '🤝',
-      'donation': '❤️',
-      'party': '🎉',
-      'event': '🎊',
-      'wedding': '�',
-      'birthday': '🎂',
-      
-      // Work & Business
-      'business': '💼',
-      'office': '🏢',
-      'work': '💼',
-      'meeting': '�',
-      'conference': '🎤',
-      
-      // Miscellaneous
-      'other': '�',
-      'miscellaneous': '📦',
-      'general': '📋',
-      'misc': '📦',
-      'emergency': '🚨'
-    };
-    
-    // Find matching icon (check if any keyword is in the category name)
-    for (const [key, icon] of Object.entries(iconMap)) {
-      if (name.includes(key)) {
-        return icon;
-      }
-    }
-    
-    // Enhanced default: try to guess based on common patterns
-    if (name.match(/expense|cost|spend/)) return '💸';
-    if (name.match(/save|saving/)) return '💰';
-    if (name.match(/earn|revenue/)) return '💵';
-    
-    // Fallback to a more generic icon
-    return '�';
+    return IconMapper.getIcon(categoryName);
   }
 
   // ============================================
@@ -417,7 +226,12 @@ export class CategoryPage implements OnInit {
     const subCategory = this.newSubCategoryName().trim();
     
     if (!name) {
-      alert('⚠️ Validation Error\n\nCategory name is required.\n\nPlease enter a valid category name.');
+      this.showError(
+        'Validation Error',
+        'Category name is required.',
+        'Please enter a valid category name before submitting.',
+        'warning'
+      );
       return;
     }
 
@@ -429,8 +243,13 @@ export class CategoryPage implements OnInit {
       console.log('✅ Category added successfully:', name, subCategory || '(no subcategory)');
     } catch (error: any) {
       ErrorHandler.logError('Add Category', error);
-      const errorMessage = ErrorHandler.getAlertMessage(error, 'add');
-      alert(errorMessage);
+      const errorResult = ErrorHandler.handleDatabaseError(error, 'add');
+      this.showError(
+        errorResult.title,
+        errorResult.message,
+        errorResult.details,
+        'error'
+      );
     } finally {
       this.isAdding.set(false);
     }
@@ -458,7 +277,12 @@ export class CategoryPage implements OnInit {
     const subCategory = cat.sub_category?.trim();
     
     if (!name) {
-      alert('⚠️ Validation Error\n\nCategory name is required.\n\nPlease enter a valid category name.');
+      this.showError(
+        'Validation Error',
+        'Category name is required.',
+        'Please enter a valid category name before submitting.',
+        'warning'
+      );
       return;
     }
 
@@ -470,8 +294,13 @@ export class CategoryPage implements OnInit {
       console.log('✅ Category updated successfully:', name, subCategory || '(no subcategory)');
     } catch (error: any) {
       ErrorHandler.logError('Update Category', error);
-      const errorMessage = ErrorHandler.getAlertMessage(error, 'update');
-      alert(errorMessage);
+      const errorResult = ErrorHandler.handleDatabaseError(error, 'update');
+      this.showError(
+        errorResult.title,
+        errorResult.message,
+        errorResult.details,
+        'error'
+      );
     } finally {
       this.isEditing.set(false);
     }
@@ -517,8 +346,13 @@ export class CategoryPage implements OnInit {
       console.log('✅ Category deleted successfully:', cat.category_name);
     } catch (error: any) {
       ErrorHandler.logError('Delete Category', error);
-      const errorMessage = ErrorHandler.getAlertMessage(error, 'delete');
-      alert(errorMessage);
+      const errorResult = ErrorHandler.handleDatabaseError(error, 'delete');
+      this.showError(
+        errorResult.title,
+        errorResult.message,
+        errorResult.details,
+        'error'
+      );
     } finally {
       this.isDeleting.set(false);
     }
