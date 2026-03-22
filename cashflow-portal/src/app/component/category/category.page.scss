@@ -492,6 +492,29 @@
   border: 1px solid var(--border);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   margin-bottom: 20px;
+
+  /* MOBILE: Enable horizontal scroll */
+  @media (max-width: 768px) {
+    overflow-x: auto;
+    overflow-y: visible;
+    -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+    border-radius: 8px;
+    
+    /* Show scroll hint */
+    &::after {
+      content: '← Swipe to see more →';
+      position: sticky;
+      right: 0;
+      bottom: 0;
+      display: block;
+      padding: 8px;
+      background: linear-gradient(90deg, transparent, rgba(31, 41, 55, 0.05));
+      text-align: center;
+      font-size: 11px;
+      color: #6b7280;
+      font-style: italic;
+    }
+  }
 }
 
 .table-container:hover {
@@ -503,6 +526,12 @@
   border-collapse: collapse;
   font-size: 13px; /* Reduced from 14px */
   background: #ffffff;
+
+  /* MOBILE: Prevent table from collapsing, maintain minimum width */
+  @media (max-width: 768px) {
+    min-width: 600px; /* Ensure table is scrollable horizontally */
+    font-size: 12px;
+  }
 }
 
 .category-table thead {

@@ -16,6 +16,7 @@
 /* Allow overflow for tooltips when collapsed */
 .side-menu.collapsed {
   overflow: visible;
+  width: 64px;
 }
 
 @keyframes slideInFromLeft {
@@ -27,10 +28,6 @@
     transform: translateX(0);
     opacity: 1;
   }
-}
-
-.side-menu.collapsed {
-  width: 64px;
 }
 
 .menu-header {
