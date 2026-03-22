@@ -43,12 +43,6 @@
         <h2 class="card-value year-totals">{{ getMNCWorkedText() }}</h2>
         <p class="card-subtitle">Click for company details</p>
       </div>
-      <div class="card-click-indicator">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-          <circle cx="12" cy="12" r="3"></circle>
-        </svg>
-      </div>
     </div>
   </div>
 
@@ -434,9 +428,11 @@
               <div class="mnc-card">
                 <div class="mnc-icon">{{ company.icon }}</div>
                 <div class="mnc-info">
-                  <h3 class="mnc-name">{{ company.name }}</h3>
+                  <h3 class="mnc-name">
+                    <span>{{ company.name }}</span>
+                    <span class="mnc-earnings">{{ formatCurrency(company.earnings) }}</span>
+                  </h3>
                   <p class="mnc-period">{{ company.period }}</p>
-                  <p class="mnc-earnings">{{ formatCurrency(company.earnings) }}</p>
                 </div>
               </div>
             }

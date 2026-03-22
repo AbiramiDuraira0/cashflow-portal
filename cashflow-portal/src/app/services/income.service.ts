@@ -164,13 +164,13 @@ export class IncomeService {
   /**
    * Add new income entry to database
    */
-  async addEntry(entry: Omit<IncomeEntry, 'id' | 'date' | 'created_at' | 'updated_at'>): Promise<IncomeEntry> {
+  async addEntry(entry: Omit<IncomeEntry, 'id' | 'created_at' | 'updated_at'>): Promise<IncomeEntry> {
     this.loading.set(true);
     this.error.set(null);
 
     try {
-      // Calculate date if not provided
-      const date = new Date(entry.year, this.getMonthIndex(entry.month), 1).toISOString().split('T')[0];
+      // Use provided date or calculate default (1st of month)
+      const date = entry.date || new Date(entry.year, this.getMonthIndex(entry.month), 1).toISOString().split('T')[0];
 
       const newEntry = {
         year: entry.year,
@@ -178,7 +178,7 @@ export class IncomeService {
         date: date,
         amount_inr: entry.amount,
         source: entry.source,
-        mnc_company: entry.mncCompany || null,  // FIX: Include MNC company on add
+        mnc_company: entry.mncCompany || null,
         notes: entry.notes || null,
         is_delete: false
       };
@@ -354,7 +354,7 @@ export class IncomeService {
   /**
    * Restore soft-deleted entry or update if similar entry exists
    */
-  async restoreOrUpdateEntry(month: string, year: number, entry: Omit<IncomeEntry, 'id' | 'date' | 'created_at' | 'updated_at'>): Promise<IncomeEntry> {
+  async restoreOrUpdateEntry(month: string, year: number, entry: Omit<IncomeEntry, 'id' | 'created_at' | 'updated_at'>): Promise<IncomeEntry> {
     this.loading.set(true);
     this.error.set(null);
 

@@ -1218,17 +1218,94 @@
 // Earnings Table - Fixed Alignment
 // ============================================
 .earnings-table {
+  width: 100%;
+  border-collapse: collapse;
+
   thead {
     tr {
       th {
-        &.year-header {
+        padding: 12px 16px;
+        text-align: left;
+        font-weight: 600;
+        font-size: 14px;
+        color: #6b7280;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border-bottom: 2px solid #e5e7eb;
+
+        &.year-header,
+        &.month-header {
           text-align: left;
-          width: 40%;
+          width: 50%; // Reduce gap: equal columns
         }
 
         &.amount-header {
           text-align: right;
-          width: 60%;
+          width: 50%; // Reduce gap: equal columns
+        }
+      }
+    }
+  }
+
+  tbody {
+    tr {
+      border-bottom: 1px solid #f3f4f6;
+      transition: background-color 0.2s ease;
+
+      &:hover {
+        background-color: #f9fafb;
+      }
+
+      &.no-entry {
+        opacity: 0.5;
+        
+        td {
+          color: #9ca3af;
+        }
+      }
+
+      td {
+        padding: 14px 16px;
+        font-size: 15px;
+
+        &.year-column,
+        &.month-column {
+          color: #374151;
+          font-weight: 500;
+        }
+
+        &.amount-column {
+          text-align: right;
+          color: #059669;
+          font-weight: 600;
+        }
+      }
+    }
+  }
+
+  .no-data {
+    color: #d1d5db;
+    font-style: italic;
+  }
+
+  tfoot {
+    tr.total-row {
+      background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+      border-top: 2px solid #10b981;
+
+      td {
+        padding: 16px;
+        font-size: 16px;
+        font-weight: 700;
+
+        &.year-column,
+        &.month-column {
+          color: #065f46;
+        }
+
+        &.amount-column {
+          color: #047857;
+          text-align: right;
         }
       }
     }
@@ -1308,8 +1385,8 @@
 
 .mnc-card {
   display: flex;
-  align-items: center;
-  gap: 20px;
+  align-items: flex-start;
+  gap: 16px;
   padding: 20px;
   background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
   border: 2px solid #e5e7eb;
@@ -1323,9 +1400,9 @@
   }
 
   .mnc-icon {
-    font-size: 48px;
-    width: 64px;
-    height: 64px;
+    font-size: 40px;
+    width: 56px;
+    height: 56px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1335,35 +1412,57 @@
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 
     @media (max-width: 768px) {
-      font-size: 40px;
-      width: 56px;
-      height: 56px;
+      font-size: 36px;
+      width: 48px;
+      height: 48px;
     }
   }
 
   .mnc-info {
     flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
   }
 
   .mnc-name {
-    margin: 0 0 8px;
-    font-size: 20px;
+    margin: 0;
+    font-size: 18px;
     font-weight: 700;
     color: #111827;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
 
     @media (max-width: 768px) {
-      font-size: 18px;
+      font-size: 16px;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 4px;
     }
   }
 
   .mnc-period {
     margin: 0;
-    font-size: 14px;
+    font-size: 13px;
     color: #6b7280;
     font-weight: 500;
 
     @media (max-width: 768px) {
-      font-size: 13px;
+      font-size: 12px;
+    }
+  }
+
+  .mnc-earnings {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 700;
+    color: #059669;
+    white-space: nowrap;
+
+    @media (max-width: 768px) {
+      font-size: 16px;
     }
   }
 }
@@ -1375,16 +1474,6 @@
   color: #dc2626;
   font-weight: bold;
   margin-left: 2px;
-}
-
-// ============================================
-// MNC Earnings in Modal
-// ============================================
-.mnc-earnings {
-  margin: 8px 0 0;
-  font-size: 18px;
-  font-weight: 700;
-  color: #059669;
 }
 
 .mnc-total {
@@ -1578,34 +1667,8 @@
 }
 
 // ============================================
-// Monthly Breakdown Modal Styles
+// Modal Statistics Section
 // ============================================
-.earnings-table {
-  .month-header {
-    text-align: left;
-    width: 40%;
-  }
-
-  .month-column {
-    text-align: left;
-    padding: 12px 16px;
-    font-weight: 500;
-  }
-
-  tr.no-entry {
-    opacity: 0.5;
-    
-    td {
-      color: #9ca3af;
-    }
-  }
-
-  .no-data {
-    color: #d1d5db;
-    font-style: italic;
-  }
-}
-
 .modal-stats {
   margin-top: 24px;
   padding-top: 20px;
