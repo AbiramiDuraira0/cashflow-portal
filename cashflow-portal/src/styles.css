@@ -18,26 +18,11 @@ html, body {
   overflow-x: auto; /* Allow horizontal scrolling */
 }
 
-/* ============================================
-   MOBILE OPTIMIZATION: Desktop View on Mobile
-   Renders desktop layout and zooms out 50%
-   ============================================ */
+/* Mobile optimization - smooth scrolling */
 @media (max-width: 768px) {
-  body {
-    /* Force desktop width on mobile */
-    min-width: 1024px;
-  }
-
-  /* Ensure app container uses full desktop width */
-  app-root {
-    display: block;
-    min-width: 1024px;
-  }
-
-  /* Make scrolling smooth on mobile */
   html, body {
     -webkit-overflow-scrolling: touch;
-    overflow-x: auto; /* Enable horizontal scrolling on mobile */
+    overflow-x: auto; /* Enable horizontal scroll on mobile */
   }
 
   /* Improve touch interactions */
