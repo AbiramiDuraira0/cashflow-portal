@@ -9,10 +9,10 @@ import { provideClientHydration, withEventReplay } from '@angular/platform-brows
 
 /** Custom tooltip configuration for zoneless mode */
 export const customTooltipDefaults: MatTooltipDefaultOptions = {
-  showDelay: 500,
+  showDelay: 200,
   hideDelay: 0,
   touchendHideDelay: 1500,
-  disableTooltipInteractivity: false
+  disableTooltipInteractivity: true
 };
 
 export const appConfig: ApplicationConfig = {

@@ -492,6 +492,29 @@
   border: 1px solid var(--border);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   margin-bottom: 20px;
+
+  /* MOBILE: Enable horizontal scroll */
+  @media (max-width: 768px) {
+    overflow-x: auto;
+    overflow-y: visible;
+    -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+    border-radius: 8px;
+    
+    /* Show scroll hint */
+    &::after {
+      content: '← Swipe to see more →';
+      position: sticky;
+      right: 0;
+      bottom: 0;
+      display: block;
+      padding: 8px;
+      background: linear-gradient(90deg, transparent, rgba(31, 41, 55, 0.05));
+      text-align: center;
+      font-size: 11px;
+      color: #6b7280;
+      font-style: italic;
+    }
+  }
 }
 
 .table-container:hover {
@@ -503,6 +526,12 @@
   border-collapse: collapse;
   font-size: 13px; /* Reduced from 14px */
   background: #ffffff;
+
+  /* MOBILE: Prevent table from collapsing, maintain minimum width */
+  @media (max-width: 768px) {
+    min-width: 600px; /* Ensure table is scrollable horizontally */
+    font-size: 12px;
+  }
 }
 
 .category-table thead {
@@ -760,6 +789,53 @@
 
 .action-btn:active {
   transform: translateY(0);
+}
+
+/* CSS-based Tooltips for Action Buttons */
+.action-btn[data-tooltip] {
+  position: relative;
+}
+
+.action-btn[data-tooltip]::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+  color: #f1f5f9;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: all 0.2s ease;
+  z-index: 9999;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  letter-spacing: 0.3px;
+}
+
+.action-btn[data-tooltip]::before {
+  content: '';
+  position: absolute;
+  bottom: calc(100% + 2px);
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: #1e293b;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.2s ease;
+  z-index: 9999;
+}
+
+.action-btn[data-tooltip]:hover::after,
+.action-btn[data-tooltip]:hover::before {
+  opacity: 1;
+  visibility: visible;
 }
 
 .status-badge {
@@ -1802,101 +1878,147 @@
 @media (max-width: 768px) {
   .category {
     padding: 12px 8px 40px 8px;
+    overflow-x: hidden;
   }
   
   .toolbar {
     flex-direction: column;
-    align-items: stretch;
-    gap: 12px;
+    align-items: flex-start;
+    gap: 10px;
   }
   
   .titles {
     min-width: unset;
+    text-align: left;
   }
   
   .titles h1 {
-    font-size: 22px;
+    font-size: 20px;
   }
   
   .titles .subtitle {
-    font-size: 13px;
+    font-size: 12px;
   }
   
   .actions {
+    display: flex;
     flex-direction: row;
-    justify-content: space-between;
-    flex-wrap: nowrap;
+    flex-wrap: wrap;
     gap: 8px;
+    width: 100%;
+    align-items: center;
   }
   
   .search {
     flex: 1;
-    min-width: 0;
+    min-width: 150px;
+    order: 1;
   }
   
   .search input {
     width: 100%;
     font-size: 13px;
-    padding: 8px 12px 8px 38px;
+    padding: 8px 10px 8px 36px;
+    height: 36px;
   }
   
   .add-btn {
-    padding: 8px 16px;
-    font-size: 13px;
-    white-space: nowrap;
+    order: 2;
+    padding: 8px 12px;
+    font-size: 12px;
     
     .text {
-      display: none;
-    }
-    
-    .icon {
-      font-size: 18px;
+      display: inline;
     }
   }
   
   .category-count-badge {
+    order: 3;
     padding: 8px 12px;
     
     .count {
-      font-size: 13px;
+      font-size: 12px;
     }
     
     .label {
-      font-size: 12px;
+      font-size: 11px;
     }
   }
   
   /* Make table scrollable on mobile */
   .table-container {
     overflow-x: auto;
+    overflow-y: visible;
     -webkit-overflow-scrolling: touch;
-    border-radius: var(--radius-md);
+    border-radius: 8px;
+    margin: 0;
+    width: 100%;
+    max-width: 100%;
   }
   
   .category-table {
-    min-width: 750px;
+    min-width: 700px;
     font-size: 12px;
+    table-layout: auto;
+    width: max-content;
   }
   
   .category-table thead tr th {
-    padding: 10px 12px;
+    padding: 10px 8px;
     font-size: 11px;
+    white-space: nowrap;
   }
   
   .category-table td {
-    padding: 10px 12px;
+    padding: 10px 8px;
+    white-space: nowrap;
+  }
+  
+  .col-icon {
+    width: 45px;
   }
   
   .col-icon .category-icon {
-    font-size: 22px;
+    font-size: 20px;
+  }
+  
+  .col-name {
+    width: auto;
+    min-width: 100px;
+  }
+  
+  .col-subcategory {
+    width: auto;
+    min-width: 100px;
+  }
+  
+  .col-status {
+    width: auto;
+    min-width: 80px;
+  }
+  
+  .col-date {
+    width: auto;
+    min-width: 75px;
+  }
+  
+  .col-notes {
+    width: auto;
+    min-width: 80px;
+    max-width: 120px;
+  }
+  
+  .col-actions {
+    width: auto;
+    min-width: 70px;
   }
   
   .action-btn {
-    width: 32px;
-    height: 32px;
+    width: 28px;
+    height: 28px;
     
     .icon {
-      font-size: 14px;
+      font-size: 12px;
     }
   }
   
@@ -1926,131 +2048,153 @@
 @media (max-width: 480px) {
   .category {
     padding: 8px 4px 30px 4px;
+    overflow-x: hidden;
   }
   
   .toolbar {
     flex-direction: column;
-    align-items: stretch;
+    align-items: flex-start;
     gap: 10px;
     padding: 0 4px;
   }
   
+  .titles {
+    text-align: left;
+  }
+  
   .titles h1 {
-    font-size: 20px;
+    font-size: 18px;
   }
   
   .titles .subtitle {
-    font-size: 12px;
+    font-size: 11px;
   }
   
   .actions {
-    flex-direction: column;
+    flex-direction: row;
+    flex-wrap: wrap;
     gap: 8px;
     width: 100%;
-    align-items: stretch;
+    align-items: center;
   }
   
   .add-btn {
-    width: 100%;
-    font-size: 14px;
-    padding: 10px 16px;
-    justify-content: center;
+    padding: 6px 10px;
+    font-size: 11px;
     
     .text {
       display: inline;
     }
     
     .icon {
-      font-size: 16px;
+      font-size: 13px;
     }
   }
   
   .search {
-    width: 100%;
-    min-width: unset;
+    flex: 1;
+    min-width: 120px;
+    order: 1;
   }
   
   .search input {
     width: 100%;
-    height: 40px;
-    font-size: 14px;
-    padding: 10px 12px 10px 40px;
+    height: 34px;
+    font-size: 12px;
+    padding: 6px 10px 6px 32px;
   }
   
   .search-icon {
-    left: 12px;
-    font-size: 16px;
+    left: 10px;
+    font-size: 14px;
   }
   
   .category-count-badge {
-    padding: 10px 16px;
-    width: 100%;
-    justify-content: center;
+    padding: 6px 10px;
+    
+    .count {
+      font-size: 11px;
+    }
+    
+    .label {
+      font-size: 10px;
+    }
   }
   
   .table-container {
     overflow-x: auto;
+    overflow-y: visible;
     -webkit-overflow-scrolling: touch;
     border-radius: 8px;
-    margin: 0 -4px;
-    width: calc(100% + 8px);
+    margin: 0;
+    width: 100%;
+    max-width: 100%;
   }
   
   .category-table {
     min-width: 650px;
     font-size: 11px;
+    table-layout: auto;
+    width: max-content;
   }
   
   .category-table thead tr th {
-    padding: 8px 10px;
+    padding: 8px 6px;
     font-size: 10px;
+    white-space: nowrap;
   }
   
   .category-table td {
-    padding: 8px 10px;
+    padding: 8px 6px;
     font-size: 11px;
+    white-space: nowrap;
   }
   
   .col-icon {
-    width: 50px;
+    width: 40px;
   }
   
   .col-icon .category-icon {
-    font-size: 20px;
+    font-size: 18px;
   }
   
   .col-name {
-    width: 120px;
-    min-width: 120px;
+    width: auto;
+    min-width: 90px;
   }
   
   .col-subcategory {
-    width: 140px;
-    min-width: 140px;
+    width: auto;
+    min-width: 90px;
   }
   
   .col-status {
-    width: 100px;
+    width: auto;
+    min-width: 70px;
   }
   
   .col-date {
-    width: 90px;
+    width: auto;
+    min-width: 70px;
   }
   
   .col-notes {
-    width: 150px;
+    width: auto;
+    min-width: 70px;
+    max-width: 100px;
   }
   
   .col-actions {
-    width: 90px;
+    width: auto;
+    min-width: 60px;
   }
   
   .action-btn {
-    width: 30px;
-    height: 30px;
+    width: 26px;
+    height: 26px;
     
     .icon {
-      font-size: 13px;
+      font-size: 11px;
     }
   }
   
@@ -2204,37 +2348,87 @@
 @media (max-width: 375px) {
   .category {
     padding: 8px 4px 30px 4px;
+    overflow-x: hidden;
+  }
+  
+  .titles {
+    text-align: left;
   }
   
   .titles h1 {
-    font-size: 18px;
+    font-size: 16px;
+  }
+  
+  .table-container {
+    overflow-x: auto;
+    overflow-y: visible;
+    -webkit-overflow-scrolling: touch;
   }
   
   .category-table {
     min-width: 600px;
     font-size: 10px;
+    table-layout: auto;
+    width: max-content;
   }
   
   .category-table thead tr th {
-    padding: 6px 8px;
+    padding: 6px 5px;
     font-size: 9px;
+    white-space: nowrap;
   }
   
   .category-table td {
-    padding: 6px 8px;
+    padding: 6px 5px;
     font-size: 10px;
+    white-space: nowrap;
+  }
+  
+  .col-icon {
+    width: 36px;
   }
   
   .col-icon .category-icon {
-    font-size: 18px;
+    font-size: 16px;
+  }
+  
+  .col-name {
+    width: auto;
+    min-width: 80px;
+  }
+  
+  .col-subcategory {
+    width: auto;
+    min-width: 80px;
+  }
+  
+  .col-status {
+    width: auto;
+    min-width: 60px;
+  }
+  
+  .col-date {
+    width: auto;
+    min-width: 60px;
+  }
+  
+  .col-notes {
+    width: auto;
+    min-width: 60px;
+    max-width: 80px;
+  }
+  
+  .col-actions {
+    width: auto;
+    min-width: 55px;
   }
   
   .action-btn {
-    width: 28px;
-    height: 28px;
+    width: 24px;
+    height: 24px;
     
     .icon {
-      font-size: 12px;
+      font-size: 10px;
     }
   }
   
@@ -2254,8 +2448,8 @@
   }
   
   .add-btn {
-    font-size: 13px;
-    padding: 10px 14px;
+    font-size: 11px;
+    padding: 6px 10px;
   }
   
   .btn {
@@ -2267,52 +2461,102 @@
 @media (max-width: 320px) {
   .category {
     padding: 6px 2px 24px 2px;
+    overflow-x: hidden;
+  }
+  
+  .titles {
+    text-align: left;
   }
   
   .titles h1 {
-    font-size: 16px;
+    font-size: 15px;
   }
   
   .titles .subtitle {
-    font-size: 11px;
+    font-size: 10px;
+  }
+  
+  .table-container {
+    overflow-x: auto;
+    overflow-y: visible;
+    -webkit-overflow-scrolling: touch;
   }
   
   .category-table {
     min-width: 550px;
     font-size: 9px;
+    table-layout: auto;
+    width: max-content;
   }
   
   .category-table thead tr th {
-    padding: 5px 6px;
+    padding: 5px 4px;
     font-size: 8px;
+    white-space: nowrap;
   }
   
   .category-table td {
-    padding: 5px 6px;
+    padding: 5px 4px;
     font-size: 9px;
+    white-space: nowrap;
+  }
+  
+  .col-icon {
+    width: 32px;
   }
   
   .col-icon .category-icon {
-    font-size: 16px;
+    font-size: 14px;
+  }
+  
+  .col-name {
+    width: auto;
+    min-width: 70px;
+  }
+  
+  .col-subcategory {
+    width: auto;
+    min-width: 70px;
+  }
+  
+  .col-status {
+    width: auto;
+    min-width: 55px;
+  }
+  
+  .col-date {
+    width: auto;
+    min-width: 55px;
+  }
+  
+  .col-notes {
+    width: auto;
+    min-width: 55px;
+    max-width: 70px;
+  }
+  
+  .col-actions {
+    width: auto;
+    min-width: 50px;
   }
   
   .action-btn {
-    width: 26px;
-    height: 26px;
+    width: 22px;
+    height: 22px;
     
     .icon {
-      font-size: 11px;
+      font-size: 9px;
     }
   }
   
   .add-btn {
-    font-size: 12px;
-    padding: 8px 12px;
+    font-size: 10px;
+    padding: 5px 8px;
   }
   
   .search input {
-    font-size: 13px;
-    height: 38px;
+    font-size: 12px;
+    height: 32px;
   }
   
   .icon-grid {

@@ -1,12 +1,11 @@
 import { Component, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, RouterLinkActive, Router } from '@angular/router';
-import { MatTooltipModule } from '@angular/material/tooltip';
 
 @Component({
   selector: 'app-side-menu',
   standalone: true,
-  imports: [CommonModule, RouterLink, RouterLinkActive, MatTooltipModule],
+  imports: [CommonModule, RouterLink, RouterLinkActive],
   templateUrl: './side-menu.component.html',
   styleUrl: './side-menu.component.scss'
 })

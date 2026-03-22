@@ -110,7 +110,7 @@
                 </td>
                 <td class="col-notes">
                   @if (cat.notes) {
-                    <span class="notes-text" [matTooltip]="cat.notes" matTooltipPosition="above">
+                    <span class="notes-text" [title]="cat.notes">
                       {{ cat.notes.length > 50 ? cat.notes.substring(0, 50) + '...' : cat.notes }}
                     </span>
                   } @else {
@@ -122,24 +122,21 @@
                     <button 
                       class="action-btn edit" 
                       (click)="openEditModal(cat)"
-                      [matTooltip]="'Edit ' + cat.category_name"
-                      matTooltipPosition="above">
+                      [attr.data-tooltip]="'Edit ' + cat.category_name">
                       <span class="icon">✏️</span>
                     </button>
                     @if (cat.is_active) {
                       <button 
                         class="action-btn deactivate" 
                         (click)="openDeleteModal(cat)"
-                        [matTooltip]="'Deactivate ' + cat.category_name"
-                        matTooltipPosition="above">
+                        [attr.data-tooltip]="'Deactivate ' + cat.category_name">
                         <span class="icon">🚫</span>
                       </button>
                     } @else {
                       <button 
                         class="action-btn activate" 
                         (click)="activateCategory(cat)"
-                        [matTooltip]="'Activate ' + cat.category_name"
-                        matTooltipPosition="above">
+                        [attr.data-tooltip]="'Activate ' + cat.category_name">
                         <span class="icon">✅</span>
                       </button>
                     }
@@ -172,8 +169,7 @@
               class="page-btn" 
               (click)="prevPage()" 
               [disabled]="currentPage() === 1"
-              [matTooltip]="'Previous Page'"
-              matTooltipPosition="above">
+              title="Previous Page">
               ◀
             </button>
             
@@ -189,8 +185,7 @@
               class="page-btn" 
               (click)="nextPage()" 
               [disabled]="currentPage() === totalPages()"
-              [matTooltip]="'Next Page'"
-              matTooltipPosition="above">
+              title="Next Page">
               ▶
             </button>
           </div>
