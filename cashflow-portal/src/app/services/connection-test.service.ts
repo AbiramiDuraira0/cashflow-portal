@@ -38,7 +38,7 @@ export class ConnectionTestService {
         };
       }
 
-      console.log('✅ Connection successful!');
+      console.log('✅ DB Connection successful!');
       
       // Test 2: Fetch actual categories
       const { data: categories, error: catError } = await this.supabase.db

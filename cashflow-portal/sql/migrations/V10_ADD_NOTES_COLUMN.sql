@@ -19,8 +19,16 @@ FROM information_schema.columns
 WHERE table_name = 'category' 
   AND column_name = 'notes';
 
--- Show updated table structure
-\d category;
+-- Show updated table structure (alternative to \d command)
+SELECT 
+    column_name,
+    data_type,
+    character_maximum_length,
+    is_nullable,
+    column_default
+FROM information_schema.columns
+WHERE table_name = 'category'
+ORDER BY ordinal_position;
 
 -- Success message
 SELECT '✅ Notes column added successfully!' AS status;
