@@ -21,38 +21,23 @@ html, body {
 /* Material Tooltip Overlay - Ensure it's always on top */
 .cdk-overlay-container {
   position: fixed;
-  z-index: 9999 !important;
-  pointer-events: none;
-}
-
-.cdk-overlay-pane {
-  pointer-events: auto;
+  z-index: 99999 !important;
 }
 
 /* Custom Material Tooltip Styles - Oval Shape */
 .mat-mdc-tooltip {
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
-  padding: 0 !important;
-  pointer-events: none !important;
+  z-index: 99999 !important;
 }
 
 .mat-mdc-tooltip .mdc-tooltip__surface {
-  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%) !important;
-  border: 1px solid #bae6fd !important;
-  color: #0369a1 !important;
+  background: linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%) !important;
+  border: 1px solid #3b7cb8 !important;
+  color: #ffffff !important;
   font-size: 13px !important;
   padding: 8px 16px !important;
   border-radius: 20px !important;
-  box-shadow: 0 2px 8px rgba(3, 105, 161, 0.1) !important;
-  font-weight: 600 !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25) !important;
+  font-weight: 500 !important;
   white-space: nowrap !important;
-  pointer-events: none !important;
-}
-
-/* Ensure tooltip container is visible */
-.cdk-overlay-backdrop {
-  pointer-events: none;
 }
 

@@ -1,7 +1,6 @@
 import { Component, OnInit, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { MatTooltipModule } from '@angular/material/tooltip';
 import { CategoryService, Category } from '../../services/category.service';
 import { ErrorHandler } from '../../utils/error-handler.util';
 import { 
@@ -18,7 +17,7 @@ import {
 @Component({
   selector: 'app-category',
   standalone: true,
-  imports: [CommonModule, FormsModule, MatTooltipModule, ErrorPopupComponent],
+  imports: [CommonModule, FormsModule, ErrorPopupComponent],
   templateUrl: './category.page.html',
   styleUrls: ['./category.page.scss']
 })

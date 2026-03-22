@@ -116,7 +116,20 @@ export class IncomeService {
     if (appEntry.source !== undefined) dbEntry.source = appEntry.source;
     if (appEntry.mncCompany !== undefined) dbEntry.mnc_company = appEntry.mncCompany || null;
     if (appEntry.notes !== undefined) dbEntry.notes = appEntry.notes || null;
-    if (appEntry.date !== undefined) dbEntry.date = appEntry.date;
+    
+    // Fix timezone issue: ensure date is stored as plain YYYY-MM-DD string
+    if (appEntry.date !== undefined) {
+      // If it's already a YYYY-MM-DD string, use it directly
+      if (typeof appEntry.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(appEntry.date)) {
+        dbEntry.date = appEntry.date;
+      } else if (appEntry.date) {
+        // Convert to YYYY-MM-DD without timezone conversion
+        const d = new Date(appEntry.date);
+        dbEntry.date = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      } else {
+        dbEntry.date = null;
+      }
+    }
     
     return dbEntry;
   }
