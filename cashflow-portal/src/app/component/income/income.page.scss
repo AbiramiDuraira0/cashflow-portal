@@ -1079,6 +1079,27 @@
       gap: 8px;
     }
   }
+
+  .modal-body {
+    padding: 24px;
+  }
+
+  .modal-footer {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    padding: 16px 24px;
+    border-top: 1px solid #e5e7eb;
+    background: #fafafa;
+    
+    @media (max-width: 480px) {
+      flex-direction: column-reverse;
+      
+      button {
+        width: 100%;
+      }
+    }
+  }
 }
 
 .warning-box {
@@ -1087,11 +1108,14 @@
   border-radius: 12px;
   padding: 24px;
   text-align: center;
+  margin: 0; // Prevent floating
+  clear: both; // Clear any floats
 
   .warning-icon {
     font-size: 48px;
     display: block;
     margin-bottom: 16px;
+    line-height: 1; // FIX: Proper line height for icon
     animation: warningPulse 2s ease-in-out infinite;
   }
 
@@ -1552,3 +1576,68 @@
   font-weight: 500;
   margin-left: 4px;
 }
+
+// ============================================
+// Monthly Breakdown Modal Styles
+// ============================================
+.earnings-table {
+  .month-header {
+    text-align: left;
+    width: 40%;
+  }
+
+  .month-column {
+    text-align: left;
+    padding: 12px 16px;
+    font-weight: 500;
+  }
+
+  tr.no-entry {
+    opacity: 0.5;
+    
+    td {
+      color: #9ca3af;
+    }
+  }
+
+  .no-data {
+    color: #d1d5db;
+    font-style: italic;
+  }
+}
+
+.modal-stats {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 2px solid #e5e7eb;
+  display: flex;
+  gap: 32px;
+  justify-content: center;
+
+  @media (max-width: 480px) {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+
+    .stat-label {
+      font-size: 13px;
+      color: #6b7280;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .stat-value {
+      font-size: 20px;
+      font-weight: 700;
+      color: #111827;
+    }
+  }
+}
+

@@ -3,7 +3,7 @@
 
 **Last Updated**: March 22, 2026  
 **Status**: Production Ready  
-**Version**: 5.0
+**Version**: 6.0 (UI/UX Improvements)
 
 ---
 
@@ -33,12 +33,45 @@ The Income Tracker module allows users to track monthly income entries with full
 - ✅ Toast notifications for all operations
 - ✅ Optional salary date field
 - ✅ Supabase PostgreSQL integration
+- ✅ Dynamic company periods based on income data
+- ✅ Clean, compact form layout
 
 ---
 
 ## Version History
 
-### **Version 5.1** (March 22, 2026) - Current
+### **Version 6.0** (March 22, 2026) - Current (UI/UX Improvements)
+**UI Enhancements**:
+- ✅ **Removed eye icon** from Total Earnings widget (cleaner design)
+- ✅ **Month dropdown** now defaults to empty "Select Month" (explicit selection required)
+- ✅ **Compact form layout**: Income Source & MNC Company side-by-side on same row
+
+**User Experience**:
+- Better visual clarity with reduced clutter
+- More intentional data entry (no pre-filled month)
+- Space-efficient form using horizontal layout
+- Mobile-responsive: Fields stack vertically on small screens
+
+---
+
+### **Version 5.2** (March 22, 2026) - Bug Fix Release
+**Critical Bug Fixes**:
+- ✅ **Delete Modal**: Fixed button alignment and floating content issues
+- ✅ **Top Add Button**: Year field now editable (2021-2030) instead of always readonly
+- ✅ **MNC Company**: Now saves correctly on ADD (was only saving on update)
+- ✅ **Salary Date**: Fixed timezone issue (Aug 31 now saves as Aug 31, not July 31)
+- ✅ **SQL Cleanup**: Deleted 3 obsolete SQL files, use master file only
+
+**Technical Improvements**:
+- Added `isYearLocked` signal for dynamic readonly state
+- Added `.modal-footer` CSS styles for proper alignment
+- Fixed `.warning-box` floating with margin/clear
+- Added year field validation (min: 2021, max: 2030)
+- Fixed `addEntry()` to include `mnc_company` field
+
+---
+
+### **Version 5.1** (March 22, 2026)
 **Features Added**:
 - **Dynamic Company Periods**: MNC company periods now calculated automatically from actual income entries
 - **Smart Period Detection**: Automatically detects if company is current ("Present") or past employment

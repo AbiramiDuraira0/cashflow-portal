@@ -178,6 +178,7 @@ export class IncomeService {
         date: date,
         amount_inr: entry.amount,
         source: entry.source,
+        mnc_company: entry.mncCompany || null,  // FIX: Include MNC company on add
         notes: entry.notes || null,
         is_delete: false
       };

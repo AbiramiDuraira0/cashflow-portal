@@ -24,6 +24,7 @@ export class IncomePage implements OnInit {
   protected incomeEntries = this.incomeService.getEntriesSignal();
   protected showAddForm = signal(false);
   protected showTotalEarningsModal = signal(false); // New: Modal for total earnings breakdown
+  protected showYearlyBreakdownModal = signal(false); // New: Modal for yearly monthly breakdown
   protected showMNCModal = signal(false); // New: Modal for MNC companies
   protected showDeleteConfirm = signal(false); // New: Delete confirmation modal
   protected deletingEntry = signal<IncomeEntry | null>(null); // Entry to be deleted
@@ -36,6 +37,9 @@ export class IncomePage implements OnInit {
   protected showToast = signal(false);
   protected toastMessage = signal('');
   protected toastType = signal<'success' | 'error' | 'info'>('success');
+  
+  // Form state
+  protected isYearLocked = signal(false); // Track if year should be readonly
   
   // Form fields
   protected selectedMonth = signal<string>('');
@@ -214,6 +218,25 @@ export class IncomePage implements OnInit {
     }));
   });
 
+  // New: Monthly breakdown for selected year
+  protected yearlyMonthlyBreakdown = computed(() => {
+    const entries = this.filteredEntries();
+    const year = this.selectedYear();
+    
+    // Create array with all 12 months
+    const monthlyData = this.months.map(monthName => {
+      const entry = entries.find(e => e.month === monthName);
+      return {
+        month: monthName,
+        amount: entry ? entry.amount : 0,
+        hasEntry: !!entry,
+        entry: entry
+      };
+    });
+    
+    return monthlyData;
+  });
+
   protected availableMonths = computed(() => {
     const existingMonthYears = this.incomeEntries().map(
       entry => `${entry.month}-${entry.year}`
@@ -265,6 +288,7 @@ export class IncomePage implements OnInit {
     this.showAddForm.set(true);
     this.editingEntry.set(null);
     this.resetForm();
+    this.isYearLocked.set(false); // Year is NOT locked for top button
   }
 
   protected openTotalEarningsModal(): void {
@@ -273,6 +297,14 @@ export class IncomePage implements OnInit {
 
   protected closeTotalEarningsModal(): void {
     this.showTotalEarningsModal.set(false);
+  }
+
+  protected openYearlyBreakdownModal(): void {
+    this.showYearlyBreakdownModal.set(true);
+  }
+
+  protected closeYearlyBreakdownModal(): void {
+    this.showYearlyBreakdownModal.set(false);
   }
 
   protected openMNCModal(): void {
@@ -288,6 +320,7 @@ export class IncomePage implements OnInit {
     this.editingEntry.set(null);
     this.resetForm();
     this.selectedYearForm.set(year); // Set year AFTER resetForm to preserve it
+    this.isYearLocked.set(true); // Year IS locked for year-specific button
   }
 
   protected closeAddForm(): void {
@@ -315,8 +348,9 @@ export class IncomePage implements OnInit {
         notes: this.notes()
       };
 
-      // Add optional date if provided
+      // Add optional date if provided (without timezone conversion)
       if (this.selectedDate()) {
+        // Use the date as-is without timezone conversion
         entryData.date = this.selectedDate();
       }
       
@@ -461,7 +495,7 @@ export class IncomePage implements OnInit {
 
   private resetForm(): void {
     const now = new Date();
-    this.selectedMonth.set(this.months[now.getMonth()]);
+    this.selectedMonth.set(''); // Reset to empty - user must select
     this.selectedYearForm.set(now.getFullYear());
     this.selectedDate.set(''); // Reset date field
     this.amount.set(0);

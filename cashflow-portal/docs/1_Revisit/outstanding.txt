@@ -1,6 +1,10 @@
 1- mobile view responsivesness - catgeory page
 2- tooltip issue in the entire app
-3-
+3- Bug income - v6
+------------------ 
+salary date - issue - updating properly in the DB - from UI I give aug 31st 2021, db saves july 31st 2021
+remove eye icon in the widget - mnc
+
 4-
 5-
 6-
