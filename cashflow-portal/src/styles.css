@@ -18,12 +18,24 @@ html, body {
   overflow-x: hidden;
 }
 
+/* Material Tooltip Overlay - Ensure it's always on top */
+.cdk-overlay-container {
+  position: fixed;
+  z-index: 9999 !important;
+  pointer-events: none;
+}
+
+.cdk-overlay-pane {
+  pointer-events: auto;
+}
+
 /* Custom Material Tooltip Styles - Oval Shape */
 .mat-mdc-tooltip {
   background: transparent !important;
   border: none !important;
   box-shadow: none !important;
   padding: 0 !important;
+  pointer-events: none !important;
 }
 
 .mat-mdc-tooltip .mdc-tooltip__surface {
@@ -36,4 +48,11 @@ html, body {
   box-shadow: 0 2px 8px rgba(3, 105, 161, 0.1) !important;
   font-weight: 600 !important;
   white-space: nowrap !important;
+  pointer-events: none !important;
 }
+
+/* Ensure tooltip container is visible */
+.cdk-overlay-backdrop {
+  pointer-events: none;
+}
+

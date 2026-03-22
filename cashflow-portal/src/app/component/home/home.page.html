@@ -136,7 +136,7 @@
       <div class="popup-card" (click)="$event.stopPropagation()">
         <div class="popup-header">
           <span class="popup-icon">{{ testResult()?.success ? '✅' : '❌' }}</span>
-          <h3>{{ testResult()?.success ? 'Connection Successful' : 'Connection Failed' }}</h3>
+          <h3>{{ testResult()?.success ? 'DB Connection Successful' : 'DB Connection Failed' }}</h3>
           <button class="close-btn" (click)="closeTestPopup()">✕</button>
         </div>
         <div class="popup-body">

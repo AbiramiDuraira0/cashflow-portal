@@ -15,92 +15,141 @@
 
   <!-- Summary Cards -->
   <div class="summary-cards">
-    <div class="summary-card total">
+    <!-- Total Earnings Card - Clickable -->
+    <div class="summary-card total clickable" (click)="openTotalEarningsModal()">
       <div class="card-icon">💵</div>
       <div class="card-content">
         <p class="card-label">Total Earnings</p>
         <h2 class="card-value">{{ formatCurrency(totalEarnings()) }}</h2>
-        <p class="card-subtitle">Since Aug 2021</p>
+        <p class="card-subtitle">Since Aug 2021 • Click for details</p>
       </div>
     </div>
 
-    <div class="summary-card year">
+    <!-- Selected Year Total Card - Clickable -->
+    <div class="summary-card year clickable" (click)="openYearlyBreakdownModal()">
       <div class="card-icon">📅</div>
       <div class="card-content">
-        <p class="card-label">Current Year Total ({{ currentYear() }})</p>
+        <p class="card-label">{{ selectedYear() }} Total Earnings</p>
         <h2 class="card-value">{{ formatCurrency(yearlyTotal()) }}</h2>
-        <p class="card-subtitle">{{ filteredEntries().length }} entries</p>
+        <p class="card-subtitle">Selected Year • {{ filledMonthsCount() }} months • Click for details</p>
       </div>
     </div>
 
-    <div class="summary-card average">
-      <div class="card-icon">📊</div>
+    <!-- MNC Worked Card - Clickable -->
+    <div class="summary-card average clickable" (click)="openMNCModal()">
+      <div class="card-icon">🏢</div>
       <div class="card-content">
-        <p class="card-label">Year Wise Total Earnings</p>
-        <h2 class="card-value year-totals">{{ getYearWiseTotalsText() }}</h2>
-        <p class="card-subtitle">All years breakdown</p>
+        <p class="card-label">MNC Worked</p>
+        <h2 class="card-value year-totals">{{ getMNCWorkedText() }}</h2>
+        <p class="card-subtitle">Click for company details</p>
       </div>
     </div>
   </div>
 
-  <!-- Year Filter -->
+  <!-- Year Filter with Add Button for Selected Year -->
   <div class="filter-section">
-    <div class="year-tabs">
-      @for (year of availableYears(); track year) {
-        <button 
-          class="year-tab"
-          [class.active]="selectedYear() === year"
-          (click)="changeYear(year)">
-          {{ year }}
-        </button>
-      }
+    <div class="year-tabs-container">
+      <div class="year-tabs">
+        @for (year of availableYears(); track year) {
+          <button 
+            class="year-tab"
+            [class.active]="selectedYear() === year"
+            (click)="changeYear(year)">
+            {{ year }}
+          </button>
+        }
+      </div>
+      <button class="btn-add-year" (click)="openAddFormForYear(selectedYear())">
+        <span class="icon">+</span>
+        Add for {{ selectedYear() }}
+      </button>
     </div>
   </div>
 
-  <!-- Income Entries List -->
+  <!-- Monthly Grid View: 2 Rows x 6 Months -->
   <div class="entries-container">
     @if (filteredEntries().length === 0) {
       <div class="empty-state">
         <div class="empty-icon">📝</div>
         <h3>No income entries for {{ selectedYear() }}</h3>
         <p>Add your first income entry to start tracking</p>
-        <button class="btn-primary" (click)="openAddForm()">Add Income</button>
+        <button class="btn-primary" (click)="openAddFormForYear(selectedYear())">Add Income for {{ selectedYear() }}</button>
       </div>
     } @else {
-      <div class="entries-grid">
-        @for (entry of filteredEntries(); track entry.id) {
-          <div class="income-entry">
-            <div class="entry-header">
-              <div class="entry-month">
-                <span class="month-name">{{ entry.month }}</span>
-                <span class="month-year">{{ entry.year }}</span>
-              </div>
-              <div class="entry-actions">
-                <button class="btn-icon" (click)="editIncome(entry)" title="Edit">
-                  ✏️
-                </button>
-                <button class="btn-icon delete" (click)="deleteIncome(entry)" title="Delete">
-                  🗑️
-                </button>
-              </div>
-            </div>
-            
-            <div class="entry-amount">
-              {{ formatCurrency(entry.amount) }}
-            </div>
-            
-            <div class="entry-details">
-              <div class="detail-item">
-                <span class="detail-label">Source:</span>
-                <span class="detail-value">{{ entry.source }}</span>
-              </div>
-              @if (entry.notes) {
-                <div class="detail-item notes">
-                  <span class="detail-label">Notes:</span>
-                  <span class="detail-value">{{ entry.notes }}</span>
+      <!-- First Row: January to June -->
+      <div class="month-row">
+        @for (monthData of monthlyEntriesGrid().firstRow; track monthData.month) {
+          <div class="month-card" [class.has-entry]="monthData.hasEntry">
+            <div class="month-header">
+              <span class="month-name">{{ monthData.month }}</span>
+              @if (monthData.hasEntry) {
+                <div class="month-actions">
+                  <button class="btn-icon-small" (click)="editIncome(monthData.entry!)" title="Edit">✏️</button>
+                  <button class="btn-icon-small delete" (click)="deleteIncome(monthData.entry!)" title="Delete">🗑️</button>
                 </div>
               }
             </div>
+            
+            @if (monthData.hasEntry) {
+              <div class="month-content">
+                <div class="month-amount">{{ formatCurrency(monthData.entry!.amount) }}</div>
+                <div class="month-source">{{ monthData.entry!.source }}
+                  @if (monthData.entry!.mncCompany) {
+                    <span class="month-company">• {{ monthData.entry!.mncCompany }}</span>
+                  }
+                </div>
+                @if (monthData.entry!.date) {
+                  <div class="month-date">📅 {{ monthData.entry!.date | date: 'MMM dd' }}</div>
+                }
+                @if (monthData.entry!.notes) {
+                  <div class="month-notes" [title]="monthData.entry!.notes">💬 {{ monthData.entry!.notes }}</div>
+                }
+              </div>
+            } @else {
+              <div class="month-empty">
+                <span class="empty-icon">📝</span>
+                <span class="empty-text">No data</span>
+              </div>
+            }
+          </div>
+        }
+      </div>
+
+      <!-- Second Row: July to December -->
+      <div class="month-row">
+        @for (monthData of monthlyEntriesGrid().secondRow; track monthData.month) {
+          <div class="month-card" [class.has-entry]="monthData.hasEntry">
+            <div class="month-header">
+              <span class="month-name">{{ monthData.month }}</span>
+              @if (monthData.hasEntry) {
+                <div class="month-actions">
+                  <button class="btn-icon-small" (click)="editIncome(monthData.entry!)" title="Edit">✏️</button>
+                  <button class="btn-icon-small delete" (click)="deleteIncome(monthData.entry!)" title="Delete">🗑️</button>
+                </div>
+              }
+            </div>
+            
+            @if (monthData.hasEntry) {
+              <div class="month-content">
+                <div class="month-amount">{{ formatCurrency(monthData.entry!.amount) }}</div>
+                <div class="month-source">{{ monthData.entry!.source }}
+                  @if (monthData.entry!.mncCompany) {
+                    <span class="month-company">• {{ monthData.entry!.mncCompany }}</span>
+                  }
+                </div>
+                @if (monthData.entry!.date) {
+                  <div class="month-date">📅 {{ monthData.entry!.date | date: 'MMM dd' }}</div>
+                }
+                @if (monthData.entry!.notes) {
+                  <div class="month-notes" [title]="monthData.entry!.notes">💬 {{ monthData.entry!.notes }}</div>
+                }
+              </div>
+            } @else {
+              <div class="month-empty">
+                <span class="empty-icon">📝</span>
+                <span class="empty-text">No data</span>
+              </div>
+            }
           </div>
         }
       </div>
@@ -120,13 +169,14 @@
           <!-- Month & Year Selection -->
           <div class="form-row">
             <div class="form-group">
-              <label for="month">Month</label>
+              <label for="month">Month <span class="required">*</span></label>
               <select 
                 id="month" 
                 [(ngModel)]="selectedMonth"
                 name="month"
                 required
                 class="form-control">
+                <option value="">Select Month</option>
                 @for (month of months; track month) {
                   <option [value]="month">{{ month }}</option>
                 }
@@ -134,23 +184,37 @@
             </div>
 
             <div class="form-group">
-              <label for="year">Year</label>
-              <select 
+              <label for="year">Year <span class="required">*</span></label>
+              <input 
+                type="number" 
                 id="year" 
                 [(ngModel)]="selectedYearForm"
                 name="year"
                 required
+                [readonly]="isYearLocked()"
+                [class.readonly-input]="isYearLocked()"
+                [min]="2021"
+                [max]="2030"
                 class="form-control">
-                @for (year of availableYears(); track year) {
-                  <option [value]="year">{{ year }}</option>
-                }
-              </select>
             </div>
+          </div>
+
+          <!-- Salary Date (Optional) -->
+          <div class="form-group">
+            <label for="date">Salary Date (Optional)</label>
+            <input 
+              type="date" 
+              id="date" 
+              [(ngModel)]="selectedDate"
+              name="date"
+              class="form-control"
+              placeholder="Select salary date">
+            <small class="form-hint">Leave blank to use first day of the month</small>
           </div>
 
           <!-- Amount -->
           <div class="form-group">
-            <label for="amount">Amount (₹)</label>
+            <label for="amount">Amount (₹) <span class="required">*</span></label>
             <input 
               type="number" 
               id="amount" 
@@ -163,19 +227,38 @@
               class="form-control">
           </div>
 
-          <!-- Income Source -->
-          <div class="form-group">
-            <label for="source">Income Source</label>
-            <select 
-              id="source" 
-              [(ngModel)]="source"
-              name="source"
-              required
-              class="form-control">
-              @for (src of incomeSources; track src) {
-                <option [value]="src">{{ src }}</option>
-              }
-            </select>
+          <!-- Income Source & MNC Company Row -->
+          <div class="form-row">
+            <!-- Income Source -->
+            <div class="form-group">
+              <label for="source">Income Source <span class="required">*</span></label>
+              <select 
+                id="source" 
+                [(ngModel)]="source"
+                name="source"
+                required
+                class="form-control">
+                @for (src of incomeSources; track src) {
+                  <option [value]="src">{{ src }}</option>
+                }
+              </select>
+            </div>
+
+            <!-- MNC Company -->
+            <div class="form-group">
+              <label for="mncCompany">MNC Company <span class="required">*</span></label>
+              <select 
+                id="mncCompany" 
+                [(ngModel)]="mncCompany"
+                name="mncCompany"
+                required
+                class="form-control">
+                <option value="">Select Company</option>
+                @for (company of companyNames; track company) {
+                  <option [value]="company">{{ company }}</option>
+                }
+              </select>
+            </div>
           </div>
 
           <!-- Notes -->
@@ -201,6 +284,181 @@
           </div>
         </form>
       </div>
+    </div>
+  }
+
+  <!-- Total Earnings Modal -->
+  @if (showTotalEarningsModal()) {
+    <div class="modal-overlay" (click)="closeTotalEarningsModal()">
+      <div class="earnings-modal-content" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2>💰 Total Earnings Breakdown</h2>
+          <button class="btn-close" (click)="closeTotalEarningsModal()">✕</button>
+        </div>
+        
+        <div class="modal-body">
+          <table class="earnings-table">
+            <thead>
+              <tr>
+                <th class="year-header">Year</th>
+                <th class="amount-header">Total Amount (₹)</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (item of yearWiseTotalsArray(); track item.year) {
+                <tr>
+                  <td class="year-column">{{ item.year }}</td>
+                  <td class="amount-column">{{ formatCurrency(item.amount) }}</td>
+                </tr>
+              }
+            </tbody>
+            <tfoot>
+              <tr class="total-row">
+                <td class="year-column"><strong>Total Gross Earnings</strong></td>
+                <td class="amount-column"><strong>{{ formatCurrency(totalEarnings()) }}</strong></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Yearly Monthly Breakdown Modal -->
+  @if (showYearlyBreakdownModal()) {
+    <div class="modal-overlay" (click)="closeYearlyBreakdownModal()">
+      <div class="earnings-modal-content" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2>📅 {{ selectedYear() }} Monthly Breakdown</h2>
+          <button class="btn-close" (click)="closeYearlyBreakdownModal()">✕</button>
+        </div>
+        
+        <div class="modal-body">
+          <table class="earnings-table">
+            <thead>
+              <tr>
+                <th class="month-header">Month</th>
+                <th class="amount-header">Amount Earned (₹)</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (item of yearlyMonthlyBreakdown(); track item.month) {
+                <tr [class.no-entry]="!item.hasEntry">
+                  <td class="month-column">{{ item.month }}</td>
+                  <td class="amount-column">
+                    @if (item.hasEntry) {
+                      {{ formatCurrency(item.amount) }}
+                    } @else {
+                      <span class="no-data">—</span>
+                    }
+                  </td>
+                </tr>
+              }
+            </tbody>
+            <tfoot>
+              <tr class="total-row">
+                <td class="month-column"><strong>Gross Total for {{ selectedYear() }}</strong></td>
+                <td class="amount-column"><strong>{{ formatCurrency(yearlyTotal()) }}</strong></td>
+              </tr>
+            </tfoot>
+          </table>
+          
+          <div class="modal-stats">
+            <div class="stat-item">
+              <span class="stat-label">Months Tracked:</span>
+              <span class="stat-value">{{ filledMonthsCount() }} / 12</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">Monthly Average:</span>
+              <span class="stat-value">{{ formatCurrency(monthlyAverage()) }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Delete Confirmation Modal -->
+  @if (showDeleteConfirm() && deletingEntry()) {
+    <div class="modal-overlay" (click)="closeDeleteConfirm()">
+      <div class="modal-content delete-modal" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2>⚠️ Delete Income Entry</h2>
+          <button class="btn-close" (click)="closeDeleteConfirm()">✕</button>
+        </div>
+
+        <div class="modal-body">
+          <div class="warning-box">
+            <span class="warning-icon">⚠️</span>
+            <p>Are you sure you want to delete the income entry for <strong>{{ deletingEntry()!.month }} {{ deletingEntry()!.year }}</strong>?</p>
+            <p class="warning-note">Amount: {{ formatCurrency(deletingEntry()!.amount) }}</p>
+            <p class="warning-note">This will be a soft delete - the entry can be restored later if needed.</p>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" (click)="closeDeleteConfirm()" [disabled]="isLoading()">
+            Cancel
+          </button>
+          <button type="button" class="btn-danger" (click)="confirmDelete()" [disabled]="isLoading()">
+            @if (isLoading()) {
+              <span class="spinner-small">⏳</span>
+              <span>Deleting...</span>
+            } @else {
+              <span>Delete Entry</span>
+            }
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- MNC Worked Modal -->
+  @if (showMNCModal()) {
+    <div class="modal-overlay" (click)="closeMNCModal()">
+      <div class="mnc-modal-content" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2>🏢 MNC Earnings Breakdown</h2>
+          <button class="btn-close" (click)="closeMNCModal()">✕</button>
+        </div>
+        
+        <div class="modal-body">
+          <div class="mnc-list">
+            @for (company of companyWiseEarningsArray(); track company.name) {
+              <div class="mnc-card">
+                <div class="mnc-icon">{{ company.icon }}</div>
+                <div class="mnc-info">
+                  <h3 class="mnc-name">
+                    <span>{{ company.name }}</span>
+                    <span class="mnc-earnings">{{ formatCurrency(company.earnings) }}</span>
+                  </h3>
+                  <p class="mnc-period">{{ company.period }}</p>
+                </div>
+              </div>
+            }
+          </div>
+          
+          <div class="mnc-total">
+            <span class="mnc-total-label">Total MNC Earnings:</span>
+            <span class="mnc-total-value">{{ formatCurrency(totalEarnings()) }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Toast Notification -->
+  @if (showToast()) {
+    <div class="toast-notification" [class.success]="toastType() === 'success'" [class.error]="toastType() === 'error'" [class.info]="toastType() === 'info'">
+      <div class="toast-content">
+        <span class="toast-icon">
+          @if (toastType() === 'success') { ✅ }
+          @if (toastType() === 'error') { ❌ }
+          @if (toastType() === 'info') { ℹ️ }
+        </span>
+        <span class="toast-message">{{ toastMessage() }}</span>
+      </div>
+      <button class="toast-close" (click)="showToast.set(false)">✕</button>
     </div>
   }
 </section>
