@@ -1,3 +1,2 @@
 1- catgeory page - mobile View - table view responsiveness issue
-2- tooltip - overall app not visible
-3- income page - salary date UI to DB update issue
+2- income page - salary date UI to DB update issue

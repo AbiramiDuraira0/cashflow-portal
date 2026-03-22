@@ -1,0 +1,673 @@
+<!-- Debt Management Page -->
+<section class="debts-page">
+  <!-- Page Header -->
+  <header class="page-header">
+    <div class="header-content">
+      <h1>🏦 Debt Management</h1>
+      <p class="subtitle">Track loans and journey to financial freedom</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn-secondary" (click)="openEMICalculator()">
+        🧮 EMI Calculator
+      </button>
+      <button class="btn-primary" (click)="openAddModal()">
+        <span class="btn-icon">➕</span>
+        Add Debt/Loan
+      </button>
+    </div>
+  </header>
+
+  <!-- Summary Dashboard -->
+  <div class="summary-dashboard">
+    <!-- Total Debt Card -->
+    <div class="summary-card total-card">
+      <div class="card-icon">💰</div>
+      <div class="card-content">
+        <div class="card-label">Total Borrowed</div>
+        <div class="card-value">{{ formatCurrency(totalPrincipal()) }}</div>
+        <div class="card-meta">{{ debts().length }} total loans</div>
+      </div>
+    </div>
+
+    <!-- Paid Amount Card -->
+    <div class="summary-card paid-card">
+      <div class="card-icon">✅</div>
+      <div class="card-content">
+        <div class="card-label">Amount Paid</div>
+        <div class="card-value">{{ formatCurrency(totalPaid()) }}</div>
+        <div class="card-meta">{{ closedDebts().length }} loans closed</div>
+      </div>
+    </div>
+
+    <!-- Outstanding Card -->
+    <div class="summary-card outstanding-card">
+      <div class="card-icon">⏳</div>
+      <div class="card-content">
+        <div class="card-label">Outstanding</div>
+        <div class="card-value">{{ formatCurrency(totalOutstanding()) }}</div>
+        <div class="card-meta">{{ openDebts().length }} active loans</div>
+      </div>
+    </div>
+
+    <!-- Monthly EMI Card -->
+    <div class="summary-card emi-card">
+      <div class="card-icon">📅</div>
+      <div class="card-content">
+        <div class="card-label">Monthly EMI</div>
+        <div class="card-value">{{ formatCurrency(totalMonthlyEMI()) }}</div>
+        <div class="card-meta">Combined payment</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Debt-Free Progress -->
+  <div class="debt-free-progress">
+    <div class="progress-header">
+      <h3>🎯 Debt-Free Journey</h3>
+      <span class="progress-percentage">{{ debtFreePercentage().toFixed(1) }}% Complete</span>
+    </div>
+    <div class="progress-bar-container">
+      <div class="progress-bar-fill" [style.width.%]="debtFreePercentage()"></div>
+    </div>
+    <div class="progress-footer">
+      <span>{{ formatCurrency(totalPaid()) }} paid</span>
+      <span>{{ formatCurrency(totalPrincipal()) }} total</span>
+    </div>
+  </div>
+
+  <!-- Tab Navigation -->
+  <div class="tab-navigation">
+    <button 
+      class="tab-btn" 
+      [class.active]="selectedTab() === 'all'"
+      (click)="selectedTab.set('all')">
+      All Loans ({{ debts().length }})
+    </button>
+    <button 
+      class="tab-btn" 
+      [class.active]="selectedTab() === 'open'"
+      (click)="selectedTab.set('open')">
+      🔓 Open ({{ openDebts().length }})
+    </button>
+    <button 
+      class="tab-btn" 
+      [class.active]="selectedTab() === 'closed'"
+      (click)="selectedTab.set('closed')">
+      ✅ Closed ({{ closedDebts().length }})
+    </button>
+  </div>
+
+  <!-- Debt Cards -->
+  <div class="debts-grid">
+    @if (filteredDebts().length === 0) {
+      <div class="empty-state">
+        <div class="empty-icon">🎉</div>
+        <h3>No Debts Found</h3>
+        <p>You're debt-free! Or add a loan for tracking purposes.</p>
+        <button class="btn-primary" (click)="openAddModal()">Add Loan for Tracking</button>
+      </div>
+    } @else {
+      @for (debt of filteredDebts(); track debt.id) {
+        <div class="debt-card" [class]="'status-' + debt.status.toLowerCase()">
+          <!-- Card Header -->
+          <div class="card-header">
+            <div class="header-left">
+              <span class="type-icon">{{ getTypeIcon(debt.type) }}</span>
+              <div class="header-text">
+                <h3 class="debt-name">{{ debt.lenderName }}</h3>
+                <span class="debt-type">{{ debt.type }}</span>
+              </div>
+            </div>
+            <span class="status-badge" [class]="'status-' + debt.status.toLowerCase()">
+              {{ getStatusIcon(debt.status) }} {{ debt.status }}
+            </span>
+          </div>
+
+          <!-- Card Body -->
+          <div class="card-body">
+            <!-- Principal & Outstanding -->
+            <div class="amount-row">
+              <div class="amount-item">
+                <span class="amount-label">Principal</span>
+                <span class="amount-value">{{ formatCurrency(debt.principalAmount) }}</span>
+              </div>
+              @if (debt.status === DebtStatus.OPEN) {
+                <div class="amount-item outstanding">
+                  <span class="amount-label">Outstanding</span>
+                  <span class="amount-value">{{ formatCurrency(debt.outstandingAmount) }}</span>
+                </div>
+              }
+            </div>
+
+            <!-- Progress Bar -->
+            <div class="payment-progress">
+              <div class="progress-bar">
+                <div class="progress-fill" 
+                  [style.width.%]="getDebtProgress(debt)"
+                  [class.complete]="debt.status === DebtStatus.CLOSED">
+                </div>
+              </div>
+              <div class="progress-text">
+                <span class="paid-amount">Paid: {{ formatCurrency(debt.totalPaid) }}</span>
+                <span class="progress-percent">{{ getDebtProgress(debt).toFixed(1) }}%</span>
+              </div>
+            </div>
+
+            <!-- Loan Details -->
+            <div class="loan-details">
+              @if (debt.emiAmount && debt.status === DebtStatus.OPEN) {
+                <div class="detail-tag emi-tag">
+                  <span class="tag-icon">💳</span>
+                  <span class="tag-text">EMI: {{ formatCurrency(debt.emiAmount) }}</span>
+                </div>
+              }
+              @if (debt.interestRate) {
+                <div class="detail-tag rate-tag">
+                  <span class="tag-icon">📊</span>
+                  <span class="tag-text">{{ debt.interestRate }}% p.a.</span>
+                </div>
+              }
+              @if (debt.tenure) {
+                <div class="detail-tag tenure-tag">
+                  <span class="tag-icon">⏰</span>
+                  <span class="tag-text">{{ debt.tenure }} months</span>
+                </div>
+              }
+              @if (debt.frequency !== PaymentFrequency.ONE_TIME) {
+                <div class="detail-tag frequency-tag">
+                  <span class="tag-icon">🔄</span>
+                  <span class="tag-text">{{ debt.frequency }}</span>
+                </div>
+              }
+            </div>
+
+            <!-- Next Payment (for open debts) -->
+            @if (debt.nextPaymentDate && debt.status === DebtStatus.OPEN) {
+              <div class="next-payment">
+                <span class="payment-icon">📅</span>
+                <span class="payment-text">Next Payment: {{ formatDate(debt.nextPaymentDate) }}</span>
+              </div>
+            }
+
+            <!-- Date Range -->
+            <div class="date-range">
+              <span class="start-date">📅 {{ formatDate(debt.startDate) }}</span>
+              @if (debt.closedDate) {
+                <span class="date-separator">→</span>
+                <span class="end-date">{{ formatDate(debt.closedDate) }}</span>
+              } @else if (debt.endDate) {
+                <span class="date-separator">→</span>
+                <span class="end-date">Est. {{ formatDate(debt.endDate) }}</span>
+              }
+            </div>
+
+            @if (debt.notes) {
+              <div class="notes">
+                <span class="notes-icon">📝</span>
+                <span class="notes-text">{{ debt.notes }}</span>
+              </div>
+            }
+          </div>
+
+          <!-- Card Actions -->
+          <div class="card-actions">
+            <button class="action-btn view-btn" (click)="openDetailsModal(debt)" title="View Details">
+              👁️ View
+            </button>
+            <button class="action-btn edit-btn" (click)="openEditModal(debt)" title="Edit Loan">
+              ✏️ Edit
+            </button>
+            <button class="action-btn delete-btn" (click)="openDeleteModal(debt)" title="Delete Loan">
+              🗑️ Delete
+            </button>
+          </div>
+        </div>
+      }
+    }
+  </div>
+
+  <!-- Add/Edit Debt Modal -->
+  @if (showAddModal() || showEditModal()) {
+    <div class="modal-overlay" (click)="closeModals()">
+      <div class="modal-content" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2>{{ showAddModal() ? '➕ Add New Debt/Loan' : '✏️ Edit Loan' }}</h2>
+          <button class="close-btn" (click)="closeModals()">✕</button>
+        </div>
+
+        <div class="modal-body">
+          <form (submit)="$event.preventDefault(); showAddModal() ? saveDebt() : updateDebt()">
+            <!-- Loan Type & Status -->
+            <div class="form-row">
+              <div class="form-group">
+                <label for="debtType">Loan Type *</label>
+                <select id="debtType" [(ngModel)]="formType" name="type" required>
+                  @for (type of debtTypes; track type) {
+                    <option [value]="type">{{ getTypeIcon(type) }} {{ type }}</option>
+                  }
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="debtStatus">Status *</label>
+                <select id="debtStatus" [(ngModel)]="formStatus" name="status" required>
+                  @for (status of debtStatuses; track status) {
+                    <option [value]="status">{{ getStatusIcon(status) }} {{ status }}</option>
+                  }
+                </select>
+              </div>
+            </div>
+
+            <!-- Lender Details -->
+            <div class="form-row">
+              <div class="form-group">
+                <label for="lenderName">Lender/Bank Name *</label>
+                <input 
+                  type="text" 
+                  id="lenderName" 
+                  [(ngModel)]="formLenderName" 
+                  name="lenderName"
+                  placeholder="e.g., SBI, HDFC Bank"
+                  required
+                  autofocus>
+              </div>
+              <div class="form-group">
+                <label for="accountNumber">Account/Loan Number</label>
+                <input 
+                  type="text" 
+                  id="accountNumber" 
+                  [(ngModel)]="formAccountNumber" 
+                  name="accountNumber"
+                  placeholder="Optional">
+              </div>
+            </div>
+
+            <!-- Principal & Interest -->
+            <div class="form-row">
+              <div class="form-group">
+                <label for="principalAmount">Principal Amount (₹) *</label>
+                <input 
+                  type="number" 
+                  id="principalAmount" 
+                  [(ngModel)]="formPrincipalAmount" 
+                  name="principalAmount"
+                  min="0"
+                  step="1000"
+                  (change)="autoCalculateFormEMI()"
+                  required>
+              </div>
+              <div class="form-group">
+                <label for="interestRate">Interest Rate (% p.a.)</label>
+                <input 
+                  type="number" 
+                  id="interestRate" 
+                  [(ngModel)]="formInterestRate" 
+                  name="interestRate"
+                  min="0"
+                  max="50"
+                  step="0.1"
+                  (change)="autoCalculateFormEMI()">
+              </div>
+            </div>
+
+            <!-- Tenure & EMI -->
+            <div class="form-row">
+              <div class="form-group">
+                <label for="tenure">Tenure (months)</label>
+                <input 
+                  type="number" 
+                  id="tenure" 
+                  [(ngModel)]="formTenure" 
+                  name="tenure"
+                  min="1"
+                  step="1"
+                  (change)="autoCalculateFormEMI()">
+              </div>
+              <div class="form-group">
+                <label for="emiAmount">EMI Amount (₹)</label>
+                <input 
+                  type="number" 
+                  id="emiAmount" 
+                  [(ngModel)]="formEmiAmount" 
+                  name="emiAmount"
+                  min="0"
+                  step="100"
+                  placeholder="Auto-calculated">
+              </div>
+            </div>
+
+            <!-- Dates -->
+            <div class="form-row">
+              <div class="form-group">
+                <label for="startDate">Start Date *</label>
+                <input 
+                  type="date" 
+                  id="startDate" 
+                  [(ngModel)]="formStartDate" 
+                  name="startDate"
+                  required>
+              </div>
+              <div class="form-group">
+                <label for="endDate">Expected End Date</label>
+                <input 
+                  type="date" 
+                  id="endDate" 
+                  [(ngModel)]="formEndDate" 
+                  name="endDate">
+              </div>
+            </div>
+
+            <!-- Payment Details -->
+            <div class="form-row">
+              <div class="form-group">
+                <label for="totalPaid">Total Paid (₹)</label>
+                <input 
+                  type="number" 
+                  id="totalPaid" 
+                  [(ngModel)]="formTotalPaid" 
+                  name="totalPaid"
+                  min="0"
+                  step="100">
+              </div>
+              <div class="form-group">
+                <label for="outstandingAmount">Outstanding (₹)</label>
+                <input 
+                  type="number" 
+                  id="outstandingAmount" 
+                  [(ngModel)]="formOutstandingAmount" 
+                  name="outstandingAmount"
+                  min="0"
+                  step="100">
+              </div>
+            </div>
+
+            <!-- Frequency & Next Payment -->
+            <div class="form-row">
+              <div class="form-group">
+                <label for="frequency">Payment Frequency</label>
+                <select id="frequency" [(ngModel)]="formFrequency" name="frequency">
+                  @for (freq of paymentFrequencies; track freq) {
+                    <option [value]="freq">{{ freq }}</option>
+                  }
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="nextPaymentDate">Next Payment Date</label>
+                <input 
+                  type="date" 
+                  id="nextPaymentDate" 
+                  [(ngModel)]="formNextPaymentDate" 
+                  name="nextPaymentDate">
+              </div>
+            </div>
+
+            <!-- Closed Date (for closed loans) -->
+            @if (formStatus() === DebtStatus.CLOSED) {
+              <div class="form-group">
+                <label for="closedDate">Closed Date</label>
+                <input 
+                  type="date" 
+                  id="closedDate" 
+                  [(ngModel)]="formClosedDate" 
+                  name="closedDate">
+              </div>
+            }
+
+            <!-- Notes -->
+            <div class="form-group">
+              <label for="notes">Notes</label>
+              <textarea 
+                id="notes" 
+                [(ngModel)]="formNotes" 
+                name="notes"
+                rows="3"
+                placeholder="Additional details about this loan..."></textarea>
+            </div>
+
+            <!-- Form Actions -->
+            <div class="form-actions">
+              <button type="button" class="btn-secondary" (click)="closeModals()">Cancel</button>
+              <button type="submit" class="btn-primary">
+                {{ showAddModal() ? '➕ Add Loan' : '✅ Update Loan' }}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- EMI Calculator Modal -->
+  @if (showEMICalculator()) {
+    <div class="modal-overlay" (click)="closeModals()">
+      <div class="modal-content calculator-modal" (click)="$event.stopPropagation()">
+        <div class="modal-header calculator-header">
+          <h2>🧮 EMI Calculator</h2>
+          <button class="close-btn" (click)="closeModals()">✕</button>
+        </div>
+
+        <div class="modal-body">
+          <div class="calculator-form">
+            <div class="form-group">
+              <label for="calcPrincipal">Loan Amount (₹)</label>
+              <input 
+                type="number" 
+                id="calcPrincipal" 
+                [(ngModel)]="calcPrincipal" 
+                min="0"
+                step="10000"
+                placeholder="e.g., 500000">
+            </div>
+
+            <div class="form-group">
+              <label for="calcRate">Interest Rate (% p.a.)</label>
+              <input 
+                type="number" 
+                id="calcRate" 
+                [(ngModel)]="calcRate" 
+                min="0"
+                max="50"
+                step="0.1"
+                placeholder="e.g., 10.5">
+            </div>
+
+            <div class="form-group">
+              <label for="calcTenure">Tenure (months)</label>
+              <input 
+                type="number" 
+                id="calcTenure" 
+                [(ngModel)]="calcTenure" 
+                min="1"
+                step="1"
+                placeholder="e.g., 60">
+            </div>
+
+            <button class="btn-calculate" (click)="calculateEMI()">
+              🧮 Calculate EMI
+            </button>
+
+            @if (calculatedEMI() > 0) {
+              <div class="calculator-result">
+                <div class="result-icon">💰</div>
+                <div class="result-label">Monthly EMI</div>
+                <div class="result-value">{{ formatCurrency(calculatedEMI()) }}</div>
+                <div class="result-meta">
+                  <div class="meta-item">
+                    <span class="meta-label">Total Payment:</span>
+                    <span class="meta-value">{{ formatCurrency(calculatedEMI() * calcTenure()) }}</span>
+                  </div>
+                  <div class="meta-item">
+                    <span class="meta-label">Total Interest:</span>
+                    <span class="meta-value">{{ formatCurrency((calculatedEMI() * calcTenure()) - calcPrincipal()) }}</span>
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn-secondary" (click)="closeModals()">Close</button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Details Modal -->
+  @if (showDetailsModal() && selectedDebt()) {
+    <div class="modal-overlay" (click)="closeModals()">
+      <div class="modal-content details-modal" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2>{{ getTypeIcon(selectedDebt()!.type) }} Loan Details</h2>
+          <button class="close-btn" (click)="closeModals()">✕</button>
+        </div>
+
+        <div class="modal-body">
+          <div class="details-grid">
+            <div class="detail-block">
+              <div class="block-label">Lender Name</div>
+              <div class="block-value">{{ selectedDebt()!.lenderName }}</div>
+            </div>
+
+            <div class="detail-block">
+              <div class="block-label">Loan Type</div>
+              <div class="block-value">{{ selectedDebt()!.type }}</div>
+            </div>
+
+            <div class="detail-block">
+              <div class="block-label">Status</div>
+              <div class="block-value">
+                <span class="status-badge" [class]="'status-' + selectedDebt()!.status.toLowerCase()">
+                  {{ getStatusIcon(selectedDebt()!.status) }} {{ selectedDebt()!.status }}
+                </span>
+              </div>
+            </div>
+
+            @if (selectedDebt()!.accountNumber) {
+              <div class="detail-block">
+                <div class="block-label">Account Number</div>
+                <div class="block-value">{{ selectedDebt()!.accountNumber }}</div>
+              </div>
+            }
+
+            <div class="detail-block">
+              <div class="block-label">Principal Amount</div>
+              <div class="block-value highlight">{{ formatCurrency(selectedDebt()!.principalAmount) }}</div>
+            </div>
+
+            <div class="detail-block">
+              <div class="block-label">Interest Rate</div>
+              <div class="block-value">{{ selectedDebt()!.interestRate }}% p.a.</div>
+            </div>
+
+            @if (selectedDebt()!.emiAmount) {
+              <div class="detail-block">
+                <div class="block-label">EMI Amount</div>
+                <div class="block-value highlight">{{ formatCurrency(selectedDebt()!.emiAmount!) }}</div>
+              </div>
+            }
+
+            @if (selectedDebt()!.tenure) {
+              <div class="detail-block">
+                <div class="block-label">Tenure</div>
+                <div class="block-value">{{ selectedDebt()!.tenure }} months</div>
+              </div>
+            }
+
+            <div class="detail-block">
+              <div class="block-label">Total Paid</div>
+              <div class="block-value paid-value">{{ formatCurrency(selectedDebt()!.totalPaid) }}</div>
+            </div>
+
+            @if (selectedDebt()!.status === DebtStatus.OPEN) {
+              <div class="detail-block">
+                <div class="block-label">Outstanding</div>
+                <div class="block-value outstanding-value">{{ formatCurrency(selectedDebt()!.outstandingAmount) }}</div>
+              </div>
+            }
+
+            <div class="detail-block">
+              <div class="block-label">Payment Frequency</div>
+              <div class="block-value">{{ selectedDebt()!.frequency }}</div>
+            </div>
+
+            @if (selectedDebt()!.nextPaymentDate) {
+              <div class="detail-block">
+                <div class="block-label">Next Payment</div>
+                <div class="block-value">{{ formatDate(selectedDebt()!.nextPaymentDate!) }}</div>
+              </div>
+            }
+
+            <div class="detail-block">
+              <div class="block-label">Start Date</div>
+              <div class="block-value">{{ formatDate(selectedDebt()!.startDate) }}</div>
+            </div>
+
+            @if (selectedDebt()!.closedDate) {
+              <div class="detail-block">
+                <div class="block-label">Closed Date</div>
+                <div class="block-value">{{ formatDate(selectedDebt()!.closedDate!) }}</div>
+              </div>
+            } @else if (selectedDebt()!.endDate) {
+              <div class="detail-block">
+                <div class="block-label">Expected End</div>
+                <div class="block-value">{{ formatDate(selectedDebt()!.endDate!) }}</div>
+              </div>
+            }
+
+            @if (selectedDebt()!.notes) {
+              <div class="detail-block full-width">
+                <div class="block-label">Notes</div>
+                <div class="block-value">{{ selectedDebt()!.notes }}</div>
+              </div>
+            }
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn-secondary" (click)="closeModals()">Close</button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Delete Confirmation Modal -->
+  @if (showDeleteModal() && selectedDebt()) {
+    <div class="modal-overlay" (click)="closeModals()">
+      <div class="modal-content delete-modal" (click)="$event.stopPropagation()">
+        <div class="modal-header delete-header">
+          <h2>🗑️ Delete Loan</h2>
+          <button class="close-btn" (click)="closeModals()">✕</button>
+        </div>
+
+        <div class="modal-body">
+          <div class="delete-warning">
+            <div class="warning-icon">⚠️</div>
+            <p>Are you sure you want to delete this loan record?</p>
+            <div class="debt-info">
+              <strong>{{ selectedDebt()!.lenderName }}</strong>
+              <span>{{ selectedDebt()!.type }}</span>
+            </div>
+            <p class="warning-text">This action cannot be undone.</p>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn-secondary" (click)="closeModals()">Cancel</button>
+          <button class="btn-danger" (click)="deleteDebt()">Delete Loan</button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Toast Notification -->
+  @if (toastVisible()) {
+    <div class="toast-notification">
+      {{ toastMessage() }}
+    </div>
+  }
+
+  <!-- Floating Action Button (Mobile) -->
+  <button class="fab-add" (click)="openAddModal()" title="Add Loan">
+    <span class="fab-icon">➕</span>
+  </button>
+</section>

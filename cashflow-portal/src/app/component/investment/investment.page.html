@@ -1,0 +1,533 @@
+<!-- Investment Portfolio Management Page -->
+<section class="investment-page">
+  <!-- Page Header -->
+  <header class="page-header">
+    <div class="header-content">
+      <h1>📊 Investment Portfolio</h1>
+      <p class="subtitle">Track and manage your wealth-building journey</p>
+    </div>
+    <button class="btn-primary" (click)="openAddModal()">
+      <span class="btn-icon">➕</span>
+      Add Investment
+    </button>
+  </header>
+
+  <!-- Summary Cards -->
+  <div class="summary-cards">
+    <!-- Total Invested Card -->
+    <div class="summary-card invested-card">
+      <div class="card-icon">💰</div>
+      <div class="card-content">
+        <div class="card-label">Total Invested</div>
+        <div class="card-value">{{ formatCurrency(totalInvested()) }}</div>
+        <div class="card-meta">{{ activeInvestments().length }} active investments</div>
+      </div>
+    </div>
+
+    <!-- Current Value Card -->
+    <div class="summary-card value-card">
+      <div class="card-icon">📈</div>
+      <div class="card-content">
+        <div class="card-label">Current Value</div>
+        <div class="card-value">{{ formatCurrency(totalCurrentValue()) }}</div>
+        <div class="card-meta">As of today</div>
+      </div>
+    </div>
+
+    <!-- Returns Card -->
+    <div class="summary-card returns-card" [class.positive]="totalReturns() >= 0" [class.negative]="totalReturns() < 0">
+      <div class="card-icon">{{ totalReturns() >= 0 ? '📊' : '📉' }}</div>
+      <div class="card-content">
+        <div class="card-label">Total Returns</div>
+        <div class="card-value">{{ formatCurrency(totalReturns()) }}</div>
+        <div class="card-meta">
+          <span class="returns-percentage" [class.positive]="totalReturnsPercentage() >= 0" [class.negative]="totalReturnsPercentage() < 0">
+            {{ totalReturnsPercentage() >= 0 ? '+' : '' }}{{ totalReturnsPercentage().toFixed(2) }}%
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab Navigation -->
+  <div class="tab-navigation">
+    <button 
+      class="tab-btn" 
+      [class.active]="selectedTab() === 'all'"
+      (click)="selectedTab.set('all')">
+      All Investments ({{ investments().length }})
+    </button>
+    <button 
+      class="tab-btn" 
+      [class.active]="selectedTab() === 'active'"
+      (click)="selectedTab.set('active')">
+      ✅ Active ({{ activeInvestments().length }})
+    </button>
+    <button 
+      class="tab-btn" 
+      [class.active]="selectedTab() === 'past'"
+      (click)="selectedTab.set('past')">
+      📦 Past ({{ pastInvestments().length }})
+    </button>
+    <button 
+      class="tab-btn" 
+      [class.active]="selectedTab() === 'todo'"
+      (click)="selectedTab.set('todo')">
+      📋 To-do ({{ todoInvestments().length }})
+    </button>
+  </div>
+
+  <!-- Investment Cards Grid -->
+  <div class="investments-grid">
+    @if (filteredInvestments().length === 0) {
+      <div class="empty-state">
+        <div class="empty-icon">🏦</div>
+        <h3>No Investments Found</h3>
+        <p>Start building your wealth by adding your first investment</p>
+        <button class="btn-primary" (click)="openAddModal()">Add Investment</button>
+      </div>
+    } @else {
+      @for (investment of filteredInvestments(); track investment.id) {
+        <div class="investment-card" [class]="'status-' + investment.status.toLowerCase().replace(' ', '-')">
+          <!-- Card Header -->
+          <div class="card-header">
+            <div class="header-left">
+              <span class="type-icon">{{ getTypeIcon(investment.type) }}</span>
+              <div class="header-text">
+                <h3 class="investment-name">{{ investment.name }}</h3>
+                <span class="investment-type">{{ investment.type }}</span>
+              </div>
+            </div>
+            <span class="status-badge" [class]="'status-' + investment.status.toLowerCase().replace(' ', '-')">
+              {{ getStatusIcon(investment.status) }} {{ investment.status }}
+            </span>
+          </div>
+
+          <!-- Card Body -->
+          <div class="card-body">
+            <!-- Investment Details -->
+            <div class="detail-row">
+              <div class="detail-item">
+                <span class="detail-label">Invested</span>
+                <span class="detail-value">{{ formatCurrency(investment.investedAmount) }}</span>
+              </div>
+              @if (investment.currentValue && investment.status === InvestmentStatus.ACTIVE) {
+                <div class="detail-item">
+                  <span class="detail-label">Current Value</span>
+                  <span class="detail-value">{{ formatCurrency(investment.currentValue) }}</span>
+                </div>
+              }
+            </div>
+
+            @if (investment.returns !== undefined && investment.status === InvestmentStatus.ACTIVE) {
+              <div class="returns-section">
+                <div class="returns-bar">
+                  <div class="returns-fill" 
+                    [class.positive]="investment.returns >= 0" 
+                    [class.negative]="investment.returns < 0"
+                    [style.width.%]="Math.abs(investment.returnsPercentage || 0)">
+                  </div>
+                </div>
+                <div class="returns-text" [class.positive]="investment.returns >= 0" [class.negative]="investment.returns < 0">
+                  <span>{{ formatCurrency(investment.returns) }}</span>
+                  <span class="returns-percent">
+                    {{ investment.returns >= 0 ? '+' : '' }}{{ (investment.returnsPercentage || 0).toFixed(2) }}%
+                  </span>
+                </div>
+              </div>
+            }
+
+            <!-- Additional Details -->
+            <div class="meta-info">
+              @if (investment.frequency) {
+                <span class="meta-tag">🔄 {{ investment.frequency }}</span>
+              }
+              @if (investment.units) {
+                <span class="meta-tag">📦 {{ investment.units }} units</span>
+              }
+              @if (investment.maturityDate) {
+                <span class="meta-tag">📅 Matures: {{ formatDate(investment.maturityDate) }}</span>
+              }
+            </div>
+
+            <!-- Date Range -->
+            <div class="date-range">
+              <span class="start-date">📅 {{ formatDate(investment.startDate) }}</span>
+              @if (investment.endDate) {
+                <span class="date-separator">→</span>
+                <span class="end-date">{{ formatDate(investment.endDate) }}</span>
+              }
+            </div>
+
+            @if (investment.notes) {
+              <div class="notes">
+                <span class="notes-icon">📝</span>
+                <span class="notes-text">{{ investment.notes }}</span>
+              </div>
+            }
+          </div>
+
+          <!-- Card Actions -->
+          <div class="card-actions">
+            <button class="action-btn view-btn" (click)="openDetailsModal(investment)" title="View Details">
+              👁️ View
+            </button>
+            <button class="action-btn edit-btn" (click)="openEditModal(investment)" title="Edit Investment">
+              ✏️ Edit
+            </button>
+            <button class="action-btn delete-btn" (click)="openDeleteModal(investment)" title="Delete Investment">
+              🗑️ Delete
+            </button>
+          </div>
+        </div>
+      }
+    }
+  </div>
+
+  <!-- Add/Edit Investment Modal -->
+  @if (showAddModal() || showEditModal()) {
+    <div class="modal-overlay" (click)="closeModals()">
+      <div class="modal-content" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2>{{ showAddModal() ? '➕ Add New Investment' : '✏️ Edit Investment' }}</h2>
+          <button class="close-btn" (click)="closeModals()">✕</button>
+        </div>
+
+        <div class="modal-body">
+          <form (submit)="$event.preventDefault(); showAddModal() ? saveInvestment() : updateInvestment()">
+            <!-- Investment Type & Status -->
+            <div class="form-row">
+              <div class="form-group">
+                <label for="investmentType">Investment Type *</label>
+                <select id="investmentType" [(ngModel)]="formType" name="type" required>
+                  @for (type of investmentTypes; track type) {
+                    <option [value]="type">{{ getTypeIcon(type) }} {{ type }}</option>
+                  }
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="investmentStatus">Status *</label>
+                <select id="investmentStatus" [(ngModel)]="formStatus" name="status" required>
+                  @for (status of investmentStatuses; track status) {
+                    <option [value]="status">{{ getStatusIcon(status) }} {{ status }}</option>
+                  }
+                </select>
+              </div>
+            </div>
+
+            <!-- Investment Name -->
+            <div class="form-group">
+              <label for="investmentName">Investment Name *</label>
+              <input 
+                type="text" 
+                id="investmentName" 
+                [(ngModel)]="formName" 
+                name="name"
+                placeholder="e.g., HDFC Top 100 Fund, Infosys Stock"
+                required
+                autofocus>
+            </div>
+
+            <!-- Date Range -->
+            <div class="form-row">
+              <div class="form-group">
+                <label for="startDate">Start Date *</label>
+                <input 
+                  type="date" 
+                  id="startDate" 
+                  [(ngModel)]="formStartDate" 
+                  name="startDate"
+                  required>
+              </div>
+              <div class="form-group">
+                <label for="endDate">End Date</label>
+                <input 
+                  type="date" 
+                  id="endDate" 
+                  [(ngModel)]="formEndDate" 
+                  name="endDate">
+              </div>
+            </div>
+
+            <!-- Investment Amounts -->
+            <div class="form-row">
+              <div class="form-group">
+                <label for="investedAmount">Invested Amount (₹) *</label>
+                <input 
+                  type="number" 
+                  id="investedAmount" 
+                  [(ngModel)]="formInvestedAmount" 
+                  name="investedAmount"
+                  min="0"
+                  step="100"
+                  required>
+              </div>
+              <div class="form-group">
+                <label for="currentValue">Current Value (₹)</label>
+                <input 
+                  type="number" 
+                  id="currentValue" 
+                  [(ngModel)]="formCurrentValue" 
+                  name="currentValue"
+                  min="0"
+                  step="100">
+              </div>
+            </div>
+
+            <!-- Maturity Details -->
+            <div class="form-row">
+              <div class="form-group">
+                <label for="maturityValue">Maturity Value (₹)</label>
+                <input 
+                  type="number" 
+                  id="maturityValue" 
+                  [(ngModel)]="formMaturityValue" 
+                  name="maturityValue"
+                  min="0"
+                  step="100">
+              </div>
+              <div class="form-group">
+                <label for="maturityDate">Maturity Date</label>
+                <input 
+                  type="date" 
+                  id="maturityDate" 
+                  [(ngModel)]="formMaturityDate" 
+                  name="maturityDate">
+              </div>
+            </div>
+
+            <!-- Units & Pricing (for Stocks/MF) -->
+            <div class="form-row">
+              <div class="form-group">
+                <label for="units">Units/Quantity</label>
+                <input 
+                  type="number" 
+                  id="units" 
+                  [(ngModel)]="formUnits" 
+                  name="units"
+                  min="0"
+                  step="0.01">
+              </div>
+              <div class="form-group">
+                <label for="avgPrice">Avg. Price (₹)</label>
+                <input 
+                  type="number" 
+                  id="avgPrice" 
+                  [(ngModel)]="formAvgPrice" 
+                  name="avgPrice"
+                  min="0"
+                  step="0.01">
+              </div>
+            </div>
+
+            <!-- Current Price & Frequency -->
+            <div class="form-row">
+              <div class="form-group">
+                <label for="currentPrice">Current Price (₹)</label>
+                <input 
+                  type="number" 
+                  id="currentPrice" 
+                  [(ngModel)]="formCurrentPrice" 
+                  name="currentPrice"
+                  min="0"
+                  step="0.01">
+              </div>
+              <div class="form-group">
+                <label for="frequency">Payment Frequency</label>
+                <select id="frequency" [(ngModel)]="formFrequency" name="frequency">
+                  <option value="">-- Select --</option>
+                  <option value="Monthly">Monthly</option>
+                  <option value="Quarterly">Quarterly</option>
+                  <option value="Yearly">Yearly</option>
+                  <option value="One-time">One-time</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Notes -->
+            <div class="form-group">
+              <label for="notes">Notes</label>
+              <textarea 
+                id="notes" 
+                [(ngModel)]="formNotes" 
+                name="notes"
+                rows="3"
+                placeholder="Additional details about this investment..."></textarea>
+            </div>
+
+            <!-- Form Actions -->
+            <div class="form-actions">
+              <button type="button" class="btn-secondary" (click)="closeModals()">Cancel</button>
+              <button type="submit" class="btn-primary">
+                {{ showAddModal() ? '➕ Add Investment' : '✅ Update Investment' }}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Details Modal -->
+  @if (showDetailsModal() && selectedInvestment()) {
+    <div class="modal-overlay" (click)="closeModals()">
+      <div class="modal-content details-modal" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2>{{ getTypeIcon(selectedInvestment()!.type) }} Investment Details</h2>
+          <button class="close-btn" (click)="closeModals()">✕</button>
+        </div>
+
+        <div class="modal-body">
+          <div class="details-grid">
+            <div class="detail-block">
+              <div class="block-label">Investment Name</div>
+              <div class="block-value">{{ selectedInvestment()!.name }}</div>
+            </div>
+
+            <div class="detail-block">
+              <div class="block-label">Type</div>
+              <div class="block-value">{{ selectedInvestment()!.type }}</div>
+            </div>
+
+            <div class="detail-block">
+              <div class="block-label">Status</div>
+              <div class="block-value">
+                <span class="status-badge" [class]="'status-' + selectedInvestment()!.status.toLowerCase().replace(' ', '-')">
+                  {{ getStatusIcon(selectedInvestment()!.status) }} {{ selectedInvestment()!.status }}
+                </span>
+              </div>
+            </div>
+
+            <div class="detail-block">
+              <div class="block-label">Invested Amount</div>
+              <div class="block-value highlight">{{ formatCurrency(selectedInvestment()!.investedAmount) }}</div>
+            </div>
+
+            @if (selectedInvestment()!.currentValue) {
+              <div class="detail-block">
+                <div class="block-label">Current Value</div>
+                <div class="block-value highlight">{{ formatCurrency(selectedInvestment()!.currentValue!) }}</div>
+              </div>
+            }
+
+            @if (selectedInvestment()!.returns !== undefined) {
+              <div class="detail-block">
+                <div class="block-label">Returns</div>
+                <div class="block-value" [class]="getReturnsColorClass(selectedInvestment()!.returns)">
+                  {{ formatCurrency(selectedInvestment()!.returns!) }}
+                  ({{ selectedInvestment()!.returns! >= 0 ? '+' : '' }}{{ selectedInvestment()!.returnsPercentage!.toFixed(2) }}%)
+                </div>
+              </div>
+            }
+
+            @if (selectedInvestment()!.maturityValue) {
+              <div class="detail-block">
+                <div class="block-label">Maturity Value</div>
+                <div class="block-value">{{ formatCurrency(selectedInvestment()!.maturityValue!) }}</div>
+              </div>
+            }
+
+            @if (selectedInvestment()!.units) {
+              <div class="detail-block">
+                <div class="block-label">Units</div>
+                <div class="block-value">{{ selectedInvestment()!.units }}</div>
+              </div>
+            }
+
+            @if (selectedInvestment()!.avgPrice) {
+              <div class="detail-block">
+                <div class="block-label">Avg. Price</div>
+                <div class="block-value">{{ formatCurrency(selectedInvestment()!.avgPrice!) }}</div>
+              </div>
+            }
+
+            @if (selectedInvestment()!.currentPrice) {
+              <div class="detail-block">
+                <div class="block-label">Current Price</div>
+                <div class="block-value">{{ formatCurrency(selectedInvestment()!.currentPrice!) }}</div>
+              </div>
+            }
+
+            @if (selectedInvestment()!.frequency) {
+              <div class="detail-block">
+                <div class="block-label">Frequency</div>
+                <div class="block-value">{{ selectedInvestment()!.frequency }}</div>
+              </div>
+            }
+
+            <div class="detail-block">
+              <div class="block-label">Start Date</div>
+              <div class="block-value">{{ formatDate(selectedInvestment()!.startDate) }}</div>
+            </div>
+
+            @if (selectedInvestment()!.endDate) {
+              <div class="detail-block">
+                <div class="block-label">End Date</div>
+                <div class="block-value">{{ formatDate(selectedInvestment()!.endDate!) }}</div>
+              </div>
+            }
+
+            @if (selectedInvestment()!.maturityDate) {
+              <div class="detail-block">
+                <div class="block-label">Maturity Date</div>
+                <div class="block-value">{{ formatDate(selectedInvestment()!.maturityDate!) }}</div>
+              </div>
+            }
+
+            @if (selectedInvestment()!.notes) {
+              <div class="detail-block full-width">
+                <div class="block-label">Notes</div>
+                <div class="block-value">{{ selectedInvestment()!.notes }}</div>
+              </div>
+            }
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn-secondary" (click)="closeModals()">Close</button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Delete Confirmation Modal -->
+  @if (showDeleteModal() && selectedInvestment()) {
+    <div class="modal-overlay" (click)="closeModals()">
+      <div class="modal-content delete-modal" (click)="$event.stopPropagation()">
+        <div class="modal-header delete-header">
+          <h2>🗑️ Delete Investment</h2>
+          <button class="close-btn" (click)="closeModals()">✕</button>
+        </div>
+
+        <div class="modal-body">
+          <div class="delete-warning">
+            <div class="warning-icon">⚠️</div>
+            <p>Are you sure you want to delete this investment?</p>
+            <div class="investment-info">
+              <strong>{{ selectedInvestment()!.name }}</strong>
+              <span>{{ selectedInvestment()!.type }}</span>
+            </div>
+            <p class="warning-text">This action cannot be undone.</p>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn-secondary" (click)="closeModals()">Cancel</button>
+          <button class="btn-danger" (click)="deleteInvestment()">Delete Investment</button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Toast Notification -->
+  @if (toastVisible()) {
+    <div class="toast-notification">
+      {{ toastMessage() }}
+    </div>
+  }
+
+  <!-- Floating Action Button (Mobile) -->
+  <button class="fab-add" (click)="openAddModal()" title="Add Investment">
+    <span class="fab-icon">➕</span>
+  </button>
+</section>
