@@ -2,9 +2,18 @@ import { ApplicationConfig, provideBrowserGlobalErrorListeners, provideZonelessC
 import { provideRouter, withPreloading, PreloadAllModules } from '@angular/router';
 import { provideAnimations } from '@angular/platform-browser/animations';
 import { provideHttpClient, withFetch } from '@angular/common/http';
+import { MAT_TOOLTIP_DEFAULT_OPTIONS, MatTooltipDefaultOptions } from '@angular/material/tooltip';
 
 import { routes } from './app.routes';
 import { provideClientHydration, withEventReplay } from '@angular/platform-browser';
+
+/** Custom tooltip configuration for zoneless mode */
+export const customTooltipDefaults: MatTooltipDefaultOptions = {
+  showDelay: 200,
+  hideDelay: 0,
+  touchendHideDelay: 1500,
+  disableTooltipInteractivity: true
+};
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -13,6 +22,11 @@ export const appConfig: ApplicationConfig = {
     provideAnimations(),
     provideHttpClient(withFetch()),
     provideRouter(routes, withPreloading(PreloadAllModules)), 
-    provideClientHydration(withEventReplay())
+    provideClientHydration(withEventReplay()),
+    // Configure Material Tooltip to work with zoneless change detection
+    {
+      provide: MAT_TOOLTIP_DEFAULT_OPTIONS,
+      useValue: customTooltipDefaults
+    }
   ]
 };

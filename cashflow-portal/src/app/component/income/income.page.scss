@@ -184,6 +184,25 @@
     }
   }
 
+  &.clickable {
+    cursor: pointer;
+    position: relative;
+
+    &:hover {
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+      transform: translateY(-3px);
+
+      .card-click-indicator {
+        opacity: 1;
+        color: #111827;
+      }
+    }
+
+    &:active {
+      transform: translateY(-1px);
+    }
+  }
+
   &.year {
     .card-icon {
       background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
@@ -203,20 +222,33 @@
 }
 
 // ============================================
-// Year Filter
+// Year Filter with Add Button
 // ============================================
 .filter-section {
   margin-bottom: 24px;
 
-  .year-tabs {
+  .year-tabs-container {
     display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
     padding: 12px;
     background: white;
     border-radius: 10px;
     border: 1px solid #e5e7eb;
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+
+    @media (max-width: 768px) {
+      flex-direction: column;
+      align-items: stretch;
+    }
+  }
+
+  .year-tabs {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    flex: 1;
   }
 
   .year-tab {
@@ -248,23 +280,207 @@
       font-size: 13px;
     }
   }
+
+  .btn-add-year {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
+
+    .icon {
+      font-size: 16px;
+      font-weight: 700;
+    }
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 10px rgba(59, 130, 246, 0.4);
+    }
+
+    &:active {
+      transform: translateY(0);
+    }
+
+    @media (max-width: 768px) {
+      width: 100%;
+      justify-content: center;
+    }
+  }
 }
 
 // ============================================
-// Income Entries
+// Monthly Grid View (2 Rows x 6 Columns)
 // ============================================
 .entries-container {
   margin-bottom: 24px;
 }
 
-.entries-grid {
+.month-row {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 12px;
+  margin-bottom: 16px;
+
+  @media (max-width: 1400px) {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  @media (max-width: 1024px) {
+    grid-template-columns: repeat(3, 1fr);
+  }
 
   @media (max-width: 768px) {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+
+  @media (max-width: 480px) {
     grid-template-columns: 1fr;
-    gap: 12px;
+  }
+}
+
+.month-card {
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 16px;
+  transition: all 0.3s ease;
+  min-height: 160px;
+  display: flex;
+  flex-direction: column;
+
+  &.has-entry {
+    border-color: #10b981;
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.15);
+
+    &:hover {
+      box-shadow: 0 4px 16px rgba(16, 185, 129, 0.25);
+      transform: translateY(-4px);
+      border-color: #059669;
+    }
+  }
+
+  &:not(.has-entry) {
+    background: #f9fafb;
+    border-style: dashed;
+
+    &:hover {
+      background: #f3f4f6;
+      border-color: #d1d5db;
+    }
+  }
+
+  .month-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #f3f4f6;
+
+    .month-name {
+      font-size: 14px;
+      font-weight: 700;
+      color: #374151;
+    }
+
+    .month-actions {
+      display: flex;
+      gap: 4px;
+    }
+
+    .btn-icon-small {
+      background: none;
+      border: none;
+      font-size: 14px;
+      cursor: pointer;
+      padding: 4px;
+      border-radius: 4px;
+      transition: all 0.2s ease;
+
+      &:hover {
+        background: #f3f4f6;
+        transform: scale(1.1);
+      }
+
+      &.delete:hover {
+        background: #fee2e2;
+      }
+    }
+  }
+
+  .month-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+
+    .month-amount {
+      font-size: 20px;
+      font-weight: 700;
+      color: #10b981;
+      margin-bottom: 4px;
+    }
+
+    .month-source {
+      font-size: 12px;
+      font-weight: 600;
+      color: #6b7280;
+      padding: 4px 8px;
+      background: #f3f4f6;
+      border-radius: 4px;
+      display: inline-block;
+      align-self: flex-start;
+    }
+
+    .month-date {
+      font-size: 11px;
+      color: #9ca3af;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .month-notes {
+      font-size: 11px;
+      color: #6b7280;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+  }
+
+  .month-empty {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    color: #9ca3af;
+
+    .empty-icon {
+      font-size: 32px;
+      opacity: 0.4;
+    }
+
+    .empty-text {
+      font-size: 12px;
+      font-weight: 600;
+    }
   }
 }
 
@@ -458,11 +674,6 @@
   max-height: 90vh;
   overflow-y: auto;
   animation: slideUp 0.3s ease;
-
-  @media (max-width: 768px) {
-    max-width: 100%;
-    border-radius: 12px;
-  }
 }
 
 .modal-header {
@@ -539,6 +750,11 @@
     font-size: 14px;
     font-weight: 600;
     color: #374151;
+
+    .required {
+      color: #ef4444;
+      margin-left: 2px;
+    }
   }
 
   .form-control {
@@ -560,6 +776,13 @@
     &::placeholder {
       color: #9ca3af;
     }
+
+    &.readonly-input {
+      background: #f3f4f6;
+      color: #6b7280;
+      cursor: not-allowed;
+      border-color: #e5e7eb;
+    }
   }
 
   textarea.form-control {
@@ -570,6 +793,14 @@
 
   select.form-control {
     cursor: pointer;
+  }
+
+  .form-hint {
+    display: block;
+    margin-top: 4px;
+    font-size: 12px;
+    color: #9ca3af;
+    font-style: italic;
   }
 }
 
@@ -659,3 +890,812 @@
     transform: translateY(0);
   }
 }
+// ============================================
+// Total Earnings Modal
+// ============================================
+.earnings-modal-content {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  width: 90%;
+  max-width: 600px;
+  max-height: 80vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+
+  .modal-header {
+    padding: 24px;
+    border-bottom: 1px solid #e5e7eb;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+
+    h2 {
+      margin: 0;
+      font-size: 24px;
+      font-weight: 700;
+      color: #111827;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+
+      @media (max-width: 768px) {
+        font-size: 20px;
+      }
+    }
+
+    .btn-close {
+      background: white;
+      border: 1px solid #e5e7eb;
+      color: #6b7280;
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      font-size: 20px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+
+      &:hover {
+        background: #fee2e2;
+        border-color: #fca5a5;
+        color: #dc2626;
+      }
+    }
+  }
+
+  .modal-body {
+    padding: 24px;
+    overflow-y: auto;
+    flex: 1;
+  }
+}
+
+.earnings-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+
+  thead {
+    background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+
+    tr {
+      th {
+        padding: 16px;
+        text-align: left;
+        font-size: 14px;
+        font-weight: 700;
+        color: #374151;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border-bottom: 2px solid #d1d5db;
+
+        @media (max-width: 768px) {
+          padding: 12px;
+          font-size: 13px;
+        }
+      }
+    }
+  }
+
+  tbody {
+    tr {
+      transition: background-color 0.2s ease;
+
+      &:hover {
+        background: #f9fafb;
+      }
+
+      &:not(:last-child) {
+        border-bottom: 1px solid #f3f4f6;
+      }
+
+      td {
+        padding: 16px;
+        font-size: 15px;
+
+        @media (max-width: 768px) {
+          padding: 12px;
+          font-size: 14px;
+        }
+
+        &.year-column {
+          color: #1f2937;
+          font-weight: 600;
+          width: 40%;
+        }
+
+        &.amount-column {
+          color: #059669;
+          font-weight: 700;
+          text-align: right;
+          width: 60%;
+        }
+      }
+    }
+  }
+
+  tfoot {
+    .total-row {
+      background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+      border-top: 3px solid #10b981;
+
+      td {
+        padding: 18px 16px;
+        font-size: 16px;
+
+        @media (max-width: 768px) {
+          padding: 14px 12px;
+          font-size: 15px;
+        }
+
+        &.year-column {
+          color: #065f46;
+          font-weight: 800;
+        }
+
+        &.amount-column {
+          color: #047857;
+          font-weight: 800;
+          font-size: 18px;
+          text-align: right;
+
+          @media (max-width: 768px) {
+            font-size: 16px;
+          }
+        }
+      }
+    }
+  }
+}
+
+// ============================================
+// Delete Confirmation Modal
+// ============================================
+.delete-modal {
+  max-width: 500px;
+
+  .modal-header {
+    background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+    border-bottom: 2px solid #fca5a5;
+
+    h2 {
+      color: #991b1b;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+  }
+
+  .modal-body {
+    padding: 24px;
+  }
+
+  .modal-footer {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    padding: 16px 24px;
+    border-top: 1px solid #e5e7eb;
+    background: #fafafa;
+    
+    @media (max-width: 480px) {
+      flex-direction: column-reverse;
+      
+      button {
+        width: 100%;
+      }
+    }
+  }
+}
+
+.warning-box {
+  background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+  border: 2px solid #fca5a5;
+  border-radius: 12px;
+  padding: 24px;
+  text-align: center;
+  margin: 0; // Prevent floating
+  clear: both; // Clear any floats
+
+  .warning-icon {
+    font-size: 48px;
+    display: block;
+    margin-bottom: 16px;
+    line-height: 1; // FIX: Proper line height for icon
+    animation: warningPulse 2s ease-in-out infinite;
+  }
+
+  p {
+    margin: 12px 0;
+    font-size: 15px;
+    line-height: 1.6;
+    color: #991b1b;
+
+    strong {
+      color: #7f1d1d;
+      font-weight: 700;
+    }
+  }
+
+  .warning-note {
+    font-size: 13px;
+    color: #b91c1c;
+    margin-top: 8px;
+  }
+}
+
+@keyframes warningPulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.8;
+  }
+}
+
+.btn-danger {
+  padding: 10px 24px;
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.3);
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  &:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.4);
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .spinner-small {
+    display: inline-block;
+    animation: spin 1s linear infinite;
+  }
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+// ============================================
+// Card Click Indicator (Eye Icon SVG)
+// ============================================
+.card-click-indicator {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  color: #374151;
+  opacity: 0.5;
+  transition: all 0.2s ease;
+
+  svg {
+    display: block;
+  }
+}
+
+.clickable:hover .card-click-indicator {
+  opacity: 1;
+  color: #111827;
+}
+
+// ============================================
+// Earnings Table - Fixed Alignment
+// ============================================
+.earnings-table {
+  width: 100%;
+  border-collapse: collapse;
+
+  thead {
+    tr {
+      th {
+        padding: 12px 16px;
+        text-align: left;
+        font-weight: 600;
+        font-size: 14px;
+        color: #6b7280;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border-bottom: 2px solid #e5e7eb;
+
+        &.year-header,
+        &.month-header {
+          text-align: left;
+          width: 50%; // Reduce gap: equal columns
+        }
+
+        &.amount-header {
+          text-align: right;
+          width: 50%; // Reduce gap: equal columns
+        }
+      }
+    }
+  }
+
+  tbody {
+    tr {
+      border-bottom: 1px solid #f3f4f6;
+      transition: background-color 0.2s ease;
+
+      &:hover {
+        background-color: #f9fafb;
+      }
+
+      &.no-entry {
+        opacity: 0.5;
+        
+        td {
+          color: #9ca3af;
+        }
+      }
+
+      td {
+        padding: 14px 16px;
+        font-size: 15px;
+
+        &.year-column,
+        &.month-column {
+          color: #374151;
+          font-weight: 500;
+        }
+
+        &.amount-column {
+          text-align: right;
+          color: #059669;
+          font-weight: 600;
+        }
+      }
+    }
+  }
+
+  .no-data {
+    color: #d1d5db;
+    font-style: italic;
+  }
+
+  tfoot {
+    tr.total-row {
+      background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+      border-top: 2px solid #10b981;
+
+      td {
+        padding: 16px;
+        font-size: 16px;
+        font-weight: 700;
+
+        &.year-column,
+        &.month-column {
+          color: #065f46;
+        }
+
+        &.amount-column {
+          color: #047857;
+          text-align: right;
+        }
+      }
+    }
+  }
+}
+
+// ============================================
+// MNC Modal
+// ============================================
+.mnc-modal-content {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  width: 90%;
+  max-width: 600px;
+  max-height: 80vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+
+  .modal-header {
+    padding: 24px;
+    border-bottom: 1px solid #e5e7eb;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+
+    h2 {
+      margin: 0;
+      font-size: 24px;
+      font-weight: 700;
+      color: #111827;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+
+      @media (max-width: 768px) {
+        font-size: 20px;
+      }
+    }
+
+    .btn-close {
+      background: white;
+      border: 1px solid #e5e7eb;
+      color: #6b7280;
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      font-size: 20px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+
+      &:hover {
+        background: #fee2e2;
+        border-color: #fca5a5;
+        color: #dc2626;
+      }
+    }
+  }
+
+  .modal-body {
+    padding: 24px;
+    overflow-y: auto;
+    flex: 1;
+  }
+}
+
+.mnc-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.mnc-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 20px;
+  background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  transition: all 0.2s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    border-color: #d1d5db;
+  }
+
+  .mnc-icon {
+    font-size: 40px;
+    width: 56px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: white;
+    border-radius: 12px;
+    flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+
+    @media (max-width: 768px) {
+      font-size: 36px;
+      width: 48px;
+      height: 48px;
+    }
+  }
+
+  .mnc-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .mnc-name {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 700;
+    color: #111827;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+
+    @media (max-width: 768px) {
+      font-size: 16px;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 4px;
+    }
+  }
+
+  .mnc-period {
+    margin: 0;
+    font-size: 13px;
+    color: #6b7280;
+    font-weight: 500;
+
+    @media (max-width: 768px) {
+      font-size: 12px;
+    }
+  }
+
+  .mnc-earnings {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 700;
+    color: #059669;
+    white-space: nowrap;
+
+    @media (max-width: 768px) {
+      font-size: 16px;
+    }
+  }
+}
+
+// ============================================
+// Required Field Asterisk (Red Star)
+// ============================================
+.required {
+  color: #dc2626;
+  font-weight: bold;
+  margin-left: 2px;
+}
+
+.mnc-total {
+  margin-top: 24px;
+  padding: 20px;
+  background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+  border: 2px solid #10b981;
+  border-radius: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  .mnc-total-label {
+    font-size: 16px;
+    font-weight: 700;
+    color: #065f46;
+  }
+
+  .mnc-total-value {
+    font-size: 22px;
+    font-weight: 800;
+    color: #047857;
+  }
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    gap: 8px;
+
+    .mnc-total-label {
+      font-size: 14px;
+    }
+
+    .mnc-total-value {
+      font-size: 20px;
+    }
+  }
+}
+
+// ============================================
+// Fix Delete Modal Warning Icon
+// ============================================
+.warning-box .warning-icon {
+  font-size: 48px;
+  display: block;
+  margin-bottom: 16px;
+  animation: warningPulse 2s ease-in-out infinite;
+  line-height: 1;
+}
+
+// ============================================
+// Toast Notification
+// ============================================
+.toast-notification {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  min-width: 320px;
+  max-width: 500px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  z-index: 10000;
+  animation: slideInRight 0.3s ease-out, fadeIn 0.3s ease-out;
+
+  @media (max-width: 768px) {
+    top: 16px;
+    right: 16px;
+    left: 16px;
+    min-width: auto;
+    max-width: none;
+  }
+
+  &.success {
+    border-left: 4px solid #10b981;
+    background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+
+    .toast-icon {
+      color: #10b981;
+    }
+
+    .toast-message {
+      color: #065f46;
+    }
+  }
+
+  &.error {
+    border-left: 4px solid #ef4444;
+    background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+
+    .toast-icon {
+      color: #ef4444;
+    }
+
+    .toast-message {
+      color: #991b1b;
+    }
+  }
+
+  &.info {
+    border-left: 4px solid #3b82f6;
+    background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+
+    .toast-icon {
+      color: #3b82f6;
+    }
+
+    .toast-message {
+      color: #1e40af;
+    }
+  }
+
+  .toast-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+  }
+
+  .toast-icon {
+    font-size: 24px;
+    flex-shrink: 0;
+  }
+
+  .toast-message {
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.5;
+    flex: 1;
+
+    @media (max-width: 768px) {
+      font-size: 13px;
+    }
+  }
+
+  .toast-close {
+    background: none;
+    border: none;
+    color: #6b7280;
+    font-size: 20px;
+    cursor: pointer;
+    padding: 4px;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+
+    &:hover {
+      background: rgba(0, 0, 0, 0.05);
+      color: #374151;
+    }
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+// ============================================
+// Month Company Display
+// ============================================
+.month-company {
+  font-size: 11px;
+  color: #6b7280;
+  font-weight: 500;
+  margin-left: 4px;
+}
+
+// ============================================
+// Modal Statistics Section
+// ============================================
+.modal-stats {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 2px solid #e5e7eb;
+  display: flex;
+  gap: 32px;
+  justify-content: center;
+
+  @media (max-width: 480px) {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+
+    .stat-label {
+      font-size: 13px;
+      color: #6b7280;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .stat-value {
+      font-size: 20px;
+      font-weight: 700;
+      color: #111827;
+    }
+  }
+}
+

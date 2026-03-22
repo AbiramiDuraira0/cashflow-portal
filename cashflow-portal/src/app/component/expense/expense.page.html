@@ -1,0 +1,442 @@
+<section class="expense-page">
+  <!-- ============================== -->
+  <!-- Page Header                    -->
+  <!-- ============================== -->
+  <header class="page-header">
+    <div class="header-content">
+      <div class="title-section">
+        <h1>💸 Expense Tracker</h1>
+        <p class="subtitle">Track and manage your monthly expenses</p>
+      </div>
+      <button class="btn-add" (click)="openAddExpenseModal()">
+        <span class="icon">+</span>
+        Add Expense
+      </button>
+    </div>
+  </header>
+
+  <!-- ============================== -->
+  <!-- Year & Month Filter            -->
+  <!-- ============================== -->
+  <div class="filter-section">
+    <div class="filter-row">
+      <!-- Year Tabs -->
+      <div class="year-tabs">
+        @for (year of availableYears(); track year) {
+          <button
+            class="year-tab"
+            [class.active]="selectedYear() === year"
+            (click)="changeYear(year)">
+            {{ year }}
+          </button>
+        }
+      </div>
+
+      <!-- Month Dropdown -->
+      <div class="month-dropdown-wrapper">
+        <select
+          class="month-dropdown"
+          [ngModel]="selectedMonth()"
+          (ngModelChange)="changeMonth($event)">
+          @for (month of months; track month) {
+            <option [value]="month">{{ month }}</option>
+          }
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================== -->
+  <!-- Summary Cards                  -->
+  <!-- ============================== -->
+  <div class="summary-cards">
+    <!-- Monthly Income -->
+    <div class="summary-card income">
+      <div class="card-icon">💰</div>
+      <div class="card-content">
+        <p class="card-label">Monthly Income</p>
+        <h2 class="card-value">{{ formatCurrency(monthlyIncome()) }}</h2>
+        <p class="card-subtitle">{{ selectedMonth() }} {{ selectedYear() }} • From DB</p>
+      </div>
+    </div>
+
+    <!-- Total Expense -->
+    <div class="summary-card expense clickable" (click)="openCategoryBreakdownModal()">
+      <div class="card-icon">💸</div>
+      <div class="card-content">
+        <p class="card-label">Total Expenses</p>
+        <h2 class="card-value">{{ formatCurrency(totalExpense()) }}</h2>
+        <p class="card-subtitle">{{ filteredExpenses().length }} entries • Click for breakdown</p>
+      </div>
+    </div>
+
+    <!-- Remaining Balance -->
+    <div class="summary-card balance" [class]="'summary-card balance ' + getBalanceClass()">
+      <div class="card-icon">
+        @if (remainingBalance() >= 0) { 📊 } @else { ⚠️ }
+      </div>
+      <div class="card-content">
+        <p class="card-label">Remaining Balance</p>
+        <h2 class="card-value">{{ formatCurrency(remainingBalance()) }}</h2>
+        <p class="card-subtitle">
+          @if (monthlyIncome() > 0) {
+            {{ (100 - expensePercentage()) | number: '1.0-0' }}% of income remaining
+          } @else {
+            No income recorded
+          }
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================== -->
+  <!-- Income vs Expense Progress Bar -->
+  <!-- ============================== -->
+  @if (monthlyIncome() > 0) {
+    <div class="progress-section">
+      <div class="progress-header">
+        <span class="progress-label">Expense vs Income</span>
+        <span class="progress-value" [style.color]="getProgressBarColor()">
+          {{ expensePercentage() | number: '1.0-0' }}% spent
+        </span>
+      </div>
+      <div class="progress-bar-track">
+        <div
+          class="progress-bar-fill"
+          [style.width.%]="expensePercentage()"
+          [style.background]="getProgressBarColor()">
+        </div>
+      </div>
+      <div class="progress-legend">
+        <span class="legend-income">💰 Income: {{ formatCurrency(monthlyIncome()) }}</span>
+        <span class="legend-expense">💸 Expense: {{ formatCurrency(totalExpense()) }}</span>
+      </div>
+    </div>
+  }
+
+  <!-- ============================== -->
+  <!-- Expense Table                  -->
+  <!-- ============================== -->
+  <div class="table-section">
+    @if (isLoading()) {
+      <div class="loading-state">
+        <div class="spinner">⏳</div>
+        <p>Loading expenses...</p>
+      </div>
+    } @else if (filteredExpenses().length === 0) {
+      <!-- Empty State -->
+      <div class="empty-state">
+        <div class="empty-icon">📝</div>
+        <h3>No expenses for {{ selectedMonth() }} {{ selectedYear() }}</h3>
+        <p>Start tracking by adding your first expense entry</p>
+        <button class="btn-primary" (click)="openAddExpenseModal()">
+          <span class="icon">+</span>
+          Add First Expense
+        </button>
+      </div>
+    } @else {
+      <div class="table-container">
+        <table class="expense-table">
+          <thead>
+            <tr>
+              <th class="col-date">Date</th>
+              <th class="col-category">Category</th>
+              <th class="col-subcategory">Subcategory</th>
+              <th class="col-notes">Notes</th>
+              <th class="col-amount">Amount (₹)</th>
+              <th class="col-actions">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (entry of filteredExpenses(); track entry.id) {
+              <tr
+                class="expense-row"
+                [class.recently-added]="isRecentlyAdded(entry.id)">
+                <td class="col-date">
+                  <span class="date-badge">{{ formatDate(entry.date) }}</span>
+                </td>
+                <td class="col-category">
+                  <span class="category-badge">
+                    <span class="category-icon">{{ entry.categoryIcon }}</span>
+                    <span>{{ entry.categoryName }}</span>
+                  </span>
+                </td>
+                <td class="col-subcategory">
+                  @if (entry.subcategory) {
+                    <span class="subcategory-badge">
+                      @if (entry.subcategoryIcon) {
+                        <span class="subcategory-icon">{{ entry.subcategoryIcon }}</span>
+                      }
+                      <span>{{ entry.subcategory }}</span>
+                    </span>
+                  } @else {
+                    <span class="no-data">—</span>
+                  }
+                </td>
+                <td class="col-notes">
+                  @if (entry.notes) {
+                    <span class="notes-text" [title]="entry.notes">{{ entry.notes }}</span>
+                  } @else {
+                    <span class="no-data">—</span>
+                  }
+                </td>
+                <td class="col-amount">
+                  <span class="amount-value">{{ formatCurrency(entry.amount) }}</span>
+                </td>
+                <td class="col-actions">
+                  <div class="action-buttons">
+                    <button class="btn-icon edit" (click)="openEditExpenseModal(entry)" title="Edit">✏️</button>
+                    <button class="btn-icon delete" (click)="openDeleteConfirm(entry)" title="Delete">🗑️</button>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+          <tfoot>
+            <tr class="total-row">
+              <td colspan="4" class="total-label">
+                <strong>Total ({{ filteredExpenses().length }} entries)</strong>
+              </td>
+              <td class="total-amount">
+                <strong>{{ formatCurrency(totalExpense()) }}</strong>
+              </td>
+              <td></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    }
+  </div>
+
+  <!-- ============================== -->
+  <!-- Floating Quick Add Button      -->
+  <!-- ============================== -->
+  <button class="fab-add" (click)="openAddExpenseModal()" title="Quick Add Expense">
+    <span>+</span>
+  </button>
+
+  <!-- ============================== -->
+  <!-- Add / Edit Expense Modal       -->
+  <!-- ============================== -->
+  @if (showExpenseModal()) {
+    <div class="modal-overlay" (click)="closeExpenseModal()">
+      <div class="modal-content" (click)="$event.stopPropagation()" (keydown)="onKeyDown($event)">
+        <div class="modal-header">
+          <h2>{{ editingEntry() ? '✏️ Edit Expense' : '➕ Add Expense' }}</h2>
+          <button class="btn-close" (click)="closeExpenseModal()">✕</button>
+        </div>
+
+        <form class="expense-form" (ngSubmit)="saveExpense()">
+          <!-- Date -->
+          <div class="form-group">
+            <label for="expDate">Date <span class="required">*</span></label>
+            <input
+              type="date"
+              id="expDate"
+              [ngModel]="formDate()"
+              (ngModelChange)="formDate.set($event)"
+              name="expDate"
+              required
+              class="form-control"
+              tabindex="1">
+          </div>
+
+          <!-- Category & Subcategory Row -->
+          <div class="form-row">
+            <div class="form-group">
+              <label for="expCategory">Category <span class="required">*</span></label>
+              <select
+                id="expCategory"
+                [ngModel]="formCategoryName()"
+                (ngModelChange)="onCategoryNameChange($event)"
+                name="expCategory"
+                required
+                class="form-control"
+                tabindex="2">
+                <option value="">Select Category</option>
+                @for (name of uniqueCategoryNames(); track name) {
+                  <option [value]="name">{{ name }}</option>
+                }
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="expSubcategory">Subcategory</label>
+              <select
+                id="expSubcategory"
+                [ngModel]="formCategoryId()"
+                (ngModelChange)="onSubcategoryChange($event)"
+                name="expSubcategory"
+                class="form-control"
+                tabindex="3"
+                [disabled]="filteredSubcategories().length === 0">
+                <option [value]="0">{{ filteredSubcategories().length > 0 ? 'Select Subcategory' : 'No subcategories' }}</option>
+                @for (cat of filteredSubcategories(); track cat.category_id) {
+                  <option [ngValue]="cat.category_id">
+                    {{ cat.subcategory_icon || '' }} {{ cat.sub_category }}
+                  </option>
+                }
+              </select>
+            </div>
+          </div>
+
+          <!-- Amount -->
+          <div class="form-group">
+            <label for="expAmount">Amount (₹) <span class="required">*</span></label>
+            <input
+              #amountInput
+              type="number"
+              id="expAmount"
+              [ngModel]="formAmount()"
+              (ngModelChange)="formAmount.set($event)"
+              name="expAmount"
+              required
+              min="1"
+              step="1"
+              placeholder="Enter amount"
+              class="form-control amount-input"
+              tabindex="4">
+          </div>
+
+          <!-- Notes -->
+          <div class="form-group">
+            <label for="expNotes">Notes (Optional)</label>
+            <textarea
+              id="expNotes"
+              [ngModel]="formNotes()"
+              (ngModelChange)="formNotes.set($event)"
+              name="expNotes"
+              rows="2"
+              placeholder="Add a note..."
+              class="form-control"
+              tabindex="5"></textarea>
+          </div>
+
+          <!-- Keyboard Hint -->
+          <div class="keyboard-hint">
+            💡 Press <kbd>Enter</kbd> to save quickly • <kbd>Tab</kbd> to navigate fields
+          </div>
+
+          <!-- Form Actions -->
+          <div class="form-actions">
+            <button type="button" class="btn-secondary" (click)="closeExpenseModal()" tabindex="7">
+              Cancel
+            </button>
+            <button type="submit" class="btn-primary" [disabled]="isLoading()" tabindex="6">
+              @if (isLoading()) {
+                <span class="spinner-small">⏳</span> Saving...
+              } @else {
+                {{ editingEntry() ? 'Update' : 'Save' }} Expense
+              }
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+
+  <!-- ============================== -->
+  <!-- Delete Confirmation Modal      -->
+  <!-- ============================== -->
+  @if (showDeleteConfirm() && deletingEntry()) {
+    <div class="modal-overlay" (click)="closeDeleteConfirm()">
+      <div class="modal-content delete-modal" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2>⚠️ Delete Expense</h2>
+          <button class="btn-close" (click)="closeDeleteConfirm()">✕</button>
+        </div>
+
+        <div class="modal-body">
+          <div class="warning-box">
+            <span class="warning-icon">⚠️</span>
+            <p>Are you sure you want to delete this expense?</p>
+            <div class="delete-details">
+              <p><strong>{{ deletingEntry()!.categoryIcon }} {{ deletingEntry()!.categoryName }}</strong></p>
+              <p class="delete-amount">{{ formatCurrency(deletingEntry()!.amount) }}</p>
+              <p class="warning-note">{{ formatDate(deletingEntry()!.date) }} • This will be a soft delete</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" (click)="closeDeleteConfirm()" [disabled]="isLoading()">
+            Cancel
+          </button>
+          <button type="button" class="btn-danger" (click)="confirmDelete()" [disabled]="isLoading()">
+            @if (isLoading()) {
+              <span class="spinner-small">⏳</span> Deleting...
+            } @else {
+              Delete Entry
+            }
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- ============================== -->
+  <!-- Category Breakdown Modal       -->
+  <!-- ============================== -->
+  @if (showCategoryBreakdownModal()) {
+    <div class="modal-overlay" (click)="closeCategoryBreakdownModal()">
+      <div class="breakdown-modal-content" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2>📊 Expense Breakdown — {{ selectedMonth() }} {{ selectedYear() }}</h2>
+          <button class="btn-close" (click)="closeCategoryBreakdownModal()">✕</button>
+        </div>
+
+        <div class="modal-body">
+          @if (categoryBreakdown().length === 0) {
+            <p class="no-data-text">No expenses recorded for this month.</p>
+          } @else {
+            <div class="breakdown-list">
+              @for (cat of categoryBreakdown(); track cat.categoryName) {
+                <div class="breakdown-item">
+                  <div class="breakdown-info">
+                    <span class="breakdown-icon">{{ cat.categoryIcon }}</span>
+                    <div class="breakdown-details">
+                      <span class="breakdown-name">{{ cat.categoryName }}</span>
+                      <span class="breakdown-count">{{ cat.count }} {{ cat.count === 1 ? 'entry' : 'entries' }}</span>
+                    </div>
+                  </div>
+                  <div class="breakdown-right">
+                    <span class="breakdown-amount">{{ formatCurrency(cat.total) }}</span>
+                    <div class="breakdown-bar-track">
+                      <div class="breakdown-bar-fill" [style.width.%]="cat.percentage"></div>
+                    </div>
+                    <span class="breakdown-pct">{{ cat.percentage }}%</span>
+                  </div>
+                </div>
+              }
+            </div>
+
+            <div class="breakdown-total">
+              <span class="breakdown-total-label">Total Expenses:</span>
+              <span class="breakdown-total-value">{{ formatCurrency(totalExpense()) }}</span>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- ============================== -->
+  <!-- Toast Notification             -->
+  <!-- ============================== -->
+  @if (showToast()) {
+    <div class="toast-notification"
+      [class.success]="toastType() === 'success'"
+      [class.error]="toastType() === 'error'"
+      [class.info]="toastType() === 'info'">
+      <div class="toast-content">
+        <span class="toast-icon">
+          @if (toastType() === 'success') { ✅ }
+          @if (toastType() === 'error') { ❌ }
+          @if (toastType() === 'info') { ℹ️ }
+        </span>
+        <span class="toast-message">{{ toastMessage() }}</span>
+      </div>
+      <button class="toast-close" (click)="showToast.set(false)">✕</button>
+    </div>
+  }
+</section>
