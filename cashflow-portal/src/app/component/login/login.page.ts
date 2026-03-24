@@ -19,7 +19,7 @@ export class LoginPage {
   constructor(private router: Router) {}
 
   onSubmit() {
-    if (this.passcode === 'Abibee') {
+    if (this.passcode === 'login') {
       // Show loading state
       this.isLoading = true;
       
