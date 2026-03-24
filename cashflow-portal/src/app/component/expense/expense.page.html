@@ -16,37 +16,6 @@
   </header>
 
   <!-- ============================== -->
-  <!-- Year & Month Filter            -->
-  <!-- ============================== -->
-  <div class="filter-section">
-    <div class="filter-row">
-      <!-- Year Tabs -->
-      <div class="year-tabs">
-        @for (year of availableYears(); track year) {
-          <button
-            class="year-tab"
-            [class.active]="selectedYear() === year"
-            (click)="changeYear(year)">
-            {{ year }}
-          </button>
-        }
-      </div>
-
-      <!-- Month Dropdown -->
-      <div class="month-dropdown-wrapper">
-        <select
-          class="month-dropdown"
-          [ngModel]="selectedMonth()"
-          (ngModelChange)="changeMonth($event)">
-          @for (month of months; track month) {
-            <option [value]="month">{{ month }}</option>
-          }
-        </select>
-      </div>
-    </div>
-  </div>
-
-  <!-- ============================== -->
   <!-- Summary Cards                  -->
   <!-- ============================== -->
   <div class="summary-cards">
@@ -85,6 +54,37 @@
             No income recorded
           }
         </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================== -->
+  <!-- Year & Month Filter            -->
+  <!-- ============================== -->
+  <div class="filter-section">
+    <div class="filter-row">
+      <!-- Year Tabs -->
+      <div class="year-tabs">
+        @for (year of availableYears(); track year) {
+          <button
+            class="year-tab"
+            [class.active]="selectedYear() === year"
+            (click)="changeYear(year)">
+            {{ year }}
+          </button>
+        }
+      </div>
+
+      <!-- Month Dropdown -->
+      <div class="month-dropdown-wrapper">
+        <select
+          class="month-dropdown"
+          [ngModel]="selectedMonth()"
+          (ngModelChange)="changeMonth($event)">
+          @for (month of months; track month) {
+            <option [value]="month">{{ month }}</option>
+          }
+        </select>
       </div>
     </div>
   </div>
