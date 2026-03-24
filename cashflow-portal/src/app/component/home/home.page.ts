@@ -35,6 +35,9 @@ export class HomePage implements OnInit {
   
   // Set loading to false immediately since data is pre-initialized
   loading = signal(false);
+
+  // Today's date - updates on component load
+  currentDate = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
   
   // Test connection state
   protected showTestPopup = signal<boolean>(false);
