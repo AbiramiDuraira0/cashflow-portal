@@ -1,6 +1,10 @@
 <section class="category">
   <header class="toolbar">
-    <div class="compact-bar">
+    <div class="titles">
+      <h1>📁 Categories</h1>
+      <p class="subtitle">Manage your expense categories</p>
+    </div>
+    <div class="actions">
       <label class="search" aria-label="Search categories">
         <span class="search-icon">🔎</span>
         <input type="text" placeholder="Search" [value]="query()" (input)="onSearchChange($any($event.target).value)" />

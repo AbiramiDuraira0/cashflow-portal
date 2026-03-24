@@ -90,14 +90,10 @@
 
 .titles h1 {
   margin: 0 0 4px 0;
-  font-size: clamp(24px, 3vw, 32px);
+  font-size: 28px;
   font-weight: 700;
-  background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #6366f1 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  letter-spacing: -0.5px;
-  display: inline-block;
+  color: #111827;
+  font-family: 'Times New Roman', Times, serif;
 }
 
 .subtitle {

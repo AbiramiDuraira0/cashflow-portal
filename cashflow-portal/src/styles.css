@@ -10,12 +10,29 @@
   box-sizing: border-box;
 }
 
-html, body {
+html {
   margin: 0;
   padding: 0;
   width: 100%;
   height: 100%;
-  overflow-x: auto; /* Allow horizontal scrolling */
+  zoom: 0.8; /* Scale entire app to 80% for better fit on desktop */
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  min-height: 100%;
+  height: 100%;
+  overflow-x: hidden;
+}
+
+/* Ensure Angular root and page host elements fill full height */
+app-root,
+app-login {
+  display: block;
+  height: 100%;
+  width: 100%;
 }
 
 /* Mobile optimization - smooth scrolling */
