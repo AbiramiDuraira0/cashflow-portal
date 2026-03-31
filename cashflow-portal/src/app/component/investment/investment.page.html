@@ -3,14 +3,17 @@
   <!-- Page Header -->
   <header class="page-header">
     <div class="header-content">
-      <h1>📊 Investment Portfolio</h1>
-      <p class="subtitle">Track and manage your wealth-building journey</p>
+      <div class="title-section">
+        <h1>📈 Investment Portfolio</h1>
+        <p class="subtitle">Track and manage your wealth-building journey</p>
+      </div>
+      <button class="btn-primary" (click)="openAddModal()">
+        <span class="btn-icon">➕</span>
+        Add Investment
+      </button>
     </div>
-    <button class="btn-primary" (click)="openAddModal()">
-      <span class="btn-icon">➕</span>
-      Add Investment
-    </button>
   </header>
+
 
   <!-- Summary Cards -->
   <div class="summary-cards">
@@ -170,13 +173,13 @@
           <!-- Card Actions -->
           <div class="card-actions">
             <button class="action-btn view-btn" (click)="openDetailsModal(investment)" title="View Details">
-              👁️ View
+              👁️
             </button>
             <button class="action-btn edit-btn" (click)="openEditModal(investment)" title="Edit Investment">
-              ✏️ Edit
+              ✏️
             </button>
             <button class="action-btn delete-btn" (click)="openDeleteModal(investment)" title="Delete Investment">
-              🗑️ Delete
+              🗑️
             </button>
           </div>
         </div>

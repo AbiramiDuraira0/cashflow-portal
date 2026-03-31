@@ -9,7 +9,6 @@ import { IncomeService } from './income.service';
 
 export type DbExpenseEntry = {
   expense_id: number;
-  date: string;
   month: string;
   year: number;
   category_id: number;
@@ -30,7 +29,6 @@ export type DbExpenseEntry = {
 
 export type ExpenseEntry = {
   id: number;
-  date: string;            // YYYY-MM-DD
   month: string;           // January, February, etc.
   year: number;
   categoryId: number;
@@ -46,7 +44,8 @@ export type ExpenseEntry = {
 };
 
 export type ExpenseFormData = {
-  date: string;
+  month: string;
+  year: number;
   categoryId: number;
   amount: number;
   notes?: string;
@@ -64,70 +63,70 @@ export type MonthlySummary = {
 
 const MOCK_EXPENSES: ExpenseEntry[] = [
   {
-    id: 1, date: '2026-03-01', month: 'March', year: 2026,
+    id: 1, month: 'March', year: 2026,
     categoryId: 1, categoryName: 'Rent', categoryIcon: '🏠',
     subcategory: 'Monthly Rent', subcategoryIcon: '🏡',
     amount: 15000, notes: 'March rent payment',
     isDeleted: false, createdAt: '2026-03-01T10:00:00Z', updatedAt: '2026-03-01T10:00:00Z'
   },
   {
-    id: 2, date: '2026-03-02', month: 'March', year: 2026,
+    id: 2, month: 'March', year: 2026,
     categoryId: 2, categoryName: 'Groceries', categoryIcon: '🛒',
     subcategory: 'Vegetables', subcategoryIcon: '🥬',
     amount: 2500, notes: 'Weekly vegetables',
     isDeleted: false, createdAt: '2026-03-02T11:00:00Z', updatedAt: '2026-03-02T11:00:00Z'
   },
   {
-    id: 3, date: '2026-03-05', month: 'March', year: 2026,
+    id: 3, month: 'March', year: 2026,
     categoryId: 3, categoryName: 'Transport', categoryIcon: '🚗',
     subcategory: 'Fuel', subcategoryIcon: '⛽',
     amount: 3000, notes: 'Petrol filling',
     isDeleted: false, createdAt: '2026-03-05T09:00:00Z', updatedAt: '2026-03-05T09:00:00Z'
   },
   {
-    id: 4, date: '2026-03-08', month: 'March', year: 2026,
+    id: 4, month: 'March', year: 2026,
     categoryId: 4, categoryName: 'Utilities', categoryIcon: '💡',
     subcategory: 'Electricity', subcategoryIcon: '⚡',
     amount: 1800, notes: 'EB bill March',
     isDeleted: false, createdAt: '2026-03-08T14:00:00Z', updatedAt: '2026-03-08T14:00:00Z'
   },
   {
-    id: 5, date: '2026-03-10', month: 'March', year: 2026,
+    id: 5, month: 'March', year: 2026,
     categoryId: 5, categoryName: 'Food', categoryIcon: '🍔',
     subcategory: 'Dining Out', subcategoryIcon: '🍽️',
     amount: 1200, notes: 'Weekend dinner',
     isDeleted: false, createdAt: '2026-03-10T20:00:00Z', updatedAt: '2026-03-10T20:00:00Z'
   },
   {
-    id: 6, date: '2026-03-12', month: 'March', year: 2026,
+    id: 6, month: 'March', year: 2026,
     categoryId: 6, categoryName: 'Health', categoryIcon: '🏥',
     subcategory: 'Medicine', subcategoryIcon: '💊',
     amount: 800, notes: 'Monthly medicines',
     isDeleted: false, createdAt: '2026-03-12T10:00:00Z', updatedAt: '2026-03-12T10:00:00Z'
   },
   {
-    id: 7, date: '2026-03-15', month: 'March', year: 2026,
+    id: 7, month: 'March', year: 2026,
     categoryId: 2, categoryName: 'Groceries', categoryIcon: '🛒',
     subcategory: 'Fruits', subcategoryIcon: '🍎',
     amount: 1500, notes: 'Weekly fruits',
     isDeleted: false, createdAt: '2026-03-15T11:30:00Z', updatedAt: '2026-03-15T11:30:00Z'
   },
   {
-    id: 8, date: '2026-03-18', month: 'March', year: 2026,
+    id: 8, month: 'March', year: 2026,
     categoryId: 7, categoryName: 'Entertainment', categoryIcon: '🎬',
     subcategory: 'Movies', subcategoryIcon: '🎥',
     amount: 600, notes: 'Movie tickets',
     isDeleted: false, createdAt: '2026-03-18T18:00:00Z', updatedAt: '2026-03-18T18:00:00Z'
   },
   {
-    id: 9, date: '2026-03-20', month: 'March', year: 2026,
+    id: 9, month: 'March', year: 2026,
     categoryId: 4, categoryName: 'Utilities', categoryIcon: '💡',
     subcategory: 'Internet', subcategoryIcon: '📡',
     amount: 999, notes: 'Broadband bill',
     isDeleted: false, createdAt: '2026-03-20T10:00:00Z', updatedAt: '2026-03-20T10:00:00Z'
   },
   {
-    id: 10, date: '2026-03-22', month: 'March', year: 2026,
+    id: 10, month: 'March', year: 2026,
     categoryId: 8, categoryName: 'Shopping', categoryIcon: '🛍️',
     subcategory: 'Clothing', subcategoryIcon: '👕',
     amount: 3500, notes: 'New shirts',
@@ -135,28 +134,28 @@ const MOCK_EXPENSES: ExpenseEntry[] = [
   },
   // February entries
   {
-    id: 11, date: '2026-02-01', month: 'February', year: 2026,
+    id: 11, month: 'February', year: 2026,
     categoryId: 1, categoryName: 'Rent', categoryIcon: '🏠',
     subcategory: 'Monthly Rent', subcategoryIcon: '🏡',
     amount: 15000, notes: 'Feb rent',
     isDeleted: false, createdAt: '2026-02-01T10:00:00Z', updatedAt: '2026-02-01T10:00:00Z'
   },
   {
-    id: 12, date: '2026-02-05', month: 'February', year: 2026,
+    id: 12, month: 'February', year: 2026,
     categoryId: 2, categoryName: 'Groceries', categoryIcon: '🛒',
     subcategory: 'Vegetables', subcategoryIcon: '🥬',
     amount: 2200, notes: 'Weekly groceries',
     isDeleted: false, createdAt: '2026-02-05T11:00:00Z', updatedAt: '2026-02-05T11:00:00Z'
   },
   {
-    id: 13, date: '2026-02-10', month: 'February', year: 2026,
+    id: 13, month: 'February', year: 2026,
     categoryId: 3, categoryName: 'Transport', categoryIcon: '🚗',
     subcategory: 'Fuel', subcategoryIcon: '⛽',
     amount: 2800, notes: 'Petrol',
     isDeleted: false, createdAt: '2026-02-10T09:00:00Z', updatedAt: '2026-02-10T09:00:00Z'
   },
   {
-    id: 14, date: '2026-02-15', month: 'February', year: 2026,
+    id: 14, month: 'February', year: 2026,
     categoryId: 5, categoryName: 'Food', categoryIcon: '🍔',
     subcategory: 'Dining Out', subcategoryIcon: '🍽️',
     amount: 1500, notes: 'Valentine dinner',
@@ -164,14 +163,14 @@ const MOCK_EXPENSES: ExpenseEntry[] = [
   },
   // January entries
   {
-    id: 15, date: '2026-01-01', month: 'January', year: 2026,
+    id: 15, month: 'January', year: 2026,
     categoryId: 1, categoryName: 'Rent', categoryIcon: '🏠',
     subcategory: 'Monthly Rent', subcategoryIcon: '🏡',
     amount: 15000, notes: 'Jan rent',
     isDeleted: false, createdAt: '2026-01-01T10:00:00Z', updatedAt: '2026-01-01T10:00:00Z'
   },
   {
-    id: 16, date: '2026-01-10', month: 'January', year: 2026,
+    id: 16, month: 'January', year: 2026,
     categoryId: 2, categoryName: 'Groceries', categoryIcon: '🛒',
     subcategory: 'Vegetables', subcategoryIcon: '🥬',
     amount: 3000, notes: 'New year groceries',
@@ -198,7 +197,8 @@ export class ExpenseService {
 
   // Flag: set to true once the 'expense' table exists in Supabase
   // For now, false → uses mock data
-  private readonly USE_DB = false;
+  // TODO: Set to true after running sql/schemas/003_expense.sql in DBeaver
+  private readonly USE_DB = true;
 
   private nextMockId = 100;
 
@@ -234,7 +234,6 @@ export class ExpenseService {
   private transformDbToApp(dbEntry: DbExpenseEntry): ExpenseEntry {
     return {
       id: dbEntry.expense_id,
-      date: dbEntry.date || '',
       month: dbEntry.month,
       year: dbEntry.year,
       categoryId: dbEntry.category_id,
@@ -252,18 +251,6 @@ export class ExpenseService {
 
   private transformAppToDb(appEntry: Partial<ExpenseEntry>): Partial<DbExpenseEntry> {
     const dbEntry: any = {};
-
-    if (appEntry.date !== undefined) {
-      // Ensure date is stored as plain YYYY-MM-DD string (same pattern as IncomeService)
-      if (typeof appEntry.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(appEntry.date)) {
-        dbEntry.date = appEntry.date;
-      } else if (appEntry.date) {
-        const d = new Date(appEntry.date);
-        dbEntry.date = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-      } else {
-        dbEntry.date = null;
-      }
-    }
 
     if (appEntry.month !== undefined) dbEntry.month = appEntry.month;
     if (appEntry.year !== undefined) dbEntry.year = appEntry.year;
@@ -315,7 +302,7 @@ export class ExpenseService {
           .select('*')
           .eq('is_delete', false)
           .order('year', { ascending: false })
-          .order('date', { ascending: false });
+          .order('month', { ascending: false });
 
         if (error) {
           console.error('❌ Database error:', error.message);
@@ -355,18 +342,13 @@ export class ExpenseService {
     this.error.set(null);
 
     try {
-      const date = new Date(data.date);
-      const month = this.getMonthName(date.getMonth());
-      const year = date.getFullYear();
-
       // Lookup category details from CategoryService
       const category = this.categoryService.getCategoryById(data.categoryId);
 
       if (this.USE_DB) {
         const newEntry = {
-          date: data.date,
-          month: month,
-          year: year,
+          month: data.month,
+          year: data.year,
           category_id: data.categoryId,
           category_name: category?.category_name || 'Unknown',
           category_icon: category?.category_icon || null,
@@ -401,9 +383,8 @@ export class ExpenseService {
 
         const newEntry: ExpenseEntry = {
           id: this.nextMockId++,
-          date: data.date,
-          month: month,
-          year: year,
+          month: data.month,
+          year: data.year,
           categoryId: data.categoryId,
           categoryName: category?.category_name || 'Unknown',
           categoryIcon: category?.category_icon || '📁',
@@ -439,17 +420,12 @@ export class ExpenseService {
     this.error.set(null);
 
     try {
-      const date = new Date(data.date);
-      const month = this.getMonthName(date.getMonth());
-      const year = date.getFullYear();
-
       const category = this.categoryService.getCategoryById(data.categoryId);
 
       if (this.USE_DB) {
         const dbUpdates = {
-          date: data.date,
-          month: month,
-          year: year,
+          month: data.month,
+          year: data.year,
           category_id: data.categoryId,
           category_name: category?.category_name || 'Unknown',
           category_icon: category?.category_icon || null,
@@ -504,9 +480,8 @@ export class ExpenseService {
 
         const updatedEntry: ExpenseEntry = {
           ...currentEntries[index],
-          date: data.date,
-          month: month,
-          year: year,
+          month: data.month,
+          year: data.year,
           categoryId: data.categoryId,
           categoryName: category?.category_name || 'Unknown',
           categoryIcon: category?.category_icon || '📁',

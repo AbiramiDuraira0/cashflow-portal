@@ -3,17 +3,19 @@
   <!-- Page Header -->
   <header class="page-header">
     <div class="header-content">
-      <h1>🏦 Debt Management</h1>
-      <p class="subtitle">Track loans and journey to financial freedom</p>
-    </div>
-    <div class="header-actions">
-      <button class="btn-secondary" (click)="openEMICalculator()">
-        🧮 EMI Calculator
-      </button>
-      <button class="btn-primary" (click)="openAddModal()">
-        <span class="btn-icon">➕</span>
-        Add Debt/Loan
-      </button>
+      <div class="title-section">
+        <h1>🏦 Debt Management</h1>
+        <p class="subtitle">Track loans and journey to financial freedom</p>
+      </div>
+      <div class="header-actions">
+        <button class="btn-secondary" (click)="openEMICalculator()">
+          🧮 EMI Calculator
+        </button>
+        <button class="btn-primary" (click)="openAddModal()">
+          <span class="btn-icon">➕</span>
+          Add Debt/Loan
+        </button>
+      </div>
     </div>
   </header>
 
@@ -212,13 +214,13 @@
           <!-- Card Actions -->
           <div class="card-actions">
             <button class="action-btn view-btn" (click)="openDetailsModal(debt)" title="View Details">
-              👁️ View
+              👁️
             </button>
             <button class="action-btn edit-btn" (click)="openEditModal(debt)" title="Edit Loan">
-              ✏️ Edit
+              ✏️
             </button>
             <button class="action-btn delete-btn" (click)="openDeleteModal(debt)" title="Delete Loan">
-              🗑️ Delete
+              🗑️
             </button>
           </div>
         </div>

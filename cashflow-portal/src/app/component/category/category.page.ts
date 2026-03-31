@@ -109,7 +109,14 @@ export class CategoryPage implements OnInit {
     const col = this.sortColumn();
     const dir = this.sortDirection();
     
-    return SortingHelper.sort(cats, col, dir);
+    // Sort using helper
+    const sorted = SortingHelper.sort(cats, col, dir);
+    
+    // Move inactive categories to the end
+    const activeCategories = sorted.filter(cat => cat.is_active);
+    const inactiveCategories = sorted.filter(cat => !cat.is_active);
+    
+    return [...activeCategories, ...inactiveCategories];
   });
 
   // Computed total items
@@ -308,6 +315,16 @@ export class CategoryPage implements OnInit {
     this.newCategoryIcon.set('');
     this.newSubCategoryIcon.set('');
     this.newNotes.set('');
+    this.showAddModal.set(true);
+  }
+
+  protected duplicateCategory(category: Category): void {
+    // Pre-fill the add modal with the selected category's data
+    this.newCategoryName.set(category.category_name);
+    this.newSubCategoryName.set(category.sub_category || '');
+    this.newCategoryIcon.set(category.category_icon || '');
+    this.newSubCategoryIcon.set(category.subcategory_icon || '');
+    this.newNotes.set(category.notes || '');
     this.showAddModal.set(true);
   }
 
