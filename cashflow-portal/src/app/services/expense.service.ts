@@ -198,7 +198,8 @@ export class ExpenseService {
 
   // Flag: set to true once the 'expense' table exists in Supabase
   // For now, false → uses mock data
-  private readonly USE_DB = false;
+  // TODO: Set to true after running sql/schemas/003_expense.sql in DBeaver
+  private readonly USE_DB = true;
 
   private nextMockId = 100;
 
