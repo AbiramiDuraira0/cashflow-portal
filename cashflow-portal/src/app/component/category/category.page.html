@@ -1,25 +1,19 @@
 <section class="category">
   <header class="toolbar">
-    <div class="titles">
-      <h1>Categories</h1>
-      <p class="subtitle">Manage your expense categories</p>
-    </div>
-    <div class="actions">
+    <div class="compact-bar">
       <label class="search" aria-label="Search categories">
         <span class="search-icon">🔎</span>
-        <input type="text" placeholder="Search categories" [value]="query()" (input)="onSearchChange($any($event.target).value)" />
+        <input type="text" placeholder="Search" [value]="query()" (input)="onSearchChange($any($event.target).value)" />
       </label>
       
-      <button 
-        class="add-btn" 
-        (click)="openAddModal()">
-        <span class="text">Add Category</span>
+      <button class="add-btn" (click)="openAddModal()">
+        <span class="text">+</span>
       </button>
       
       <!-- Category Count Badge -->
       <div class="category-count-badge">
         <span class="count">{{ filtered().length }}</span>
-        <span class="label">{{ filtered().length === 1 ? 'Category' : 'Categories' }}</span>
+        <span class="label">{{ filtered().length === 1 ? 'Cat' : 'Cats' }}</span>
       </div>
     </div>
   </header>
@@ -35,7 +29,7 @@
         <table class="category-table">
           <thead>
             <tr>
-              <th class="col-icon">Icon</th>
+              <th class="col-icon desktop-only">Icon</th>
               <th class="col-name sortable" (click)="sortBy('category_name')">
                 <div class="header-content">
                   <span>Category</span>
@@ -54,30 +48,34 @@
                   <span class="sort-icon">{{ getSortIcon('is_active') }}</span>
                 </div>
               </th>
-              <th class="col-date sortable" (click)="sortBy('created_at')">
+              <th class="col-date desktop-only sortable" (click)="sortBy('created_at')">
                 <div class="header-content">
                   <span>Created</span>
                   <span class="sort-icon">{{ getSortIcon('created_at') }}</span>
                 </div>
               </th>
-              <th class="col-date sortable" (click)="sortBy('updated_at')">
+              <th class="col-date desktop-only sortable" (click)="sortBy('updated_at')">
                 <div class="header-content">
                   <span>Updated</span>
                   <span class="sort-icon">{{ getSortIcon('updated_at') }}</span>
                 </div>
               </th>
-              <th class="col-notes">Notes</th>
+              <th class="col-notes desktop-only">Notes</th>
               <th class="col-actions">Actions</th>
             </tr>
           </thead>
           <tbody>
             @for (cat of paginated(); track cat.category_id) {
               <tr class="table-row">
-                <td class="col-icon">
+                <td class="col-icon desktop-only">
                   <span class="category-icon">{{ getCategoryIcon(cat.category_name, cat.category_icon) }}</span>
                 </td>
                 <td class="col-name">
-                  <span class="category-name">{{ cat.category_name }}</span>
+                  <span class="mobile-icon-name">
+                    <span class="category-icon">{{ getCategoryIcon(cat.category_name, cat.category_icon) }}</span>
+                    <span class="category-name">{{ cat.category_name }}</span>
+                  </span>
+                  <span class="desktop-name">{{ cat.category_name }}</span>
                 </td>
                 <td class="col-subcategory">
                   @if (cat.sub_category) {
@@ -102,13 +100,13 @@
                     </span>
                   }
                 </td>
-                <td class="col-date">
+                <td class="col-date desktop-only">
                   <span class="date-value">{{ formatDate(cat.created_at) }}</span>
                 </td>
-                <td class="col-date">
+                <td class="col-date desktop-only">
                   <span class="date-value">{{ formatDate(cat.updated_at) }}</span>
                 </td>
-                <td class="col-notes">
+                <td class="col-notes desktop-only">
                   @if (cat.notes) {
                     <span class="notes-text" [title]="cat.notes">
                       {{ cat.notes.length > 50 ? cat.notes.substring(0, 50) + '...' : cat.notes }}
