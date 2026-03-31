@@ -8,10 +8,22 @@
         <h1>💸 Expense Tracker</h1>
         <p class="subtitle">Track and manage your monthly expenses</p>
       </div>
-      <button class="btn-add" (click)="openAddExpenseModal()">
-        <span class="icon">+</span>
-        Add Expense
-      </button>
+      <div class="header-actions">
+        <!-- Search Bar -->
+        <div class="search-bar-compact">
+          <span class="search-icon">🔎</span>
+          <input 
+            type="text" 
+            placeholder="Search expenses..." 
+            [value]="searchQuery()"
+            (input)="onSearchChange($any($event.target).value)"
+            class="search-input" />
+        </div>
+        <button class="btn-add" (click)="openAddExpenseModal()">
+          <span class="icon">+</span>
+          Add Expense
+        </button>
+      </div>
     </div>
   </header>
 
@@ -86,13 +98,23 @@
           }
         </select>
       </div>
+
+      <!-- Toggle Button for Expense vs Income -->
+      @if (monthlyIncome() > 0) {
+        <button 
+          class="toggle-chart-btn" 
+          (click)="toggleExpenseVsIncome()"
+          [title]="showExpenseVsIncome() ? 'Hide Expense vs Income' : 'Show Expense vs Income'">
+          {{ showExpenseVsIncome() ? '📊 Hide Chart' : '📊 Show Chart' }}
+        </button>
+      }
     </div>
   </div>
 
   <!-- ============================== -->
   <!-- Income vs Expense Progress Bar -->
   <!-- ============================== -->
-  @if (monthlyIncome() > 0) {
+  @if (monthlyIncome() > 0 && showExpenseVsIncome()) {
     <div class="progress-section">
       <div class="progress-header">
         <span class="progress-label">Expense vs Income</span>
@@ -139,21 +161,36 @@
         <table class="expense-table">
           <thead>
             <tr>
-              <th class="col-date">Date</th>
-              <th class="col-category">Category</th>
+              <th class="col-date sortable" (click)="sortBy('date')">
+                <div class="header-content">
+                  <span>Period</span>
+                  <span class="sort-icon">{{ getSortIcon('date') }}</span>
+                </div>
+              </th>
+              <th class="col-category sortable" (click)="sortBy('categoryName')">
+                <div class="header-content">
+                  <span>Category</span>
+                  <span class="sort-icon">{{ getSortIcon('categoryName') }}</span>
+                </div>
+              </th>
               <th class="col-subcategory">Subcategory</th>
               <th class="col-notes">Notes</th>
-              <th class="col-amount">Amount (₹)</th>
+              <th class="col-amount sortable" (click)="sortBy('amount')">
+                <div class="header-content">
+                  <span>Amount (₹)</span>
+                  <span class="sort-icon">{{ getSortIcon('amount') }}</span>
+                </div>
+              </th>
               <th class="col-actions">Actions</th>
             </tr>
           </thead>
           <tbody>
-            @for (entry of filteredExpenses(); track entry.id) {
+            @for (entry of paginatedExpenses(); track entry.id) {
               <tr
                 class="expense-row"
                 [class.recently-added]="isRecentlyAdded(entry.id)">
                 <td class="col-date">
-                  <span class="date-badge">{{ formatDate(entry.date) }}</span>
+                  <span class="date-badge">{{ entry.month }} {{ entry.year }}</span>
                 </td>
                 <td class="col-category">
                   <span class="category-badge">
@@ -186,6 +223,7 @@
                 <td class="col-actions">
                   <div class="action-buttons">
                     <button class="btn-icon edit" (click)="openEditExpenseModal(entry)" title="Edit">✏️</button>
+                    <button class="btn-icon duplicate" (click)="duplicateExpense(entry)" title="Duplicate">📋</button>
                     <button class="btn-icon delete" (click)="openDeleteConfirm(entry)" title="Delete">🗑️</button>
                   </div>
                 </td>
@@ -195,7 +233,7 @@
           <tfoot>
             <tr class="total-row">
               <td colspan="4" class="total-label">
-                <strong>Total ({{ filteredExpenses().length }} entries)</strong>
+                <strong>Total ({{ sortedExpenses().length }} entries)</strong>
               </td>
               <td class="total-amount">
                 <strong>{{ formatCurrency(totalExpense()) }}</strong>
@@ -205,6 +243,47 @@
           </tfoot>
         </table>
       </div>
+
+      <!-- Pagination Controls -->
+      @if (totalPages() > 1) {
+        <div class="pagination-section">
+          <div class="pagination-controls">
+            <button 
+              class="pagination-btn" 
+              (click)="goToPage(currentPage() - 1)" 
+              [disabled]="currentPage() === 1">
+              ‹ Prev
+            </button>
+            
+            @for (page of [].constructor(totalPages()); track $index) {
+              <button 
+                class="pagination-btn page-number" 
+                [class.active]="currentPage() === $index + 1"
+                (click)="goToPage($index + 1)">
+                {{ $index + 1 }}
+              </button>
+            }
+            
+            <button 
+              class="pagination-btn" 
+              (click)="goToPage(currentPage() + 1)" 
+              [disabled]="currentPage() === totalPages()">
+              Next ›
+            </button>
+          </div>
+          
+          <div class="page-size-control">
+            <label>
+              Rows per page:
+              <select [ngModel]="pageSize()" (ngModelChange)="changePageSize($event)">
+                @for (size of pageSizeOptions; track size) {
+                  <option [value]="size">{{ size }}</option>
+                }
+              </select>
+            </label>
+          </div>
+        </div>
+      }
     }
   </div>
 
@@ -219,45 +298,39 @@
   <!-- Add / Edit Expense Modal       -->
   <!-- ============================== -->
   @if (showExpenseModal()) {
-    <div class="modal-overlay" (click)="closeExpenseModal()">
+    <div class="modal-overlay">
       <div class="modal-content" (click)="$event.stopPropagation()" (keydown)="onKeyDown($event)">
         <div class="modal-header">
-          <h2>{{ editingEntry() ? '✏️ Edit Expense' : '➕ Add Expense' }}</h2>
+          <h2>{{ editingEntry() ? '✏️ Edit Expense' : 'Add Expense' }}</h2>
           <button class="btn-close" (click)="closeExpenseModal()">✕</button>
         </div>
 
         <form class="expense-form" (ngSubmit)="saveExpense()">
-          <!-- Date -->
-          <div class="form-group">
-            <label for="expDate">Date <span class="required">*</span></label>
-            <input
-              type="date"
-              id="expDate"
-              [ngModel]="formDate()"
-              (ngModelChange)="formDate.set($event)"
-              name="expDate"
-              required
-              class="form-control"
-              tabindex="1">
-          </div>
-
           <!-- Category & Subcategory Row -->
           <div class="form-row">
             <div class="form-group">
               <label for="expCategory">Category <span class="required">*</span></label>
-              <select
-                id="expCategory"
-                [ngModel]="formCategoryName()"
-                (ngModelChange)="onCategoryNameChange($event)"
-                name="expCategory"
-                required
-                class="form-control"
-                tabindex="2">
-                <option value="">Select Category</option>
-                @for (name of uniqueCategoryNames(); track name) {
-                  <option [value]="name">{{ name }}</option>
-                }
-              </select>
+              <div class="input-with-button">
+                <select
+                  id="expCategory"
+                  [ngModel]="formCategoryName()"
+                  (ngModelChange)="onCategoryNameChange($event)"
+                  name="expCategory"
+                  required
+                  class="form-control category-select-with-icon"
+                  tabindex="2">
+                  <option value="">Select Category</option>
+                  @for (name of uniqueCategoryNames(); track name) {
+                    <option [value]="name">{{ getCategoryIconForName(name) }} {{ name }}</option>
+                  }
+                </select>
+                <button type="button" class="add-category-btn-small" (click)="navigateToCategories()" title="Add New Category">
+                  ➕
+                </button>
+              </div>
+              @if (uniqueCategoryNames().length === 0) {
+                <p class="no-categories-hint">No categories found. Click ➕ to add one.</p>
+              }
             </div>
 
             <div class="form-group">
@@ -353,7 +426,7 @@
             <div class="delete-details">
               <p><strong>{{ deletingEntry()!.categoryIcon }} {{ deletingEntry()!.categoryName }}</strong></p>
               <p class="delete-amount">{{ formatCurrency(deletingEntry()!.amount) }}</p>
-              <p class="warning-note">{{ formatDate(deletingEntry()!.date) }} • This will be a soft delete</p>
+              <p class="warning-note">{{ deletingEntry()!.month }} {{ deletingEntry()!.year }} • This will be a soft delete</p>
             </div>
           </div>
         </div>

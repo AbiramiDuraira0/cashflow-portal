@@ -11,7 +11,13 @@
       </label>
       
       <button class="add-btn" (click)="openAddModal()">
-        <span class="text">+</span>
+        <span cl  @if (showDeleteModal() && deletingCategory()) {
+    <div class="modal-overlay">
+      <div class="modal-card modal-delete" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2>🗑️ Deactivate Category</h2>
+          <button class="close-btn" (click)="closeDeleteModal()">✕</button>
+        </div>xt">+</span>
       </button>
       
       <!-- Category Count Badge -->
@@ -127,6 +133,12 @@
                       [attr.data-tooltip]="'Edit ' + cat.category_name">
                       <span class="icon">✏️</span>
                     </button>
+                    <button 
+                      class="action-btn duplicate" 
+                      (click)="duplicateCategory(cat)"
+                      [attr.data-tooltip]="'Duplicate ' + cat.category_name">
+                      <span class="icon">📋</span>
+                    </button>
                     @if (cat.is_active) {
                       <button 
                         class="action-btn deactivate" 
@@ -210,7 +222,7 @@
   }
 
   @if (showAddModal()) {
-    <div class="modal-overlay" (click)="closeAddModal()">
+    <div class="modal-overlay">
       <div class="modal-card modal-wide" 
            [class.modal-expanded]="showCategoryIconPicker() || showSubCategoryIconPicker()"
            (click)="$event.stopPropagation()">
@@ -369,7 +381,7 @@
   }
 
   @if (showEditModal() && editingCategory()) {
-    <div class="modal-overlay" (click)="closeEditModal()">
+    <div class="modal-overlay">
       <div class="modal-card modal-wide" 
            [class.modal-expanded]="showEditCategoryIconPicker() || showEditSubCategoryIconPicker()"
            (click)="$event.stopPropagation()">

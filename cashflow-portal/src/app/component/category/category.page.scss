@@ -788,6 +788,18 @@
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
 }
 
+.action-btn.duplicate {
+  color: #8b5cf6;
+  border-color: #ede9fe;
+}
+
+.action-btn.duplicate:hover {
+  background: linear-gradient(135deg, #ede9fe 0%, #ddd6fe 100%);
+  border-color: #8b5cf6;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.2);
+}
+
 .action-btn.delete {
   color: var(--danger);
   border-color: var(--danger-light);
