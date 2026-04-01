@@ -51,6 +51,8 @@ export class ExpensePage implements OnInit {
 
   // Toggle states
   protected showExpenseVsIncome = signal(false);
+  protected groupByCategory = signal(true); // Enable grouping by default
+  protected expandedCategories = signal<Set<string>>(new Set()); // Track expanded categories
 
   // Modal states
   protected showExpenseModal = signal(false);
@@ -159,7 +161,30 @@ export class ExpensePage implements OnInit {
     return expenses;
   });
 
-  /** Paginated expenses */
+  /** Grouped expenses by category */
+  protected groupedExpenses = computed(() => {
+    const sorted = this.sortedExpenses();
+    const groups = new Map<string, ExpenseEntry[]>();
+    
+    sorted.forEach(expense => {
+      const categoryKey = expense.categoryName;
+      if (!groups.has(categoryKey)) {
+        groups.set(categoryKey, []);
+      }
+      groups.get(categoryKey)!.push(expense);
+    });
+    
+    // Convert to array with category info
+    return Array.from(groups.entries()).map(([categoryName, expenses]) => ({
+      categoryName,
+      categoryIcon: expenses[0].categoryIcon,
+      expenses,
+      total: expenses.reduce((sum, exp) => sum + exp.amount, 0),
+      count: expenses.length
+    }));
+  });
+
+  /** Paginated expenses (flat list or grouped) */
   protected paginatedExpenses = computed(() => {
     const sorted = this.sortedExpenses();
     const page = this.currentPage();
@@ -294,6 +319,13 @@ export class ExpensePage implements OnInit {
     console.log('📊 Initial expenses signal:', this.expenses());
     console.log('⏳ Is loading:', this.isLoading());
     this.loadData();
+    
+    // Initialize expanded categories (expand all by default)
+    setTimeout(() => {
+      if (this.groupByCategory()) {
+        this.expandAllCategories();
+      }
+    }, 100);
   }
 
   private async loadData(): Promise<void> {
@@ -337,6 +369,50 @@ export class ExpensePage implements OnInit {
   protected onSearchChange(value: string): void {
     this.searchQuery.set(value);
     this.currentPage.set(1); // Reset to first page on search
+  }
+
+  protected toggleGroupByCategory(): void {
+    this.groupByCategory.update(v => !v);
+    // If enabling grouping, expand all categories by default
+    if (this.groupByCategory()) {
+      const allCategories = new Set(this.groupedExpenses().map(g => g.categoryName));
+      this.expandedCategories.set(allCategories);
+    }
+  }
+
+  protected toggleCategoryExpand(categoryName: string): void {
+    this.expandedCategories.update(set => {
+      const newSet = new Set(set);
+      if (newSet.has(categoryName)) {
+        newSet.delete(categoryName);
+      } else {
+        newSet.add(categoryName);
+      }
+      return newSet;
+    });
+  }
+
+  protected isCategoryExpanded(categoryName: string): boolean {
+    return this.expandedCategories().has(categoryName);
+  }
+
+  protected expandAllCategories(): void {
+    const allCategories = new Set(this.groupedExpenses().map(g => g.categoryName));
+    this.expandedCategories.set(allCategories);
+  }
+
+  protected collapseAllCategories(): void {
+    this.expandedCategories.set(new Set());
+  }
+
+  protected areAllCategoriesExpanded(): boolean {
+    const allCategories = this.groupedExpenses().map(g => g.categoryName);
+    const expandedSet = this.expandedCategories();
+    return allCategories.length > 0 && allCategories.every(cat => expandedSet.has(cat));
+  }
+
+  protected areAllCategoriesCollapsed(): boolean {
+    return this.expandedCategories().size === 0;
   }
 
   protected sortBy(column: 'date' | 'categoryName' | 'subcategory' | 'amount'): void {
