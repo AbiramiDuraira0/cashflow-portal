@@ -480,6 +480,7 @@ export class IconMapper {
       { category: 'Shopping & Fashion', icon: '👒', keywords: ['hat', 'sunhat', 'accessories', 'summer', 'fashion'] },
       { category: 'Shopping & Fashion', icon: '🕶️', keywords: ['sunglasses', 'shades', 'accessories', 'fashion', 'eyewear'] },
       { category: 'Shopping & Fashion', icon: '🎀', keywords: ['ribbon', 'bow', 'gift', 'decoration', 'accessories'] },
+      { category: 'Shopping & Fashion', icon: '🎁', keywords: ['gift', 'present', 'box', 'birthday', 'celebration', 'surprise'] },
       { category: 'Shopping & Fashion', icon: '👘', keywords: ['kimono', 'robe', 'clothing', 'traditional', 'fashion'] },
       { category: 'Shopping & Fashion', icon: '💎', keywords: ['diamond', 'gem', 'jewelry', 'luxury', 'precious'] },
       

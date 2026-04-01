@@ -172,7 +172,7 @@
     display: flex;
     gap: 8px;
     flex-wrap: wrap;
-    flex: 1;
+    flex: 0 0 auto;
   }
 
   .year-tab {
@@ -205,30 +205,44 @@
     }
   }
 
-  .month-dropdown-wrapper {
-    flex-shrink: 0;
+  .month-tabs {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    flex: 1;
+    justify-content: flex-end;
   }
 
-  .month-dropdown {
-    padding: 8px 16px;
+  .month-tab {
+    padding: 8px 12px;
+    background: #f9fafb;
     border: 1px solid #e5e7eb;
     border-radius: 6px;
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 600;
-    color: #374151;
-    background: white;
+    color: #6b7280;
     cursor: pointer;
-    min-width: 140px;
     transition: all 0.2s ease;
+    min-width: 42px;
+    text-align: center;
 
-    &:focus {
-      outline: none;
-      border-color: #ef4444;
-      box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+    &:hover {
+      background: #f3f4f6;
+      border-color: #d1d5db;
+      color: #374151;
+    }
+
+    &.active {
+      background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+      border-color: #3b82f6;
+      color: white;
+      box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
     }
 
     @media (max-width: 768px) {
-      width: 100%;
+      padding: 6px 8px;
+      font-size: 11px;
+      min-width: 36px;
     }
   }
 
@@ -1003,6 +1017,27 @@
     cursor: pointer;
   }
 
+  .category-search,
+  .subcategory-search {
+    margin-bottom: 8px;
+    padding: 8px 12px;
+    font-size: 13px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    background: #f9fafb;
+
+    &:focus {
+      background: white;
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    &::placeholder {
+      color: #9ca3af;
+      font-size: 13px;
+    }
+  }
+
   .input-with-button {
     display: flex;
     gap: 8px;
@@ -1660,7 +1695,8 @@
     }
   }
 
-  .page-size-selector {
+  .page-size-selector,
+  .page-size-control {
     display: flex;
     align-items: center;
     gap: 8px;
@@ -1669,6 +1705,9 @@
       color: #6b7280;
       font-size: 14px;
       white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
 
     select {
@@ -1700,7 +1739,8 @@
       justify-content: center;
     }
 
-    .page-size-selector {
+    .page-size-selector,
+    .page-size-control {
       justify-content: center;
     }
   }

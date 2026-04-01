@@ -10,12 +10,25 @@
         <input type="text" placeholder="Search" [value]="query()" (input)="onSearchChange($any($event.target).value)" />
       </label>
       
-      <button class="add-btn" (click)="openAddModal()">
+      <!-- Desktop View: Full text button -->
+      <button class="add-btn desktop-only" (click)="openAddModal()">
+        <span class="icon">➕</span>
+        <span class="text">Add Category</span>
+      </button>
+      
+      <!-- Mobile View: Icon only button -->
+      <button class="add-btn mobile-only" (click)="openAddModal()">
         <span class="text">+</span>
       </button>
       
-      <!-- Category Count Badge -->
-      <div class="category-count-badge">
+      <!-- Category Count Badge - Desktop -->
+      <div class="category-count-badge desktop-only">
+        <span class="count">{{ filtered().length }}</span>
+        <span class="label">{{ filtered().length === 1 ? 'Category' : 'Categories' }}</span>
+      </div>
+      
+      <!-- Category Count Badge - Mobile -->
+      <div class="category-count-badge mobile-only">
         <span class="count">{{ filtered().length }}</span>
         <span class="label">{{ filtered().length === 1 ? 'Cat' : 'Cats' }}</span>
       </div>
@@ -40,7 +53,9 @@
                   <span class="sort-icon">{{ getSortIcon('category_name') }}</span>
                 </div>
               </th>
-              <th class="col-subcategory sortable" (click)="sortBy('sub_category')">
+              <th class="col-subcategory sortable" 
+                  (click)="sortBy('sub_category')"
+                  [title]="sortColumn() === 'category_name' ? 'Click to sub-sort within each category' : 'Click to sort by subcategory'">
                 <div class="header-content">
                   <span>Sub Category</span>
                   <span class="sort-icon">{{ getSortIcon('sub_category') }}</span>
@@ -219,12 +234,13 @@
     <div class="modal-overlay">
       <div class="modal-card modal-wide" 
            [class.modal-expanded]="showCategoryIconPicker() || showSubCategoryIconPicker()"
-           (click)="$event.stopPropagation()">
+           (click)="$event.stopPropagation()"
+           (keydown)="onAddModalKeyDown($event)">
         <div class="modal-header">
           <h2>Add New Category</h2>
           <button class="close-btn" (click)="closeAddModal()">✕</button>
         </div>
-        <div class="modal-body">
+        <form class="modal-body" (submit)="$event.preventDefault(); addCategory()">
           <div class="form-row">
             <label class="form-label">
               Category Name & Icon
@@ -239,6 +255,8 @@
                 (input)="newCategoryName.set($any($event.target).value)"
                 [disabled]="isAdding()"
                 maxlength="50"
+                tabindex="1"
+                #categoryNameInput
               />
               <div class="icon-picker-wrapper">
                 <button 
@@ -246,7 +264,8 @@
                   class="icon-picker-btn" 
                   (click)="toggleCategoryIconPicker()"
                   [disabled]="isAdding()"
-                  title="Click to select icon">
+                  title="Click to select icon"
+                  tabindex="-1">
                   {{ newCategoryIcon() || getCategoryIcon(newCategoryName()) }}
                 </button>
                 @if (showCategoryIconPicker()) {
@@ -289,6 +308,7 @@
                 (input)="newSubCategoryName.set($any($event.target).value)"
                 [disabled]="isAdding()"
                 maxlength="50"
+                tabindex="2"
               />
               @if (newSubCategoryName()) {
                 <div class="icon-picker-wrapper">
@@ -297,7 +317,8 @@
                     class="icon-picker-btn" 
                     (click)="toggleSubCategoryIconPicker()"
                     [disabled]="isAdding()"
-                    title="Click to select icon">
+                    title="Click to select icon"
+                    tabindex="-1">
                     {{ newSubCategoryIcon() || getCategoryIcon(newSubCategoryName()) }}
                   </button>
                   @if (showSubCategoryIconPicker()) {
@@ -339,7 +360,8 @@
               [value]="newNotes()"
               (input)="newNotes.set($any($event.target).value)"
               [disabled]="isAdding()"
-              maxlength="500"></textarea>
+              maxlength="500"
+              tabindex="3"></textarea>
             <div class="char-count">{{ newNotes().length }} / 500</div>
           </div>
           
@@ -356,12 +378,12 @@
               </span>
             </div>
           }
-        </div>
+        </form>
         <div class="modal-footer">
-          <button class="btn btn-secondary" (click)="closeAddModal()" [disabled]="isAdding()">
+          <button class="btn btn-secondary" (click)="closeAddModal()" [disabled]="isAdding()" tabindex="5">
             Cancel
           </button>
-          <button class="btn btn-primary" (click)="addCategory()" [disabled]="isAdding()">
+          <button class="btn btn-primary" (click)="addCategory()" [disabled]="isAdding()" tabindex="4">
             @if (isAdding()) {
               <span class="spinner-small">⏳</span>
               <span>Adding...</span>

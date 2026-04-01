@@ -41,8 +41,10 @@ export class ExpensePage implements OnInit {
 
   // Search, Sort, Pagination
   protected searchQuery = signal<string>('');
-  protected sortColumn = signal<'date' | 'categoryName' | 'amount'>('date');
+  protected sortColumn = signal<'date' | 'categoryName' | 'subcategory' | 'amount'>('amount');
   protected sortDirection = signal<'asc' | 'desc'>('desc');
+  protected secondarySortColumn = signal<'subcategory' | null>(null);
+  protected secondarySortDirection = signal<'asc' | 'desc'>('asc');
   protected currentPage = signal<number>(1);
   protected pageSize = signal<number>(10);
   protected readonly pageSizeOptions = [5, 10, 25, 50, 100];
@@ -108,11 +110,13 @@ export class ExpensePage implements OnInit {
     return filtered;
   });
 
-  /** Sorted expenses */
+  /** Sorted expenses with multi-level sorting support */
   protected sortedExpenses = computed(() => {
     const expenses = [...this.filteredExpenses()];
     const col = this.sortColumn();
     const dir = this.sortDirection();
+    const secondaryCol = this.secondarySortColumn();
+    const secondaryDir = this.secondarySortDirection();
     
     expenses.sort((a, b) => {
       let aVal: any, bVal: any;
@@ -128,14 +132,28 @@ export class ExpensePage implements OnInit {
       } else if (col === 'categoryName') {
         aVal = a.categoryName.toLowerCase();
         bVal = b.categoryName.toLowerCase();
+      } else if (col === 'subcategory') {
+        aVal = (a.subcategory || '').toLowerCase();
+        bVal = (b.subcategory || '').toLowerCase();
       } else if (col === 'amount') {
         aVal = a.amount;
         bVal = b.amount;
       }
       
-      if (aVal < bVal) return dir === 'asc' ? -1 : 1;
-      if (aVal > bVal) return dir === 'asc' ? 1 : -1;
-      return 0;
+      // Primary sort comparison
+      let primaryComparison = 0;
+      if (aVal < bVal) primaryComparison = dir === 'asc' ? -1 : 1;
+      else if (aVal > bVal) primaryComparison = dir === 'asc' ? 1 : -1;
+      
+      // If primary values are equal and secondary sort is enabled
+      if (primaryComparison === 0 && col === 'categoryName' && secondaryCol === 'subcategory') {
+        const aSubVal = (a.subcategory || '').toLowerCase();
+        const bSubVal = (b.subcategory || '').toLowerCase();
+        if (aSubVal < bSubVal) return secondaryDir === 'asc' ? -1 : 1;
+        if (aSubVal > bSubVal) return secondaryDir === 'asc' ? 1 : -1;
+      }
+      
+      return primaryComparison;
     });
     
     return expenses;
@@ -229,6 +247,21 @@ export class ExpensePage implements OnInit {
     return Array.from(names).sort();
   });
 
+  /** Search query for category dropdown */
+  protected categorySearchQuery = signal<string>('');
+
+  /** Filtered category names based on search */
+  protected filteredCategoryNames = computed(() => {
+    const allNames = this.uniqueCategoryNames();
+    const searchTerm = this.categorySearchQuery().toLowerCase().trim();
+    
+    if (!searchTerm) return allNames;
+    
+    return allNames.filter(name => 
+      name.toLowerCase().includes(searchTerm)
+    );
+  });
+
   /** Subcategories (categories with same name that have sub_category) for the selected category name */
   protected filteredSubcategories = computed(() => {
     const catName = this.formCategoryName();
@@ -306,18 +339,61 @@ export class ExpensePage implements OnInit {
     this.currentPage.set(1); // Reset to first page on search
   }
 
-  protected sortBy(column: 'date' | 'categoryName' | 'amount'): void {
-    if (this.sortColumn() === column) {
-      this.sortDirection.update(dir => dir === 'asc' ? 'desc' : 'asc');
-    } else {
-      this.sortColumn.set(column);
-      this.sortDirection.set('asc');
+  protected sortBy(column: 'date' | 'categoryName' | 'subcategory' | 'amount'): void {
+    const currentPrimary = this.sortColumn();
+    const currentSecondary = this.secondarySortColumn();
+    
+    // If clicking on subcategory and categoryName is already primary sort
+    if (column === 'subcategory' && currentPrimary === 'categoryName') {
+      if (currentSecondary === 'subcategory') {
+        // Toggle secondary sort direction
+        this.secondarySortDirection.update(dir => dir === 'asc' ? 'desc' : 'asc');
+      } else {
+        // Enable secondary sort
+        this.secondarySortColumn.set('subcategory');
+        this.secondarySortDirection.set('asc');
+      }
+    }
+    // If clicking on categoryName
+    else if (column === 'categoryName') {
+      if (currentPrimary === 'categoryName') {
+        // Toggle primary sort direction
+        this.sortDirection.update(dir => dir === 'asc' ? 'desc' : 'asc');
+      } else {
+        // Set as new primary sort, reset secondary
+        this.sortColumn.set('categoryName');
+        this.sortDirection.set('asc');
+        this.secondarySortColumn.set(null);
+      }
+    }
+    // Any other column
+    else {
+      if (this.sortColumn() === column) {
+        // Toggle direction if same column
+        this.sortDirection.update(dir => dir === 'asc' ? 'desc' : 'asc');
+      } else {
+        // New column, default to ascending, clear secondary sort
+        this.sortColumn.set(column);
+        this.sortDirection.set('asc');
+        this.secondarySortColumn.set(null);
+      }
     }
   }
 
   protected getSortIcon(column: string): string {
-    if (this.sortColumn() !== column) return '↕️';
-    return this.sortDirection() === 'asc' ? '↑' : '↓';
+    const isPrimary = this.sortColumn() === column;
+    const isSecondary = this.secondarySortColumn() === column;
+    
+    if (isPrimary) {
+      return this.sortDirection() === 'asc' ? '↑' : '↓';
+    }
+    
+    if (isSecondary && column === 'subcategory') {
+      // Show secondary sort indicator (smaller/different style)
+      return this.secondarySortDirection() === 'asc' ? '▲²' : '▼²';
+    }
+    
+    return '↕️';
   }
 
   protected goToPage(page: number): void {

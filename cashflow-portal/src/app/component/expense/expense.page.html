@@ -87,16 +87,16 @@
         }
       </div>
 
-      <!-- Month Dropdown -->
-      <div class="month-dropdown-wrapper">
-        <select
-          class="month-dropdown"
-          [ngModel]="selectedMonth()"
-          (ngModelChange)="changeMonth($event)">
-          @for (month of months; track month) {
-            <option [value]="month">{{ month }}</option>
-          }
-        </select>
+      <!-- Month Buttons -->
+      <div class="month-tabs">
+        @for (month of months; track month) {
+          <button
+            class="month-tab"
+            [class.active]="selectedMonth() === month"
+            (click)="changeMonth(month)">
+            {{ month.substring(0, 3) }}
+          </button>
+        }
       </div>
 
       <!-- Toggle Button for Expense vs Income -->
@@ -173,7 +173,14 @@
                   <span class="sort-icon">{{ getSortIcon('categoryName') }}</span>
                 </div>
               </th>
-              <th class="col-subcategory">Subcategory</th>
+              <th class="col-subcategory sortable" 
+                  (click)="sortBy('subcategory')"
+                  [title]="sortColumn() === 'categoryName' ? 'Click to sub-sort within each category' : 'Click to sort by subcategory'">
+                <div class="header-content">
+                  <span>Subcategory</span>
+                  <span class="sort-icon">{{ getSortIcon('subcategory') }}</span>
+                </div>
+              </th>
               <th class="col-notes">Notes</th>
               <th class="col-amount sortable" (click)="sortBy('amount')">
                 <div class="header-content">
@@ -245,8 +252,12 @@
       </div>
 
       <!-- Pagination Controls -->
-      @if (totalPages() > 1) {
-        <div class="pagination-section">
+      <div class="pagination-section">
+        <div class="pagination-info">
+          {{ paginationInfo() }}
+        </div>
+        
+        @if (totalPages() > 1) {
           <div class="pagination-controls">
             <button 
               class="pagination-btn" 
@@ -271,19 +282,19 @@
               Next ›
             </button>
           </div>
-          
-          <div class="page-size-control">
-            <label>
-              Rows per page:
-              <select [ngModel]="pageSize()" (ngModelChange)="changePageSize($event)">
-                @for (size of pageSizeOptions; track size) {
-                  <option [value]="size">{{ size }}</option>
-                }
-              </select>
-            </label>
-          </div>
+        }
+        
+        <div class="page-size-control">
+          <label>
+            Rows per page:
+            <select [ngModel]="pageSize()" (ngModelChange)="changePageSize($event)">
+              @for (size of pageSizeOptions; track size) {
+                <option [value]="size">{{ size }}</option>
+              }
+            </select>
+          </label>
         </div>
-      }
+      </div>
     }
   </div>
 
@@ -310,6 +321,17 @@
           <div class="form-row">
             <div class="form-group">
               <label for="expCategory">Category <span class="required">*</span></label>
+              
+              <!-- Category Search Input (only for many categories) -->
+              @if (uniqueCategoryNames().length > 10) {
+                <input
+                  type="text"
+                  [ngModel]="categorySearchQuery()"
+                  (ngModelChange)="categorySearchQuery.set($event)"
+                  placeholder="🔍 Search categories..."
+                  class="form-control category-search">
+              }
+              
               <div class="input-with-button">
                 <select
                   id="expCategory"
@@ -320,7 +342,7 @@
                   class="form-control category-select-with-icon"
                   tabindex="2">
                   <option value="">Select Category</option>
-                  @for (name of uniqueCategoryNames(); track name) {
+                  @for (name of filteredCategoryNames(); track name) {
                     <option [value]="name">{{ getCategoryIconForName(name) }} {{ name }}</option>
                   }
                 </select>
