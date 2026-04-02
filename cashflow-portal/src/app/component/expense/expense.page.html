@@ -19,6 +19,7 @@
             (input)="onSearchChange($any($event.target).value)"
             class="search-input" />
         </div>
+        
         <button class="btn-add" (click)="openAddExpenseModal()">
           <span class="icon">+</span>
           Add Expense
@@ -68,6 +69,59 @@
         </p>
       </div>
     </div>
+
+    <!-- Actions Widget -->
+    <div class="summary-card actions">
+      <div class="card-icon">⚙️</div>
+      <div class="card-content">
+        <p class="card-label">Quick Actions</p>
+        <div class="action-buttons-grid">
+          <!-- Chart Toggle -->
+          <button 
+            class="action-widget-btn"
+            [class.active]="showExpenseVsIncome()"
+            (click)="toggleExpenseVsIncome()"
+            title="Toggle expense vs income chart">
+            <span class="btn-icon">📊</span>
+            <span class="btn-label">Chart</span>
+          </button>
+
+          <!-- Grouped View Toggle -->
+          <button 
+            class="action-widget-btn"
+            [class.active]="groupByCategory()"
+            (click)="toggleGroupByCategory()"
+            title="Toggle grouped view">
+            <span class="btn-icon">{{ groupByCategory() ? '📑' : '📋' }}</span>
+            <span class="btn-label">{{ groupByCategory() ? 'Grouped' : 'List' }}</span>
+          </button>
+
+          <!-- Expand All (only when grouped) -->
+          @if (groupByCategory()) {
+            <button 
+              class="action-widget-btn"
+              (click)="expandAllCategories()"
+              [disabled]="areAllCategoriesExpanded()"
+              [class.disabled]="areAllCategoriesExpanded()"
+              title="Expand all categories">
+              <span class="btn-icon">⬇️</span>
+              <span class="btn-label">Expand</span>
+            </button>
+
+            <!-- Collapse All (only when grouped) -->
+            <button 
+              class="action-widget-btn"
+              (click)="collapseAllCategories()"
+              [disabled]="areAllCategoriesCollapsed()"
+              [class.disabled]="areAllCategoriesCollapsed()"
+              title="Collapse all categories">
+              <span class="btn-icon">⬆️</span>
+              <span class="btn-label">Collapse</span>
+            </button>
+          }
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- ============================== -->
@@ -87,16 +141,16 @@
         }
       </div>
 
-      <!-- Month Dropdown -->
-      <div class="month-dropdown-wrapper">
-        <select
-          class="month-dropdown"
-          [ngModel]="selectedMonth()"
-          (ngModelChange)="changeMonth($event)">
-          @for (month of months; track month) {
-            <option [value]="month">{{ month }}</option>
-          }
-        </select>
+      <!-- Month Buttons -->
+      <div class="month-tabs">
+        @for (month of months; track month) {
+          <button
+            class="month-tab"
+            [class.active]="selectedMonth() === month"
+            (click)="changeMonth(month)">
+            {{ month.substring(0, 3) }}
+          </button>
+        }
       </div>
 
       <!-- Toggle Button for Expense vs Income -->
@@ -173,7 +227,14 @@
                   <span class="sort-icon">{{ getSortIcon('categoryName') }}</span>
                 </div>
               </th>
-              <th class="col-subcategory">Subcategory</th>
+              <th class="col-subcategory sortable" 
+                  (click)="sortBy('subcategory')"
+                  [title]="sortColumn() === 'categoryName' ? 'Click to sub-sort within each category' : 'Click to sort by subcategory'">
+                <div class="header-content">
+                  <span>Subcategory</span>
+                  <span class="sort-icon">{{ getSortIcon('subcategory') }}</span>
+                </div>
+              </th>
               <th class="col-notes">Notes</th>
               <th class="col-amount sortable" (click)="sortBy('amount')">
                 <div class="header-content">
@@ -185,49 +246,118 @@
             </tr>
           </thead>
           <tbody>
-            @for (entry of paginatedExpenses(); track entry.id) {
-              <tr
-                class="expense-row"
-                [class.recently-added]="isRecentlyAdded(entry.id)">
-                <td class="col-date">
-                  <span class="date-badge">{{ entry.month }} {{ entry.year }}</span>
-                </td>
-                <td class="col-category">
-                  <span class="category-badge">
-                    <span class="category-icon">{{ entry.categoryIcon }}</span>
-                    <span>{{ entry.categoryName }}</span>
-                  </span>
-                </td>
-                <td class="col-subcategory">
-                  @if (entry.subcategory) {
-                    <span class="subcategory-badge">
-                      @if (entry.subcategoryIcon) {
-                        <span class="subcategory-icon">{{ entry.subcategoryIcon }}</span>
-                      }
-                      <span>{{ entry.subcategory }}</span>
+            @if (groupByCategory()) {
+              <!-- Grouped Accordion View -->
+              @for (group of groupedExpenses(); track group.categoryName) {
+                <!-- Category Header Row (Accordion) -->
+                <tr class="category-group-header" 
+                    [class.expanded]="isCategoryExpanded(group.categoryName)"
+                    (click)="toggleCategoryExpand(group.categoryName)">
+                  <td colspan="6" class="category-header-cell">
+                    <div class="category-header-content">
+                      <span class="expand-icon">
+                        {{ isCategoryExpanded(group.categoryName) ? '▼' : '▶' }}
+                      </span>
+                      <span class="category-icon-large">{{ group.categoryIcon }}</span>
+                      <span class="category-name-large">{{ group.categoryName }}</span>
+                      <span class="category-count">({{ group.count }} {{ group.count === 1 ? 'item' : 'items' }})</span>
+                      <span class="category-percentage">{{ group.percentage | number: '1.0-1' }}%</span>
+                      <span class="category-total">{{ formatCurrency(group.total) }}</span>
+                    </div>
+                  </td>
+                </tr>
+                
+                <!-- Expense Rows (Collapsible) -->
+                @if (isCategoryExpanded(group.categoryName)) {
+                  @for (entry of group.expenses; track entry.id) {
+                    <tr
+                      class="expense-row grouped"
+                      [class.recently-added]="isRecentlyAdded(entry.id)">
+                      <td class="col-date">
+                        <span class="date-badge">{{ entry.month }} {{ entry.year }}</span>
+                      </td>
+                      <td class="col-category">
+                        <!-- Empty in grouped view since category is in header -->
+                      </td>
+                      <td class="col-subcategory">
+                        @if (entry.subcategory) {
+                          <span class="subcategory-badge">
+                            @if (entry.subcategoryIcon) {
+                              <span class="subcategory-icon">{{ entry.subcategoryIcon }}</span>
+                            }
+                            <span>{{ entry.subcategory }}</span>
+                          </span>
+                        } @else {
+                          <span class="no-data">—</span>
+                        }
+                      </td>
+                      <td class="col-notes">
+                        @if (entry.notes) {
+                          <span class="notes-text" [title]="entry.notes">{{ entry.notes }}</span>
+                        } @else {
+                          <span class="no-data">—</span>
+                        }
+                      </td>
+                      <td class="col-amount">
+                        <span class="amount-value">{{ formatCurrency(entry.amount) }}</span>
+                      </td>
+                      <td class="col-actions">
+                        <div class="action-buttons">
+                          <button class="btn-icon edit" (click)="openEditExpenseModal(entry)" title="Edit">✏️</button>
+                          <button class="btn-icon duplicate" (click)="duplicateExpense(entry)" title="Duplicate">📋</button>
+                          <button class="btn-icon delete" (click)="openDeleteConfirm(entry)" title="Delete">🗑️</button>
+                        </div>
+                      </td>
+                    </tr>
+                  }
+                }
+              }
+            } @else {
+              <!-- Flat List View -->
+              @for (entry of paginatedExpenses(); track entry.id) {
+                <tr
+                  class="expense-row"
+                  [class.recently-added]="isRecentlyAdded(entry.id)">
+                  <td class="col-date">
+                    <span class="date-badge">{{ entry.month }} {{ entry.year }}</span>
+                  </td>
+                  <td class="col-category">
+                    <span class="category-badge">
+                      <span class="category-icon">{{ entry.categoryIcon }}</span>
+                      <span>{{ entry.categoryName }}</span>
                     </span>
-                  } @else {
-                    <span class="no-data">—</span>
-                  }
-                </td>
-                <td class="col-notes">
-                  @if (entry.notes) {
-                    <span class="notes-text" [title]="entry.notes">{{ entry.notes }}</span>
-                  } @else {
-                    <span class="no-data">—</span>
-                  }
-                </td>
-                <td class="col-amount">
-                  <span class="amount-value">{{ formatCurrency(entry.amount) }}</span>
-                </td>
-                <td class="col-actions">
-                  <div class="action-buttons">
-                    <button class="btn-icon edit" (click)="openEditExpenseModal(entry)" title="Edit">✏️</button>
-                    <button class="btn-icon duplicate" (click)="duplicateExpense(entry)" title="Duplicate">📋</button>
-                    <button class="btn-icon delete" (click)="openDeleteConfirm(entry)" title="Delete">🗑️</button>
-                  </div>
-                </td>
-              </tr>
+                  </td>
+                  <td class="col-subcategory">
+                    @if (entry.subcategory) {
+                      <span class="subcategory-badge">
+                        @if (entry.subcategoryIcon) {
+                          <span class="subcategory-icon">{{ entry.subcategoryIcon }}</span>
+                        }
+                        <span>{{ entry.subcategory }}</span>
+                      </span>
+                    } @else {
+                      <span class="no-data">—</span>
+                    }
+                  </td>
+                  <td class="col-notes">
+                    @if (entry.notes) {
+                      <span class="notes-text" [title]="entry.notes">{{ entry.notes }}</span>
+                    } @else {
+                      <span class="no-data">—</span>
+                    }
+                  </td>
+                  <td class="col-amount">
+                    <span class="amount-value">{{ formatCurrency(entry.amount) }}</span>
+                  </td>
+                  <td class="col-actions">
+                    <div class="action-buttons">
+                      <button class="btn-icon edit" (click)="openEditExpenseModal(entry)" title="Edit">✏️</button>
+                      <button class="btn-icon duplicate" (click)="duplicateExpense(entry)" title="Duplicate">📋</button>
+                      <button class="btn-icon delete" (click)="openDeleteConfirm(entry)" title="Delete">🗑️</button>
+                    </div>
+                  </td>
+                </tr>
+              }
             }
           </tbody>
           <tfoot>
@@ -245,8 +375,12 @@
       </div>
 
       <!-- Pagination Controls -->
-      @if (totalPages() > 1) {
-        <div class="pagination-section">
+      <div class="pagination-section">
+        <div class="pagination-info">
+          {{ paginationInfo() }}
+        </div>
+        
+        @if (totalPages() > 1) {
           <div class="pagination-controls">
             <button 
               class="pagination-btn" 
@@ -271,19 +405,19 @@
               Next ›
             </button>
           </div>
-          
-          <div class="page-size-control">
-            <label>
-              Rows per page:
-              <select [ngModel]="pageSize()" (ngModelChange)="changePageSize($event)">
-                @for (size of pageSizeOptions; track size) {
-                  <option [value]="size">{{ size }}</option>
-                }
-              </select>
-            </label>
-          </div>
+        }
+        
+        <div class="page-size-control">
+          <label>
+            Rows per page:
+            <select [ngModel]="pageSize()" (ngModelChange)="changePageSize($event)">
+              @for (size of pageSizeOptions; track size) {
+                <option [value]="size">{{ size }}</option>
+              }
+            </select>
+          </label>
         </div>
-      }
+      </div>
     }
   </div>
 
@@ -310,6 +444,17 @@
           <div class="form-row">
             <div class="form-group">
               <label for="expCategory">Category <span class="required">*</span></label>
+              
+              <!-- Category Search Input (only for many categories) -->
+              @if (uniqueCategoryNames().length > 10) {
+                <input
+                  type="text"
+                  [ngModel]="categorySearchQuery()"
+                  (ngModelChange)="categorySearchQuery.set($event)"
+                  placeholder="🔍 Search categories..."
+                  class="form-control category-search">
+              }
+              
               <div class="input-with-button">
                 <select
                   id="expCategory"
@@ -320,7 +465,7 @@
                   class="form-control category-select-with-icon"
                   tabindex="2">
                   <option value="">Select Category</option>
-                  @for (name of uniqueCategoryNames(); track name) {
+                  @for (name of filteredCategoryNames(); track name) {
                     <option [value]="name">{{ getCategoryIconForName(name) }} {{ name }}</option>
                   }
                 </select>

@@ -29,6 +29,13 @@
 }
 
 /* Desktop/Mobile Toggle Classes */
+.mobile-only {
+  display: none !important; /* Hide on desktop */
+}
+
+/* Don't set display on desktop-only by default - let elements use their natural display */
+/* This allows table cells, buttons, etc. to maintain their proper display type */
+
 .mobile-icon-name {
   display: none; /* Hide on desktop */
 }
@@ -38,6 +45,17 @@
 }
 
 @media (max-width: 768px) {
+  .mobile-only {
+    display: flex !important; /* Show mobile-only elements on mobile */
+    
+    /* For table cells in mobile view */
+    &.col-icon,
+    &.col-date,
+    &.col-notes {
+      display: table-cell !important;
+    }
+  }
+  
   .desktop-only {
     display: none !important; /* Hide desktop-only columns on mobile */
   }
@@ -164,6 +182,27 @@
     position: relative;
     z-index: 1;
     letter-spacing: 0.3px;
+  }
+
+  // Mobile-only version - compact icon button
+  &.mobile-only {
+    width: 42px;
+    height: 42px;
+    padding: 0;
+    border-radius: 50%;
+    justify-content: center;
+    
+    .text {
+      font-size: 22px;
+      font-weight: 300;
+    }
+  }
+
+  // Desktop-only version - full button with text
+  &.desktop-only {
+    .icon {
+      font-size: 18px;
+    }
   }
 
   &:hover {
