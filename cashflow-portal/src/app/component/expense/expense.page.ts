@@ -174,14 +174,23 @@ export class ExpensePage implements OnInit {
       groups.get(categoryKey)!.push(expense);
     });
     
-    // Convert to array with category info
-    return Array.from(groups.entries()).map(([categoryName, expenses]) => ({
-      categoryName,
-      categoryIcon: expenses[0].categoryIcon,
-      expenses,
-      total: expenses.reduce((sum, exp) => sum + exp.amount, 0),
-      count: expenses.length
-    }));
+    // Calculate total for percentage calculation
+    const grandTotal = sorted.reduce((sum, exp) => sum + exp.amount, 0);
+    
+    // Convert to array with category info and percentage
+    return Array.from(groups.entries()).map(([categoryName, expenses]) => {
+      const total = expenses.reduce((sum, exp) => sum + exp.amount, 0);
+      const percentage = grandTotal > 0 ? (total / grandTotal) * 100 : 0;
+      
+      return {
+        categoryName,
+        categoryIcon: expenses[0].categoryIcon,
+        expenses,
+        total,
+        count: expenses.length,
+        percentage
+      };
+    });
   });
 
   /** Paginated expenses (flat list or grouped) */

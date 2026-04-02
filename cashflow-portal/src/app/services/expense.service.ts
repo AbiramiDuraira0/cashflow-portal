@@ -211,6 +211,24 @@ export class ExpenseService {
   }
 
   // ============================================
+  // Year-Based Table Name Helper
+  // ============================================
+
+  /**
+   * Get the table name for a specific year
+   * Tables: expense_2021, expense_2022, expense_2023, expense_2024, expense_2025, expense_2026
+   */
+  private getTableNameForYear(year: number): string {
+    // Supported years: 2021-2026
+    if (year >= 2021 && year <= 2026) {
+      return `expense_${year}`;
+    }
+    // Default to current year table if outside range
+    console.warn(`⚠️ Year ${year} outside supported range (2021-2026). Using expense_2026.`);
+    return 'expense_2026';
+  }
+
+  // ============================================
   // Public Signals (same pattern as IncomeService)
   // ============================================
 
@@ -288,6 +306,7 @@ export class ExpenseService {
   /**
    * Load all expense entries from Supabase (excluding soft-deleted)
    * Falls back to mock data if DB table doesn't exist yet
+   * Note: Queries from year-based tables (expense_2021 through expense_2026)
    */
   async loadExpenseData(): Promise<void> {
     this.loading.set(true);
@@ -295,23 +314,41 @@ export class ExpenseService {
 
     try {
       if (this.USE_DB) {
-        console.log('📂 Loading expense data from database...');
+        console.log('📂 Loading expense data from year-based tables...');
 
-        const { data, error } = await this.supabase.db
-          .from('expense')
-          .select('*')
-          .eq('is_delete', false)
-          .order('year', { ascending: false })
-          .order('month', { ascending: false });
+        // Query all year tables (2021-2026)
+        const years = [2021, 2022, 2023, 2024, 2025, 2026];
+        const allEntries: ExpenseEntry[] = [];
 
-        if (error) {
-          console.error('❌ Database error:', error.message);
-          throw error;
+        for (const year of years) {
+          const tableName = this.getTableNameForYear(year);
+          
+          try {
+            const { data, error } = await this.supabase.db
+              .from(tableName)
+              .select('*')
+              .eq('is_delete', false)
+              .order('year', { ascending: false })
+              .order('month', { ascending: false });
+
+            if (error) {
+              console.warn(`⚠️ Error loading from ${tableName}:`, error.message);
+              continue; // Skip this year if table doesn't exist or has errors
+            }
+
+            if (data && data.length > 0) {
+              const entries = data.map(this.transformDbToApp.bind(this));
+              allEntries.push(...entries);
+              console.log(`✅ Loaded ${entries.length} entries from ${tableName}`);
+            }
+          } catch (err: any) {
+            console.warn(`⚠️ Failed to load from ${tableName}:`, err.message);
+            continue; // Skip this year and continue with others
+          }
         }
 
-        const entries: ExpenseEntry[] = (data || []).map(this.transformDbToApp.bind(this));
-        this.expenseData.set(entries);
-        console.log('✅ Loaded expense entries from DB:', entries.length);
+        this.expenseData.set(allEntries);
+        console.log('✅ Total expense entries loaded from all tables:', allEntries.length);
       } else {
         // Use mock data
         console.log('📂 Loading expense mock data...');
@@ -346,6 +383,9 @@ export class ExpenseService {
       const category = this.categoryService.getCategoryById(data.categoryId);
 
       if (this.USE_DB) {
+        // Determine which table to insert into based on year
+        const tableName = this.getTableNameForYear(data.year);
+
         const newEntry = {
           month: data.month,
           year: data.year,
@@ -359,10 +399,10 @@ export class ExpenseService {
           is_delete: false
         };
 
-        console.log('➕ Adding new expense entry:', newEntry);
+        console.log(`➕ Adding new expense entry to ${tableName}:`, newEntry);
 
         const { data: dbData, error } = await this.supabase.db
-          .from('expense')
+          .from(tableName)
           .insert([newEntry])
           .select()
           .single();
@@ -374,7 +414,7 @@ export class ExpenseService {
 
         const addedEntry = this.transformDbToApp(dbData);
         this.expenseData.set([...this.expenseData(), addedEntry]);
-        console.log('✅ Expense entry added to DB. Total:', this.expenseData().length);
+        console.log(`✅ Expense entry added to ${tableName}. Total:`, this.expenseData().length);
 
         return addedEntry;
       } else {
@@ -414,6 +454,8 @@ export class ExpenseService {
 
   /**
    * Update existing expense entry
+   * Note: If year changes, deletes from old table and inserts into new table.
+   * This is necessary because of year constraints on each table.
    */
   async updateExpense(id: number, data: ExpenseFormData): Promise<ExpenseEntry> {
     this.loading.set(true);
@@ -423,50 +465,120 @@ export class ExpenseService {
       const category = this.categoryService.getCategoryById(data.categoryId);
 
       if (this.USE_DB) {
-        const dbUpdates = {
-          month: data.month,
-          year: data.year,
-          category_id: data.categoryId,
-          category_name: category?.category_name || 'Unknown',
-          category_icon: category?.category_icon || null,
-          sub_category: category?.sub_category || null,
-          subcategory_icon: category?.subcategory_icon || null,
-          amount_inr: data.amount,
-          notes: data.notes || null
-        };
-
-        console.log('✏️ Updating expense entry:', id, dbUpdates);
-
-        const { data: dbData, error } = await this.supabase.db
-          .from('expense')
-          .update(dbUpdates)
-          .eq('expense_id', id)
-          .eq('is_delete', false)
-          .select()
-          .single();
-
-        if (error) {
-          console.error('❌ Database error:', error.message);
-          throw error;
+        // Find the existing entry to determine which table it's in
+        const existingEntry = this.expenseData().find(e => e.id === id);
+        if (!existingEntry) {
+          throw new Error('Expense entry not found');
         }
 
-        if (!dbData) {
-          throw new Error('Expense entry not found or already deleted');
+        const oldTableName = this.getTableNameForYear(existingEntry.year);
+        const newTableName = this.getTableNameForYear(data.year);
+
+        // Check if year has changed (requires moving between tables)
+        if (existingEntry.year !== data.year) {
+          console.log(`🔄 Year changed: ${existingEntry.year} → ${data.year}`);
+          console.log(`🔄 Moving record from ${oldTableName} to ${newTableName}`);
+
+          // Step 1: Delete from old table (hard delete since we're moving)
+          const { error: deleteError } = await this.supabase.db
+            .from(oldTableName)
+            .delete()
+            .eq('expense_id', id);
+
+          if (deleteError) {
+            console.error('❌ Delete error:', deleteError.message);
+            throw new Error(`Failed to delete from ${oldTableName}: ${deleteError.message}`);
+          }
+
+          console.log(`✅ Deleted from ${oldTableName}`);
+
+          // Step 2: Insert into new table
+          const newEntry = {
+            month: data.month,
+            year: data.year,
+            category_id: data.categoryId,
+            category_name: category?.category_name || 'Unknown',
+            category_icon: category?.category_icon || null,
+            sub_category: category?.sub_category || null,
+            subcategory_icon: category?.subcategory_icon || null,
+            amount_inr: data.amount,
+            notes: data.notes || null,
+            is_delete: false
+          };
+
+          const { data: insertedData, error: insertError } = await this.supabase.db
+            .from(newTableName)
+            .insert([newEntry])
+            .select()
+            .single();
+
+          if (insertError) {
+            console.error('❌ Insert error:', insertError.message);
+            throw new Error(`Failed to insert into ${newTableName}: ${insertError.message}`);
+          }
+
+          console.log(`✅ Inserted into ${newTableName} with new ID:`, insertedData.expense_id);
+
+          const updatedEntry = this.transformDbToApp(insertedData);
+
+          // Update local state (replace old entry with new one)
+          const currentEntries = this.expenseData();
+          const index = currentEntries.findIndex(e => e.id === id);
+          if (index !== -1) {
+            const newEntries = [...currentEntries];
+            newEntries[index] = updatedEntry;
+            this.expenseData.set(newEntries);
+          }
+
+          console.log(`✅ Expense moved from ${oldTableName} to ${newTableName}`);
+          return updatedEntry;
+        } else {
+          // Year hasn't changed - simple update in same table
+          const dbUpdates = {
+            month: data.month,
+            year: data.year,
+            category_id: data.categoryId,
+            category_name: category?.category_name || 'Unknown',
+            category_icon: category?.category_icon || null,
+            sub_category: category?.sub_category || null,
+            subcategory_icon: category?.subcategory_icon || null,
+            amount_inr: data.amount,
+            notes: data.notes || null
+          };
+
+          console.log(`✏️ Updating expense entry in ${oldTableName}:`, id, dbUpdates);
+
+          const { data: dbData, error } = await this.supabase.db
+            .from(oldTableName)
+            .update(dbUpdates)
+            .eq('expense_id', id)
+            .eq('is_delete', false)
+            .select()
+            .single();
+
+          if (error) {
+            console.error('❌ Database error:', error.message);
+            throw error;
+          }
+
+          if (!dbData) {
+            throw new Error('Expense entry not found or already deleted');
+          }
+
+          const updatedEntry = this.transformDbToApp(dbData);
+
+          // Update local state
+          const currentEntries = this.expenseData();
+          const index = currentEntries.findIndex(e => e.id === id);
+          if (index !== -1) {
+            const newEntries = [...currentEntries];
+            newEntries[index] = updatedEntry;
+            this.expenseData.set(newEntries);
+          }
+
+          console.log(`✅ Expense entry updated in ${oldTableName}`);
+          return updatedEntry;
         }
-
-        const updatedEntry = this.transformDbToApp(dbData);
-
-        // Update local state
-        const currentEntries = this.expenseData();
-        const index = currentEntries.findIndex(e => e.id === id);
-        if (index !== -1) {
-          const newEntries = [...currentEntries];
-          newEntries[index] = updatedEntry;
-          this.expenseData.set(newEntries);
-        }
-
-        console.log('✅ Expense entry updated in DB');
-        return updatedEntry;
       } else {
         // Mock implementation
         await new Promise(resolve => setTimeout(resolve, 200));
@@ -518,10 +630,19 @@ export class ExpenseService {
 
     try {
       if (this.USE_DB) {
-        console.log('🗑️ Soft deleting expense entry:', id);
+        // Find the existing entry to determine which table it's in
+        const existingEntry = this.expenseData().find(e => e.id === id);
+        if (!existingEntry) {
+          throw new Error('Expense entry not found');
+        }
+
+        // Use the table based on the entry's year
+        const tableName = this.getTableNameForYear(existingEntry.year);
+
+        console.log(`🗑️ Soft deleting expense entry from ${tableName}:`, id);
 
         const { error } = await this.supabase.db
-          .from('expense')
+          .from(tableName)
           .update({ is_delete: true })
           .eq('expense_id', id);
 
@@ -534,7 +655,7 @@ export class ExpenseService {
         const filtered = this.expenseData().filter(e => e.id !== id);
         this.expenseData.set(filtered);
 
-        console.log('✅ Expense entry soft deleted from DB. Remaining:', filtered.length);
+        console.log(`✅ Expense entry soft deleted from ${tableName}. Remaining:`, filtered.length);
       } else {
         // Mock implementation
         await new Promise(resolve => setTimeout(resolve, 200));

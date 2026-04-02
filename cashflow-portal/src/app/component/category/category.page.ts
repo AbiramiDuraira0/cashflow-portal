@@ -104,7 +104,8 @@ export class CategoryPage implements OnInit {
     
     return allCategories.filter(cat => 
       cat.category_name.toLowerCase().includes(searchQuery) ||
-      cat.sub_category?.toLowerCase().includes(searchQuery)
+      cat.sub_category?.toLowerCase().includes(searchQuery) ||
+      cat.notes?.toLowerCase().includes(searchQuery)
     );
   });
 

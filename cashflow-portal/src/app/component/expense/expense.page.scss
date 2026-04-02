@@ -460,8 +460,8 @@
       justify-content: center;
       gap: 2px;
       padding: 5px 6px;
-      background: #f9fafb;
-      border: 1px solid #e5e7eb;
+      background: transparent;
+      border: none;
       border-radius: 6px;
       cursor: pointer;
       transition: all 0.2s ease;
@@ -487,10 +487,8 @@
       }
 
       &:hover:not(:disabled) {
-        background: white;
-        border-color: #d1d5db;
+        background: #f3f4f6;
         transform: translateY(-2px);
-        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
 
         .btn-label {
           color: #374151;
@@ -499,11 +497,11 @@
 
       &.active {
         background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-        border-color: #dc2626;
+        border-radius: 8px;
         box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
 
         .btn-icon {
-          transform: scale(1.1);
+          transform: scale(1.15);
         }
 
         .btn-label {
@@ -513,9 +511,8 @@
 
       &:disabled,
       &.disabled {
-        opacity: 0.5;
+        opacity: 0.4;
         cursor: not-allowed;
-        background: #f3f4f6;
 
         .btn-label {
           color: #9ca3af;
@@ -523,7 +520,7 @@
 
         &:hover {
           transform: none;
-          box-shadow: none;
+          background: transparent;
         }
       }
 
@@ -960,6 +957,24 @@
       border: 1px solid #e5e7eb;
     }
 
+    .category-percentage {
+      font-size: 14px;
+      font-weight: 600;
+      color: #2563eb;
+      padding: 4px 10px;
+      background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+      border-radius: 12px;
+      border: 1px solid #93c5fd;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      
+      &::before {
+        content: '📊';
+        font-size: 12px;
+      }
+    }
+
     .category-total {
       margin-left: auto;
       font-size: 16px;
@@ -986,6 +1001,15 @@
       .category-count {
         font-size: 11px;
         padding: 2px 6px;
+      }
+
+      .category-percentage {
+        font-size: 12px;
+        padding: 3px 8px;
+        
+        &::before {
+          font-size: 10px;
+        }
       }
 
       .category-total {
