@@ -2,10 +2,10 @@ import { Injectable, signal, inject } from '@angular/core';
 import { SupabaseService } from './supabase.service';
 
 export enum LoanName {
-  BOB_EDUCATION_LOAN = 'BOB Education Loan',
-  SBI_GOLD_LOAN = 'SBI Gold Loan',
-  HDFC_PERSONAL_LOAN = 'HDFC Personal Loan',
-  HDFC_PERSONAL_LOAN_TOP_UP = 'HDFC Personal Loan - Top Up',
+  BOB_EDUCATION_LOAN = 'Education Loan',
+  SBI_GOLD_LOAN = 'Gold Loan',
+  HDFC_PERSONAL_LOAN = 'Personal Loan',
+  HDFC_PERSONAL_LOAN_TOP_UP = 'Personal Loan - Top Up',
   HOME_LOAN = 'Home Loan',
   CAR_LOAN = 'Car Loan',
   CREDIT_CARD = 'Credit Card',
@@ -80,6 +80,40 @@ export type DebtSummary = {
   totalOutstanding: number;
   totalInterestPaid: number;
   totalReceivableOutstanding: number;
+};
+
+export type DbRepaymentSchedule = {
+  schedule_id: number;
+  debt_id: number;
+  installment_number: number;
+  due_date: string;
+  installment_amount: number;
+  principal_amount: number;
+  interest_amount: number;
+  outstanding_principal: number;
+  is_paid: boolean;
+  paid_date: string | null;
+  paid_amount: number | null;
+  is_delete: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+export type RepaymentSchedule = {
+  id: number;
+  debtId: number;
+  installmentNumber: number;
+  dueDate: string;
+  installmentAmount: number;
+  principalAmount: number;
+  interestAmount: number;
+  outstandingPrincipal: number;
+  isPaid: boolean;
+  paidDate?: string;
+  paidAmount?: number;
+  isDeleted: boolean;
+  createdAt: string;
+  updatedAt: string;
 };
 
 @Injectable({ providedIn: 'root' })
@@ -250,4 +284,110 @@ export class DebtService {
   }
 
   async reloadData(): Promise<void> { await this.loadDebtData(); }
+
+  // Repayment Schedule Methods - Using CSV Data
+  async getRepaymentSchedule(debtId: number): Promise<RepaymentSchedule[]> {
+    try {
+      // Load CSV file from public folder
+      console.log('Fetching repayment schedule CSV...');
+      const response = await fetch('/repayment_schedule.csv');
+      
+      if (!response.ok) {
+        console.error('Failed to fetch CSV:', response.status, response.statusText);
+        throw new Error(`Failed to load CSV: ${response.status}`);
+      }
+      
+      const csvText = await response.text();
+      console.log('CSV loaded, length:', csvText.length);
+      
+      // Parse CSV
+      const lines = csvText.split('\n').filter(line => line.trim());
+      console.log('Total lines in CSV:', lines.length);
+      const schedules: RepaymentSchedule[] = [];
+      
+      // Skip header row
+      for (let i = 1; i < lines.length; i++) {
+        const values = lines[i].split(',');
+        if (values.length < 6) continue;
+        
+        const installmentNumber = parseInt(values[0]);
+        const dueDate = this.parseDateFromCSV(values[1]);
+        const installmentAmount = parseFloat(values[2]);
+        const principalAmount = parseFloat(values[3]);
+        const interestAmount = parseFloat(values[4]);
+        const outstandingPrincipal = parseFloat(values[5]);
+        
+        // Determine if paid based on current date
+        const today = new Date();
+        const dueDateObj = new Date(dueDate);
+        const isPaid = dueDateObj < today;
+        
+        schedules.push({
+          id: i,
+          debtId: debtId,
+          installmentNumber: installmentNumber,
+          dueDate: dueDate,
+          installmentAmount: installmentAmount,
+          principalAmount: principalAmount,
+          interestAmount: interestAmount,
+          outstandingPrincipal: outstandingPrincipal,
+          isPaid: isPaid,
+          paidDate: isPaid ? dueDate : undefined,
+          paidAmount: isPaid ? installmentAmount : undefined,
+          isDeleted: false,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        });
+      }
+      
+      return schedules;
+    } catch (err: any) {
+      console.error('Failed to load repayment schedule from CSV:', err);
+      return [];
+    }
+  }
+
+  private parseDateFromCSV(dateStr: string): string {
+    // Format: "07/07/2024" to "2024-07-07"
+    const parts = dateStr.trim().split('/');
+    if (parts.length === 3) {
+      const day = parts[0].padStart(2, '0');
+      const month = parts[1].padStart(2, '0');
+      const year = parts[2];
+      return `${year}-${month}-${day}`;
+    }
+    return dateStr;
+  }
+
+  getScheduleSummary(schedules: RepaymentSchedule[]): {
+    totalPaid: number;
+    totalPending: number;
+    principalPaid: number;
+    interestPaid: number;
+    paidCount: number;
+    pendingCount: number;
+    nextDueDate?: string;
+    nextDueAmount?: number;
+  } {
+    const paidSchedules = schedules.filter(s => s.isPaid);
+    const pendingSchedules = schedules.filter(s => !s.isPaid);
+    
+    const totalPaid = paidSchedules.reduce((sum, s) => sum + s.installmentAmount, 0);
+    const principalPaid = paidSchedules.reduce((sum, s) => sum + s.principalAmount, 0);
+    const interestPaid = paidSchedules.reduce((sum, s) => sum + s.interestAmount, 0);
+    const totalPending = pendingSchedules.reduce((sum, s) => sum + s.installmentAmount, 0);
+    
+    const nextInstallment = pendingSchedules.length > 0 ? pendingSchedules[0] : undefined;
+    
+    return {
+      totalPaid,
+      totalPending,
+      principalPaid,
+      interestPaid,
+      paidCount: paidSchedules.length,
+      pendingCount: pendingSchedules.length,
+      nextDueDate: nextInstallment?.dueDate,
+      nextDueAmount: nextInstallment?.installmentAmount
+    };
+  }
 }

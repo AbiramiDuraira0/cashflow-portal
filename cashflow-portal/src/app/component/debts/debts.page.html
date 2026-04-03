@@ -5,7 +5,7 @@
     <div class="header-content">
       <div class="title-section">
         <h1>&#127974; Debt Management</h1>
-        <p class="subtitle">Track loans, debts, and receivables</p>
+        <p class="subtitle">Track loans and debts</p>
       </div>
       <div class="header-actions">
         <button class="btn-secondary" (click)="openEMICalculator()">
@@ -30,17 +30,7 @@
       </div>
     </div>
 
-    <!-- Receivables Card -->
-    <div class="summary-card receivables-card">
-      <div class="card-icon">&#128176;</div>
-      <div class="card-content">
-        <div class="card-label">Total Receivables</div>
-        <div class="card-value">{{ formatCurrency(summary().totalReceivables) }}</div>
-        <div class="card-meta">Money owed to you</div>
-      </div>
-    </div>
-
-    <!-- Interest Paid Card (NEW) -->
+    <!-- Interest Paid Card -->
     <div class="summary-card interest-card">
       <div class="card-icon">&#128200;</div>
       <div class="card-content">
@@ -50,24 +40,12 @@
       </div>
     </div>
 
-    <!-- Net Position Card -->
-    <div class="summary-card net-card">
-      <div class="card-icon">&#128202;</div>
-      <div class="card-content">
-        <div class="card-label">Net Position</div>
-        <div class="card-value" [class.negative]="summary().netPosition < 0">
-          {{ formatCurrency(Math.abs(summary().netPosition)) }}
-        </div>
-        <div class="card-meta">{{ summary().netPosition >= 0 ? '&#9989; Net Positive' : '&#9888; Net Negative' }}</div>
-      </div>
-    </div>
-
     <!-- Total Count Card -->
-    <div class="summary-card count-card">
+    <div class="summary-card count-card clickable" (click)="openConsolidatedModal()" title="Click to view consolidated summary">
       <div class="card-icon">&#128203;</div>
       <div class="card-content">
         <div class="card-label">Total Entries</div>
-        <div class="card-value">{{ debts().length }}</div>
+        <div class="card-value">{{ activeCount() }}</div>
         <div class="card-meta">{{ summary().openCount }} open, {{ summary().closedCount }} closed</div>
       </div>
     </div>
@@ -79,19 +57,7 @@
       class="tab-btn" 
       [class.active]="selectedTab() === 'all'"
       (click)="selectedTab.set('all')">
-      &#128203; All ({{ debts().length }})
-    </button>
-    <button 
-      class="tab-btn" 
-      [class.active]="selectedTab() === 'debts'"
-      (click)="selectedTab.set('debts')">
-      &#128184; Debts ({{ summary().debtCount }})
-    </button>
-    <button 
-      class="tab-btn" 
-      [class.active]="selectedTab() === 'receivables'"
-      (click)="selectedTab.set('receivables')">
-      &#128176; Receivables ({{ summary().receivableCount }})
+      &#128203; All ({{ activeCount() }})
     </button>
     <button 
       class="tab-btn" 
@@ -139,36 +105,41 @@
           
           <!-- Card Header -->
           <div class="card-header">
-            <div class="header-left">
-              <span class="type-icon">{{ getTypeIcon(debt.type) }}</span>
-              <div class="header-text">
+            <div class="header-content">
+              <div class="header-row">
+                <span class="type-icon">{{ getTypeIcon(debt.type) }}</span>
                 <h3 class="debt-name">{{ debt.loanName }}</h3>
+              </div>
+              <div class="header-row">
                 <span class="debt-type">{{ debt.bankOrPerson }}</span>
+                <span class="status-badge" [class]="'status-' + debt.status">
+                  {{ getStatusIcon(debt.status) }} {{ debt.status }}
+                </span>
               </div>
             </div>
-            <div class="header-right">
-              <span class="status-badge" [class]="'status-' + debt.status">
-                {{ getStatusIcon(debt.status) }} {{ debt.status }}
-              </span>
-              
-              <!-- Card Actions (moved here) -->
-              <div class="card-actions">
-                @if (debt.isDeleted) {
-                  <button class="action-btn reactivate-btn" (click)="reactivateDebt(debt)" title="Reactivate">
-                    ♻️
-                  </button>
-                } @else {
-                  <button class="action-btn view-btn" (click)="openDetailsModal(debt)" title="View Details">
-                    👁️
-                  </button>
-                  <button class="action-btn edit-btn" (click)="openEditModal(debt)" title="Edit Loan">
-                    ✏️
-                  </button>
-                  <button class="action-btn delete-btn" (click)="openDeleteModal(debt)" title="Delete Loan">
-                    🗑️
+            
+            <!-- Card Actions -->
+            <div class="card-actions">
+              @if (debt.isDeleted) {
+                <button class="action-btn reactivate-btn" (click)="reactivateDebt(debt)" title="Reactivate">
+                  ♻️
+                </button>
+              } @else {
+                @if (debt.loanName === 'Personal Loan - Top Up') {
+                  <button class="action-btn schedule-btn" (click)="openRepaymentScheduleModal(debt)" title="Repayment Schedule">
+                    📅
                   </button>
                 }
-              </div>
+                <button class="action-btn view-btn" (click)="openDetailsModal(debt)" title="View Details">
+                  👁️
+                </button>
+                <button class="action-btn edit-btn" (click)="openEditModal(debt)" title="Edit Loan">
+                  ✏️
+                </button>
+                <button class="action-btn delete-btn" (click)="openDeleteModal(debt)" title="Delete Loan">
+                  🗑️
+                </button>
+              }
             </div>
           </div>
 
@@ -194,37 +165,15 @@
               </div>
             </div>
 
-            <!-- Outstanding & EMI (if open) -->
+            <!-- Outstanding (if open) -->
             @if (debt.status === 'open') {
               <div class="amount-row outstanding-row">
                 <div class="amount-item outstanding">
                   <span class="amount-label">Outstanding</span>
                   <span class="amount-value">{{ formatCurrency(debt.outstandingAmount) }}</span>
                 </div>
-                @if (debt.emiAmount) {
-                  <div class="amount-item emi">
-                    <span class="amount-label">EMI Amount</span>
-                    <span class="amount-value">{{ formatCurrency(debt.emiAmount) }}</span>
-                  </div>
-                }
               </div>
             }
-
-            <!-- Loan Details -->
-            <div class="loan-details">
-              @if (debt.emiAmount && debt.status === 'open') {
-                <div class="detail-tag emi-tag">
-                  <span class="tag-icon">💳</span>
-                  <span class="tag-text">EMI: {{ formatCurrency(debt.emiAmount) }}</span>
-                </div>
-              }
-              @if (debt.interestRate) {
-                <div class="detail-tag rate-tag">
-                  <span class="tag-icon">📊</span>
-                  <span class="tag-text">{{ debt.interestRate }}% p.a.</span>
-                </div>
-              }
-            </div>
 
             <!-- Date Range -->
             @if (debt.emiStartDate || debt.emiEndDate) {
@@ -241,7 +190,6 @@
 
             @if (debt.notes) {
               <div class="notes">
-                <span class="notes-icon">📝</span>
                 <span class="notes-text">{{ debt.notes }}</span>
               </div>
             }
@@ -604,6 +552,150 @@
     </div>
   }
 
+  <!-- Repayment Schedule Modal -->
+  @if (showRepaymentScheduleModal() && selectedDebt()) {
+    <div class="modal-overlay" (click)="closeModals()">
+      <div class="modal-content schedule-modal" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2>📅 Repayment Schedule - {{ selectedDebt()!.loanName }}</h2>
+          <button class="close-btn" (click)="closeModals()">✕</button>
+        </div>
+
+        <div class="modal-body">
+          @if (loadingSchedule()) {
+            <div class="loading-schedule">Loading schedule...</div>
+          } @else if (repaymentSchedule().length > 0) {
+            <!-- Schedule Summary -->
+            @if (getScheduleSummary(); as summary) {
+              <div class="schedule-summary">
+                <div class="summary-card paid">
+                  <div class="summary-header">
+                    <span class="summary-label">Paid Installments</span>
+                    <span class="summary-count">{{ summary.paidCount }} / 60</span>
+                  </div>
+                  <div class="summary-main-amount">{{ formatCurrency(summary.totalPaid) }}</div>
+                  <div class="summary-breakdown">
+                    <div class="breakdown-row">
+                      <span class="breakdown-label">Interest:</span>
+                      <span class="breakdown-value">{{ formatCurrency(summary.interestPaid) }}</span>
+                    </div>
+                    <div class="breakdown-row">
+                      <span class="breakdown-label">Principal:</span>
+                      <span class="breakdown-value">{{ formatCurrency(summary.principalPaid) }}</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="summary-card pending">
+                  <div class="summary-header">
+                    <span class="summary-label">Pending Installments</span>
+                    <span class="summary-count">{{ summary.pendingCount }}</span>
+                  </div>
+                  <div class="summary-main-amount">{{ formatCurrency(summary.totalPending) }}</div>
+                  <div class="summary-breakdown">
+                    <div class="breakdown-row">
+                      <span class="breakdown-label">Interest:</span>
+                      <span class="breakdown-value">{{ formatCurrency(summary.totalPending - (850000 - summary.principalPaid)) }}</span>
+                    </div>
+                    <div class="breakdown-row">
+                      <span class="breakdown-label">Principal:</span>
+                      <span class="breakdown-value">{{ formatCurrency(850000 - summary.principalPaid) }}</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="summary-card principal">
+                  <div class="summary-header">
+                    <span class="summary-label">Total Principal</span>
+                    <span class="summary-count">5 Years</span>
+                  </div>
+                  <div class="summary-main-amount">₹8,50,000</div>
+                  <div class="summary-breakdown">
+                    <div class="breakdown-row">
+                      <span class="breakdown-label">Paid:</span>
+                      <span class="breakdown-value">{{ formatCurrency(summary.principalPaid) }}</span>
+                    </div>
+                    <div class="breakdown-row">
+                      <span class="breakdown-label">Remaining:</span>
+                      <span class="breakdown-value">{{ formatCurrency(850000 - summary.principalPaid) }}</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="summary-card interest">
+                  <div class="summary-header">
+                    <span class="summary-label">Total Interest</span>
+                    <span class="summary-count">5 Years</span>
+                  </div>
+                  <div class="summary-main-amount">{{ formatCurrency(summary.totalPaid + summary.totalPending - 850000) }}</div>
+                  <div class="summary-breakdown">
+                    <div class="breakdown-row">
+                      <span class="breakdown-label">Paid:</span>
+                      <span class="breakdown-value">{{ formatCurrency(summary.interestPaid) }}</span>
+                    </div>
+                    <div class="breakdown-row">
+                      <span class="breakdown-label">Remaining:</span>
+                      <span class="breakdown-value">{{ formatCurrency(summary.totalPending - (850000 - summary.principalPaid)) }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              @if (summary.nextDueDate) {
+                <div class="next-payment">
+                  <span class="next-label">Next Payment:</span>
+                  <span class="next-date">{{ formatDateShort(summary.nextDueDate) }}</span>
+                  <span class="next-amount">{{ formatCurrency(summary.nextDueAmount || 0) }}</span>
+                </div>
+              }
+            }
+
+            <!-- Schedule Table -->
+            <div class="schedule-table-container">
+              <table class="schedule-table">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Due Date</th>
+                    <th>EMI</th>
+                    <th>Principal</th>
+                    <th>Interest</th>
+                    <th>Outstanding</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (schedule of repaymentSchedule(); track schedule.id) {
+                    <tr [class.paid-row]="schedule.isPaid" [class.pending-row]="!schedule.isPaid">
+                      <td>{{ schedule.installmentNumber }}</td>
+                      <td>{{ formatDateShort(schedule.dueDate) }}</td>
+                      <td>{{ formatCurrency(schedule.installmentAmount) }}</td>
+                      <td>{{ formatCurrency(schedule.principalAmount) }}</td>
+                      <td>{{ formatCurrency(schedule.interestAmount) }}</td>
+                      <td>{{ formatCurrency(schedule.outstandingPrincipal) }}</td>
+                      <td>
+                        @if (schedule.isPaid) {
+                          <span class="status-paid">✓ Paid</span>
+                        } @else {
+                          <span class="status-pending">⏳ Pending</span>
+                        }
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          } @else {
+            <div class="no-schedule">
+              <p>No repayment schedule available for this loan.</p>
+            </div>
+          }
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn-secondary" (click)="closeModals()">Close</button>
+        </div>
+      </div>
+    </div>
+  }
+
   <!-- Delete Confirmation Modal -->
   @if (showDeleteModal() && selectedDebt()) {
     <div class="modal-overlay" (click)="closeModals()">
@@ -628,6 +720,113 @@
         <div class="modal-footer">
           <button class="btn-secondary" (click)="closeModals()">Cancel</button>
           <button class="btn-danger" (click)="deleteDebt()">Delete {{ selectedDebt()!.type === 'debt' ? 'Debt' : 'Receivable' }}</button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Consolidated Summary Modal -->
+  @if (showConsolidatedModal()) {
+    <div class="modal-overlay" (click)="closeModals()">
+      <div class="modal-content consolidated-modal" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2>📊 Consolidated Debt Summary</h2>
+          <button class="close-btn" (click)="closeModals()">✕</button>
+        </div>
+
+        <div class="modal-body">
+          <!-- Consolidated Table -->
+          <div class="consolidated-table-container">
+            <table class="consolidated-table">
+              <thead>
+                <tr>
+                  <th class="sortable" (click)="sortTable('loanName')">
+                    Loan Name
+                    @if (sortColumn() === 'loanName') {
+                      <span class="sort-icon">{{ sortDirection() === 'asc' ? '▲' : '▼' }}</span>
+                    }
+                  </th>
+                  <th class="sortable" (click)="sortTable('bankOrPerson')">
+                    Bank/Person
+                    @if (sortColumn() === 'bankOrPerson') {
+                      <span class="sort-icon">{{ sortDirection() === 'asc' ? '▲' : '▼' }}</span>
+                    }
+                  </th>
+                  <th class="sortable" (click)="sortTable('status')">
+                    Status
+                    @if (sortColumn() === 'status') {
+                      <span class="sort-icon">{{ sortDirection() === 'asc' ? '▲' : '▼' }}</span>
+                    }
+                  </th>
+                  <th class="sortable" (click)="sortTable('principalAmount')">
+                    Principal
+                    @if (sortColumn() === 'principalAmount') {
+                      <span class="sort-icon">{{ sortDirection() === 'asc' ? '▲' : '▼' }}</span>
+                    }
+                  </th>
+                  <th class="sortable" (click)="sortTable('amountPaid')">
+                    Paid
+                    @if (sortColumn() === 'amountPaid') {
+                      <span class="sort-icon">{{ sortDirection() === 'asc' ? '▲' : '▼' }}</span>
+                    }
+                  </th>
+                  <th class="sortable" (click)="sortTable('interestPaid')">
+                    Interest
+                    @if (sortColumn() === 'interestPaid') {
+                      <span class="sort-icon">{{ sortDirection() === 'asc' ? '▲' : '▼' }}</span>
+                    }
+                  </th>
+                  <th class="sortable" (click)="sortTable('outstandingAmount')">
+                    Outstanding
+                    @if (sortColumn() === 'outstandingAmount') {
+                      <span class="sort-icon">{{ sortDirection() === 'asc' ? '▲' : '▼' }}</span>
+                    }
+                  </th>
+                  <th class="sortable" (click)="sortTable('percentPaid')">
+                    % Paid
+                    @if (sortColumn() === 'percentPaid') {
+                      <span class="sort-icon">{{ sortDirection() === 'asc' ? '▲' : '▼' }}</span>
+                    }
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (debt of activeDebts(); track debt.id) {
+                  <tr [class.open-row]="debt.status === 'open'" [class.closed-row]="debt.status === 'closed'">
+                    <td class="loan-name-cell">
+                      <span class="type-icon">{{ getTypeIcon(debt.type) }}</span>
+                      {{ debt.loanName }}
+                    </td>
+                    <td>{{ debt.bankOrPerson }}</td>
+                    <td>
+                      <span class="status-badge-sm" [class]="'status-' + debt.status">
+                        {{ getStatusIcon(debt.status) }} {{ debt.status }}
+                      </span>
+                    </td>
+                    <td class="amount-cell">{{ formatCurrency(debt.principalAmount) }}</td>
+                    <td class="amount-cell paid">{{ formatCurrency(debt.amountPaid) }}</td>
+                    <td class="amount-cell interest">{{ formatCurrency(getInterestPaid(debt)) }}</td>
+                    <td class="amount-cell outstanding">{{ formatCurrency(debt.outstandingAmount) }}</td>
+                    <td class="percent-cell">{{ getDebtProgress(debt).toFixed(1) }}%</td>
+                  </tr>
+                }
+              </tbody>
+              <tfoot>
+                <tr class="totals-row">
+                  <td colspan="3"><strong>TOTALS</strong></td>
+                  <td class="amount-cell"><strong>{{ formatCurrency(totalPrincipal()) }}</strong></td>
+                  <td class="amount-cell paid"><strong>{{ formatCurrency(totalPaid()) }}</strong></td>
+                  <td class="amount-cell interest"><strong>{{ formatCurrency(summary().totalInterestPaid) }}</strong></td>
+                  <td class="amount-cell outstanding"><strong>{{ formatCurrency(summary().totalDebts) }}</strong></td>
+                  <td class="percent-cell"><strong>{{ totalPercentPaid().toFixed(1) }}%</strong></td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn-secondary" (click)="closeModals()">Close</button>
         </div>
       </div>
     </div>

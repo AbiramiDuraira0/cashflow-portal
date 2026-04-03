@@ -7,7 +7,8 @@ import {
   DebtFormData,
   DebtType,
   DebtStatus,
-  LoanName
+  LoanName,
+  RepaymentSchedule
 } from '../../services/debt.service';
 
 @Component({
@@ -25,15 +26,23 @@ export class DebtsPage implements OnInit {
   protected readonly Math = Math;
 
   // Signals for UI state
-  protected selectedTab = signal<'all' | 'open' | 'closed' | 'debts' | 'receivables' | 'deactivated'>('all');
+  protected selectedTab = signal<'all' | 'open' | 'closed' | 'deactivated'>('all');
   protected showAddModal = signal<boolean>(false);
   protected showEditModal = signal<boolean>(false);
   protected showDeleteModal = signal<boolean>(false);
   protected showDetailsModal = signal<boolean>(false);
+  protected showRepaymentScheduleModal = signal<boolean>(false);
+  protected showConsolidatedModal = signal<boolean>(false);
   protected showEMICalculator = signal<boolean>(false);
   protected selectedDebt = signal<DebtEntry | null>(null);
+  protected repaymentSchedule = signal<RepaymentSchedule[]>([]);
+  protected loadingSchedule = signal<boolean>(false);
   protected toastMessage = signal<string>('');
   protected toastVisible = signal<boolean>(false);
+
+  // Sorting state for consolidated table
+  protected sortColumn = signal<string>('');
+  protected sortDirection = signal<'asc' | 'desc'>('asc');
 
   // Form data signals
   protected formType = signal<DebtType>('debt');
@@ -64,6 +73,71 @@ export class DebtsPage implements OnInit {
 
   protected activeCount = computed(() => this.debts().filter(d => !d.isDeleted).length);
   protected deactivatedCount = computed(() => this.debts().filter(d => d.isDeleted).length);
+  
+  // Active debts with sorting
+  protected activeDebts = computed(() => {
+    const debts = this.debts().filter(d => !d.isDeleted);
+    const column = this.sortColumn();
+    const direction = this.sortDirection();
+    
+    if (!column) return debts;
+    
+    return [...debts].sort((a, b) => {
+      let aVal: any, bVal: any;
+      
+      switch (column) {
+        case 'loanName':
+          aVal = a.loanName.toLowerCase();
+          bVal = b.loanName.toLowerCase();
+          break;
+        case 'bankOrPerson':
+          aVal = a.bankOrPerson.toLowerCase();
+          bVal = b.bankOrPerson.toLowerCase();
+          break;
+        case 'status':
+          aVal = a.status;
+          bVal = b.status;
+          break;
+        case 'principalAmount':
+          aVal = a.principalAmount;
+          bVal = b.principalAmount;
+          break;
+        case 'amountPaid':
+          aVal = a.amountPaid;
+          bVal = b.amountPaid;
+          break;
+        case 'interestPaid':
+          aVal = a.amountPaid - a.principalAmount;
+          bVal = b.amountPaid - b.principalAmount;
+          break;
+        case 'outstandingAmount':
+          aVal = a.outstandingAmount;
+          bVal = b.outstandingAmount;
+          break;
+        case 'percentPaid':
+          aVal = a.principalAmount > 0 ? (a.amountPaid / a.principalAmount) * 100 : 0;
+          bVal = b.principalAmount > 0 ? (b.amountPaid / b.principalAmount) * 100 : 0;
+          break;
+        default:
+          return 0;
+      }
+      
+      if (aVal < bVal) return direction === 'asc' ? -1 : 1;
+      if (aVal > bVal) return direction === 'asc' ? 1 : -1;
+      return 0;
+    });
+  });
+  
+  // Computed values for consolidated summary
+  protected totalPrincipal = computed(() => 
+    this.activeDebts().reduce((sum, d) => sum + d.principalAmount, 0)
+  );
+  protected totalPaid = computed(() => 
+    this.activeDebts().reduce((sum, d) => sum + d.amountPaid, 0)
+  );
+  protected totalPercentPaid = computed(() => 
+    this.totalPrincipal() > 0 ? (this.totalPaid() / this.totalPrincipal()) * 100 : 0
+  );
 
   protected filteredDebts = computed(() => {
     const tab = this.selectedTab();
@@ -76,13 +150,9 @@ export class DebtsPage implements OnInit {
         return allDebts.filter(d => d.status === 'open' && !d.isDeleted);
       case 'closed':
         return allDebts.filter(d => d.status === 'closed' && !d.isDeleted);
-      case 'debts':
-        return allDebts.filter(d => d.type === 'debt' && !d.isDeleted);
-      case 'receivables':
-        return allDebts.filter(d => d.type === 'receivable' && !d.isDeleted);
       case 'all':
       default:
-        return allDebts;
+        return allDebts.filter(d => !d.isDeleted);
     }
   });
 
@@ -91,6 +161,18 @@ export class DebtsPage implements OnInit {
 
   ngOnInit(): void {
     console.log('🏦 Debts Page Initialized');
+  }
+
+  // Sort table
+  protected sortTable(column: string): void {
+    if (this.sortColumn() === column) {
+      // Toggle direction if same column
+      this.sortDirection.set(this.sortDirection() === 'asc' ? 'desc' : 'asc');
+    } else {
+      // Set new column and default to ascending
+      this.sortColumn.set(column);
+      this.sortDirection.set('asc');
+    }
   }
 
   // Open add modal
@@ -129,6 +211,35 @@ export class DebtsPage implements OnInit {
     this.showDetailsModal.set(true);
   }
 
+  // Open repayment schedule modal
+  protected async openRepaymentScheduleModal(debt: DebtEntry): Promise<void> {
+    this.selectedDebt.set(debt);
+    this.showRepaymentScheduleModal.set(true);
+    
+    // Load repayment schedule if it's the Personal Loan - Top Up
+    if (debt.loanName === 'Personal Loan - Top Up') {
+      this.loadingSchedule.set(true);
+      try {
+        console.log('Loading repayment schedule for:', debt.loanName);
+        const schedule = await this.debtService.getRepaymentSchedule(debt.id);
+        console.log('Loaded schedule entries:', schedule.length);
+        this.repaymentSchedule.set(schedule);
+      } catch (err) {
+        console.error('Failed to load repayment schedule:', err);
+      } finally {
+        this.loadingSchedule.set(false);
+      }
+    } else {
+      console.log('No schedule for loan type:', debt.loanName);
+      this.repaymentSchedule.set([]);
+    }
+  }
+
+  // Open consolidated view modal
+  protected openConsolidatedModal(): void {
+    this.showConsolidatedModal.set(true);
+  }
+
   // Open EMI calculator
   protected openEMICalculator(): void {
     this.showEMICalculator.set(true);
@@ -140,8 +251,11 @@ export class DebtsPage implements OnInit {
     this.showEditModal.set(false);
     this.showDeleteModal.set(false);
     this.showDetailsModal.set(false);
+    this.showRepaymentScheduleModal.set(false);
+    this.showConsolidatedModal.set(false);
     this.showEMICalculator.set(false);
     this.selectedDebt.set(null);
+    this.repaymentSchedule.set([]);
   }
 
   // Reset form
@@ -357,6 +471,19 @@ export class DebtsPage implements OnInit {
       
       this.formEmiAmount.set(Math.round(emi));
     }
+  }
+
+  // Get repayment schedule summary
+  protected getScheduleSummary() {
+    const schedules = this.repaymentSchedule();
+    if (schedules.length === 0) return null;
+    return this.debtService.getScheduleSummary(schedules);
+  }
+
+  // Format date for display
+  protected formatDateShort(dateStr: string): string {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
   }
 }
 
