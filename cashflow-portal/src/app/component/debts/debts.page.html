@@ -8,11 +8,13 @@
         <p class="subtitle">Track loans and debts</p>
       </div>
       <div class="header-actions">
-        <button class="btn-secondary" (click)="openEMICalculator()">
-          &#129526; EMI Calculator
+        <button class="btn-secondary emi-calc-btn" (click)="openEMICalculator()">
+          <span class="btn-icon">🧮</span>
+          <span class="btn-text">EMI Calculator</span>
         </button>
-        <button class="btn-primary" (click)="openAddModal()">
-          Add Debt/Loan
+        <button class="btn-primary add-debt-btn" (click)="openAddModal()">
+          <span class="btn-icon">➕</span>
+          <span class="btn-text">Add Debt/Loan</span>
         </button>
       </div>
     </div>
@@ -357,7 +359,7 @@
             <div class="form-actions">
               <button type="button" class="btn-secondary" (click)="closeModals()">Cancel</button>
               <button type="submit" class="btn-primary">
-                {{ showAddModal() ? '➕ Add Entry' : '✅ Update Entry' }}
+                {{ showAddModal() ? 'Add Entry' : '✅ Update Entry' }}
               </button>
             </div>
           </form>
