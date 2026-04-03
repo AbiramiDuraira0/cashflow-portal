@@ -78,6 +78,7 @@ export type DebtSummary = {
   openCount: number;
   closedCount: number;
   totalOutstanding: number;
+  totalInterestPaid: number;
   totalReceivableOutstanding: number;
 };
 
@@ -123,7 +124,8 @@ export class DebtService {
     this.error.set(null);
     try {
       if (this.USE_DB) {
-        const { data, error } = await this.supabase.db.from('debts').select('*').eq('is_delete', false).order('status', { ascending: true }).order('created_at', { ascending: false });
+        // Load ALL records including deleted ones (soft delete)
+        const { data, error } = await this.supabase.db.from('debts').select('*').order('is_delete', { ascending: true }).order('status', { ascending: true }).order('created_at', { ascending: false });
         if (error) throw error;
         const entries: DebtEntry[] = (data || []).map(this.transformDbToApp.bind(this));
         this.debtData.set(entries);
@@ -176,7 +178,31 @@ export class DebtService {
     try {
       const { error } = await this.supabase.db.from('debts').update({ is_delete: true }).eq('debt_id', id);
       if (error) throw error;
-      this.debtData.set(this.debtData().filter(e => e.id !== id));
+      
+      // Mark as deleted in local state instead of removing
+      this.debtData.set(
+        this.debtData().map(debt => 
+          debt.id === id ? { ...debt, isDeleted: true } : debt
+        )
+      );
+      return true;
+    } finally {
+      this.loading.set(false);
+    }
+  }
+
+  async reactivateDebt(id: number): Promise<boolean> {
+    this.loading.set(true);
+    try {
+      const { error } = await this.supabase.db.from('debts').update({ is_delete: false }).eq('debt_id', id);
+      if (error) throw error;
+      
+      // Mark as active in local state
+      this.debtData.set(
+        this.debtData().map(debt => 
+          debt.id === id ? { ...debt, isDeleted: false } : debt
+        )
+      );
       return true;
     } finally {
       this.loading.set(false);
@@ -184,10 +210,12 @@ export class DebtService {
   }
 
   getAllDebts(): DebtEntry[] { return this.debtData(); }
-  getDebtsByType(type: DebtType): DebtEntry[] { return this.debtData().filter(d => d.type === type && !d.isDeleted); }
-  getDebtsByStatus(status: DebtStatus): DebtEntry[] { return this.debtData().filter(d => d.status === status && !d.isDeleted); }
+  getDebtsByType(type: DebtType): DebtEntry[] { return this.debtData().filter(d => d.type === type); }
+  getDebtsByStatus(status: DebtStatus): DebtEntry[] { return this.debtData().filter(d => d.status === status); }
   getOpenDebts(): DebtEntry[] { return this.getDebtsByStatus('open'); }
   getClosedDebts(): DebtEntry[] { return this.getDebtsByStatus('closed'); }
+  getActiveDebts(): DebtEntry[] { return this.debtData().filter(d => !d.isDeleted); }
+  getDeletedDebts(): DebtEntry[] { return this.debtData().filter(d => d.isDeleted); }
   
   getSummary(): DebtSummary {
     const debts = this.debtData().filter(d => !d.isDeleted);
@@ -199,6 +227,14 @@ export class DebtService {
     const totalDebtsAmount = debtTypeDebts.reduce((sum, d) => sum + d.outstandingAmount, 0);
     const totalReceivablesAmount = receivables.reduce((sum, d) => sum + d.outstandingAmount, 0);
     
+    // Calculate total interest paid
+    // Interest Paid = Amount Paid - (Principal - Outstanding)
+    const totalInterestPaid = debts.reduce((sum, d) => {
+      const principalRepaid = d.principalAmount - d.outstandingAmount;
+      const interestPaid = d.amountPaid - principalRepaid;
+      return sum + (interestPaid > 0 ? interestPaid : 0);
+    }, 0);
+    
     return {
       totalDebts: totalDebtsAmount,
       totalReceivables: totalReceivablesAmount,
@@ -208,7 +244,8 @@ export class DebtService {
       openCount: openDebts.length,
       closedCount: closedDebts.length,
       totalOutstanding: totalDebtsAmount,
-      totalReceivableOutstanding: totalReceivablesAmount
+      totalReceivableOutstanding: totalReceivablesAmount,
+      totalInterestPaid: totalInterestPaid
     };
   }
 

@@ -25,7 +25,7 @@ export class DebtsPage implements OnInit {
   protected readonly Math = Math;
 
   // Signals for UI state
-  protected selectedTab = signal<'all' | 'open' | 'closed' | 'debts' | 'receivables'>('all');
+  protected selectedTab = signal<'all' | 'open' | 'closed' | 'debts' | 'receivables' | 'deactivated'>('all');
   protected showAddModal = signal<boolean>(false);
   protected showEditModal = signal<boolean>(false);
   protected showDeleteModal = signal<boolean>(false);
@@ -62,19 +62,25 @@ export class DebtsPage implements OnInit {
   // Computed values
   protected summary = computed(() => this.debtService.getSummary());
 
+  protected activeCount = computed(() => this.debts().filter(d => !d.isDeleted).length);
+  protected deactivatedCount = computed(() => this.debts().filter(d => d.isDeleted).length);
+
   protected filteredDebts = computed(() => {
     const tab = this.selectedTab();
     const allDebts = this.debts();
     
     switch (tab) {
+      case 'deactivated':
+        return allDebts.filter(d => d.isDeleted);
       case 'open':
-        return allDebts.filter(d => d.status === 'open');
+        return allDebts.filter(d => d.status === 'open' && !d.isDeleted);
       case 'closed':
-        return allDebts.filter(d => d.status === 'closed');
+        return allDebts.filter(d => d.status === 'closed' && !d.isDeleted);
       case 'debts':
-        return allDebts.filter(d => d.type === 'debt');
+        return allDebts.filter(d => d.type === 'debt' && !d.isDeleted);
       case 'receivables':
-        return allDebts.filter(d => d.type === 'receivable');
+        return allDebts.filter(d => d.type === 'receivable' && !d.isDeleted);
+      case 'all':
       default:
         return allDebts;
     }
@@ -228,10 +234,25 @@ export class DebtsPage implements OnInit {
 
     try {
       await this.debtService.deleteDebt(debt.id);
-      this.showToast('✅ Debt deleted successfully!');
+      this.showToast('✅ Debt deactivated! Switch to "Deactivated" tab to view.');
       this.closeModals();
+      // Switch to "All" tab to show the deactivated item
+      this.selectedTab.set('all');
     } catch (err) {
-      this.showToast('❌ Failed to delete debt');
+      this.showToast('❌ Failed to deactivate debt');
+      console.error(err);
+    }
+  }
+
+  // Reactivate debt
+  protected async reactivateDebt(debt: DebtEntry): Promise<void> {
+    try {
+      await this.debtService.reactivateDebt(debt.id);
+      this.showToast('✅ Debt reactivated successfully!');
+      // Switch to "All" tab to show the reactivated item
+      this.selectedTab.set('all');
+    } catch (err) {
+      this.showToast('❌ Failed to reactivate debt');
       console.error(err);
     }
   }
@@ -250,7 +271,7 @@ export class DebtsPage implements OnInit {
 
   // Get type icon
   protected getTypeIcon(type: DebtType): string {
-    return type === 'debt' ? '�' : '�';
+    return type === 'debt' ? '💸' : '💰';
   }
 
   // Format currency
@@ -277,6 +298,13 @@ export class DebtsPage implements OnInit {
   protected getDebtProgress(debt: DebtEntry): number {
     if (debt.principalAmount === 0) return 0;
     return (debt.amountPaid / debt.principalAmount) * 100;
+  }
+
+  // Calculate interest paid for a specific debt
+  protected getInterestPaid(debt: DebtEntry): number {
+    const principalRepaid = debt.principalAmount - debt.outstandingAmount;
+    const interestPaid = debt.amountPaid - principalRepaid;
+    return interestPaid > 0 ? interestPaid : 0;
   }
 
   // Calculate EMI in EMI calculator
