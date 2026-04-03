@@ -220,6 +220,50 @@
   }
 }
 
+// New card styles for updated dashboard
+.receivables-card {
+  background: linear-gradient(135deg, #d1fae5 0%, #ffffff 100%);
+  border: 1px solid #a7f3d0;
+
+  &::before {
+    background: linear-gradient(90deg, #10b981, #34d399);
+  }
+
+  .card-value {
+    color: #059669;
+  }
+}
+
+.net-card {
+  background: linear-gradient(135deg, #dbeafe 0%, #ffffff 100%);
+  border: 1px solid #bfdbfe;
+
+  &::before {
+    background: linear-gradient(90deg, #3b82f6, #60a5fa);
+  }
+
+  .card-value {
+    color: #2563eb;
+    
+    &.negative {
+      color: #dc2626;
+    }
+  }
+}
+
+.count-card {
+  background: linear-gradient(135deg, #f3e8ff 0%, #ffffff 100%);
+  border: 1px solid #e9d5ff;
+
+  &::before {
+    background: linear-gradient(90deg, #a855f7, #c084fc);
+  }
+
+  .card-value {
+    color: #9333ea;
+  }
+}
+
 // ==================== DEBT-FREE PROGRESS ====================
 .debt-free-progress {
   padding: 24px;
@@ -245,6 +289,7 @@
       font-size: 24px;
       font-weight: 700;
       background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
+      background-clip: text;
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
     }
@@ -673,6 +718,46 @@
   padding: 20px 24px;
   background: #f9fafb;
   border-top: 1px solid #e5e7eb;
+
+  button {
+    flex: 1;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+
+    &.btn-secondary {
+      background: #f3f4f6;
+      color: #374151;
+
+      &:hover {
+        background: #e5e7eb;
+      }
+    }
+
+    &.btn-primary {
+      background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+      color: white;
+      box-shadow: 0 4px 6px rgba(239, 68, 68, 0.25);
+
+      &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(239, 68, 68, 0.35);
+      }
+    }
+
+    &.btn-danger {
+      background: #dc2626;
+      color: white;
+
+      &:hover {
+        background: #b91c1c;
+      }
+    }
+  }
 }
 
 // ==================== FORMS ====================
@@ -931,6 +1016,31 @@
   p {
     margin: 0 0 24px;
     color: #6b7280;
+  }
+
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: white;
+    box-shadow: 0 4px 6px rgba(239, 68, 68, 0.25);
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 12px rgba(239, 68, 68, 0.35);
+    }
+
+    .btn-icon {
+      font-size: 16px;
+    }
   }
 }
 
