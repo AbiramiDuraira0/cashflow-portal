@@ -12,7 +12,6 @@
           🧮 EMI Calculator
         </button>
         <button class="btn-primary" (click)="openAddModal()">
-          <span class="btn-icon">➕</span>
           Add Debt/Loan
         </button>
       </div>
@@ -111,7 +110,6 @@
         <h3>No Entries Found</h3>
         <p>Add a debt or receivable to start tracking.</p>
         <button class="btn-primary" (click)="openAddModal()">
-          <span class="btn-icon">➕</span>
           Add Entry
         </button>
       </div>
@@ -221,7 +219,7 @@
     <div class="modal-overlay" (click)="closeModals()">
       <div class="modal-content" (click)="$event.stopPropagation()">
         <div class="modal-header">
-          <h2>{{ showAddModal() ? '➕ Add New Entry' : '✏️ Edit Entry' }}</h2>
+          <h2>{{ showAddModal() ? 'Add New Entry' : '✏️ Edit Entry' }}</h2>
           <button class="close-btn" (click)="closeModals()">✕</button>
         </div>
 
