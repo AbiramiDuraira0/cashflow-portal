@@ -26,14 +26,14 @@
     <div class="summary-card total-card">
       <div class="card-icon">&#128184;</div>
       <div class="card-content">
-        <div class="card-label">Total Debts (Borrowed)</div>
+        <div class="card-label">Current Debts (Outstanding)</div>
         <div class="card-value">{{ formatCurrency(summary().totalDebts) }}</div>
         <div class="card-meta">Money you owe</div>
       </div>
     </div>
 
     <!-- Interest Paid Card -->
-    <div class="summary-card interest-card">
+    <div class="summary-card interest-card clickable" (click)="openInterestBreakdownModal()" title="Click to view interest breakdown">
       <div class="card-icon">&#128200;</div>
       <div class="card-content">
         <div class="card-label">Total Interest Paid</div>
@@ -46,7 +46,7 @@
     <div class="summary-card count-card clickable" (click)="openConsolidatedModal()" title="Click to view consolidated summary">
       <div class="card-icon">&#128203;</div>
       <div class="card-content">
-        <div class="card-label">Total Entries</div>
+        <div class="card-label">Total Loans</div>
         <div class="card-value">{{ activeCount() }}</div>
         <div class="card-meta">{{ summary().openCount }} open, {{ summary().closedCount }} closed</div>
       </div>
@@ -829,6 +829,40 @@
 
         <div class="modal-footer">
           <button class="btn-secondary" (click)="closeModals()">Close</button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Interest Breakdown Modal -->
+  @if (showInterestBreakdownModal()) {
+    <div class="modal-backdrop">
+      <div class="modal interest-breakdown-modal">
+        <div class="modal-header">
+          <h3>Interest Paid Breakdown</h3>
+        </div>
+        <div class="modal-body">
+          <table class="breakdown-table">
+            <thead>
+              <tr>
+                <th>Loan Name</th>
+                <th>Bank/Person</th>
+                <th>Interest Paid</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (debt of activeDebts(); track debt.id) {
+                <tr>
+                  <td>{{ debt.loanName }}</td>
+                  <td>{{ debt.bankOrPerson }}</td>
+                  <td class="amount-cell">{{ formatCurrency(getInterestPaid(debt)) }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-secondary" (click)="closeInterestBreakdownModal()">Close</button>
         </div>
       </div>
     </div>

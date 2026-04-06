@@ -291,6 +291,21 @@
   .card-value {
     color: #dc2626;
   }
+
+  &.clickable {
+    cursor: pointer;
+    transition: all 0.3s ease;
+
+    &:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 20px rgba(239, 68, 68, 0.25);
+      border-color: #f87171;
+    }
+
+    &:active {
+      transform: translateY(-2px);
+    }
+  }
 }
 
 .net-card {
@@ -311,15 +326,15 @@
 }
 
 .count-card {
-  background: linear-gradient(135deg, #f3e8ff 0%, #ffffff 100%);
-  border: 1px solid #e9d5ff;
+  background: linear-gradient(135deg, #fee2e2 0%, #ffffff 100%);
+  border: 1px solid #fecaca;
 
   &::before {
-    background: linear-gradient(90deg, #a855f7, #c084fc);
+    background: linear-gradient(90deg, #ef4444, #f87171);
   }
 
   .card-value {
-    color: #9333ea;
+    color: #dc2626;
   }
 
   &.clickable {
@@ -328,8 +343,8 @@
 
     &:hover {
       transform: translateY(-4px);
-      box-shadow: 0 8px 20px rgba(168, 85, 247, 0.25);
-      border-color: #c084fc;
+      box-shadow: 0 8px 20px rgba(239, 68, 68, 0.25);
+      border-color: #f87171;
     }
 
     &:active {
@@ -709,8 +724,9 @@
   }
 
   &.percentage .amount-value {
-    color: #8b5cf6;
+    color: #1f2937;
     font-size: 18px;
+    font-weight: 700;
 
     @media (max-width: 480px) {
       font-size: 16px;
@@ -926,7 +942,9 @@
 }
 
 // ==================== MODALS ====================
-.modal-overlay {
+// ==================== MODALS ====================
+.modal-overlay,
+.modal-backdrop {
   position: fixed;
   top: 0;
   left: 0;
@@ -942,7 +960,8 @@
   animation: fadeIn 0.2s ease;
 }
 
-.modal-content {
+.modal-content,
+.modal {
   background: white;
   border-radius: 16px;
   max-width: 600px;
@@ -1553,23 +1572,83 @@
       }
 
       &.paid {
-        background: linear-gradient(135deg, #ffffff 0%, #29346e 100%);
-        border-color: #d1d5db;
+        background: linear-gradient(135deg, #dbeafe 0%, #93c5fd 100%);
+        border-color: #60a5fa;
+        
+        .summary-label,
+        .breakdown-label {
+          color: #1e3a8a;
+        }
+        
+        .summary-count {
+          background: #bfdbfe;
+          color: #1e3a8a;
+        }
+        
+        .summary-main-amount,
+        .breakdown-value {
+          color: #1e40af;
+        }
       }
 
       &.pending {
-        background: linear-gradient(135deg, #ffffff 0%, #29346e 100%);
-        border-color: #e5e7eb;
+        background: linear-gradient(135deg, #dbeafe 0%, #93c5fd 100%);
+        border-color: #60a5fa;
+        
+        .summary-label,
+        .breakdown-label {
+          color: #1e3a8a;
+        }
+        
+        .summary-count {
+          background: #bfdbfe;
+          color: #1e3a8a;
+        }
+        
+        .summary-main-amount,
+        .breakdown-value {
+          color: #1e40af;
+        }
       }
 
       &.principal {
-        background: linear-gradient(135deg, #f3f4f6 0%, #a6a9ad 100%);
-        border-color: #d1d5db;
+        background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+        border-color: #fbbf24;
+        
+        .summary-label,
+        .breakdown-label {
+          color: #78350f;
+        }
+        
+        .summary-count {
+          background: #fde68a;
+          color: #78350f;
+        }
+        
+        .summary-main-amount,
+        .breakdown-value {
+          color: #b45309;
+        }
       }
 
       &.interest {
-        background: linear-gradient(135deg, #f3f4f6 0%, #a6a9ad 100%);
-        border-color: #9ca3af;
+        background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+        border-color: #fbbf24;
+        
+        .summary-label,
+        .breakdown-label {
+          color: #78350f;
+        }
+        
+        .summary-count {
+          background: #fde68a;
+          color: #78350f;
+        }
+        
+        .summary-main-amount,
+        .breakdown-value {
+          color: #b45309;
+        }
       }
     }
   }
@@ -1990,6 +2069,90 @@
 
     tbody td {
       padding: 10px 8px;
+    }
+  }
+}
+
+// ==================== INTEREST BREAKDOWN MODAL ====================
+.interest-breakdown-modal {
+  width: 90%;
+  max-width: 800px;
+
+  .breakdown-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+    font-size: 14px;
+
+    thead {
+      background: linear-gradient(135deg, #f9fafb 0%, #ffffff 100%);
+      border-bottom: 2px solid #e5e7eb;
+
+      th {
+        padding: 16px;
+        text-align: left;
+        font-weight: 600;
+        color: #374151;
+        font-size: 13px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+
+        &:last-child {
+          text-align: right;
+        }
+      }
+    }
+
+    tbody {
+      tr {
+        border-bottom: 1px solid #f3f4f6;
+        transition: background 0.2s ease;
+
+        &:hover {
+          background: #f9fafb;
+        }
+
+        td {
+          padding: 14px 16px;
+          color: #1f2937;
+
+          &.amount-cell {
+            text-align: right;
+            font-weight: 600;
+            color: #dc2626;
+          }
+        }
+      }
+    }
+  }
+
+  @media (max-width: 768px) {
+    .breakdown-table {
+      font-size: 12px;
+
+      thead th {
+        padding: 12px;
+        font-size: 11px;
+      }
+
+      tbody tr td {
+        padding: 10px 12px;
+      }
+    }
+  }
+
+  @media (max-width: 480px) {
+    .breakdown-table {
+      font-size: 11px;
+
+      thead th {
+        padding: 10px 8px;
+        font-size: 10px;
+      }
+
+      tbody tr td {
+        padding: 8px;
+      }
     }
   }
 }

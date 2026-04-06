@@ -34,6 +34,7 @@ export class DebtsPage implements OnInit {
   protected showRepaymentScheduleModal = signal<boolean>(false);
   protected showConsolidatedModal = signal<boolean>(false);
   protected showEMICalculator = signal<boolean>(false);
+  protected showInterestBreakdownModal = signal<boolean>(false);
   protected selectedDebt = signal<DebtEntry | null>(null);
   protected repaymentSchedule = signal<RepaymentSchedule[]>([]);
   protected loadingSchedule = signal<boolean>(false);
@@ -245,6 +246,16 @@ export class DebtsPage implements OnInit {
     this.showEMICalculator.set(true);
   }
 
+  // Open interest breakdown modal
+  protected openInterestBreakdownModal(): void {
+    this.showInterestBreakdownModal.set(true);
+  }
+
+  // Close interest breakdown modal
+  protected closeInterestBreakdownModal(): void {
+    this.showInterestBreakdownModal.set(false);
+  }
+
   // Close all modals
   protected closeModals(): void {
     this.showAddModal.set(false);
@@ -254,6 +265,7 @@ export class DebtsPage implements OnInit {
     this.showRepaymentScheduleModal.set(false);
     this.showConsolidatedModal.set(false);
     this.showEMICalculator.set(false);
+    this.showInterestBreakdownModal.set(false);
     this.selectedDebt.set(null);
     this.repaymentSchedule.set([]);
   }
