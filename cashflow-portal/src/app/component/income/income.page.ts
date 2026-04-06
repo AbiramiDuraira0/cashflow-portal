@@ -139,7 +139,12 @@ export class IncomePage implements OnInit {
   // New: Group entries by month for grid display (2 rows of 6 months)
   protected monthlyEntriesGrid = computed(() => {
     const entries = this.filteredEntries();
-    const monthsData = this.months.map(month => {
+    const year = this.selectedYear();
+    
+    // For 2021, start from August (index 7), otherwise show all 12 months
+    const monthsToShow = year === 2021 ? this.months.slice(7) : this.months;
+    
+    const monthsData = monthsToShow.map(month => {
       const entry = entries.find(e => e.month === month);
       return {
         month,
@@ -148,10 +153,11 @@ export class IncomePage implements OnInit {
       };
     });
     
-    // Split into 2 rows (Jan-Jun, Jul-Dec)
+    // Split into 2 rows (Jan-Jun, Jul-Dec) or (Aug-Oct, Nov-Dec) for 2021
+    const halfPoint = Math.ceil(monthsData.length / 2);
     return {
-      firstRow: monthsData.slice(0, 6),  // January to June
-      secondRow: monthsData.slice(6, 12) // July to December
+      firstRow: monthsData.slice(0, halfPoint),
+      secondRow: monthsData.slice(halfPoint)
     };
   });
 
