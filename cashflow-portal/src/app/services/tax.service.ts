@@ -64,7 +64,7 @@ export class TaxService {
     this.loading.set(true);
     try {
       const { data, error} = await this.supabase.db
-        .from('tax_entries')
+        .from('tax')
         .select('*')
         .eq('is_deleted', false)
         .order('year', { ascending: false })
@@ -110,7 +110,7 @@ export class TaxService {
     this.loading.set(true);
     try {
       const { error } = await this.supabase.db
-        .from('tax_entries')
+        .from('tax')
         .insert([data]);
 
       if (error) throw error;
@@ -129,7 +129,7 @@ export class TaxService {
     this.loading.set(true);
     try {
       const { error } = await this.supabase.db
-        .from('tax_entries')
+        .from('tax')
         .update(data)
         .eq('tax_id', taxId);
 
@@ -149,7 +149,7 @@ export class TaxService {
     this.loading.set(true);
     try {
       const { error } = await this.supabase.db
-        .from('tax_entries')
+        .from('tax')
         .update({ is_deleted: true })
         .eq('tax_id', taxId);
 
