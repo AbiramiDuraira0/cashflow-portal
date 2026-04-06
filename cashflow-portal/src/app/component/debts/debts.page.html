@@ -13,7 +13,6 @@
           <span class="btn-text">EMI Calculator</span>
         </button>
         <button class="btn-primary add-debt-btn" (click)="openAddModal()">
-          <span class="btn-icon">➕</span>
           <span class="btn-text">Add Debt/Loan</span>
         </button>
       </div>
@@ -23,7 +22,7 @@
   <!-- Summary Dashboard -->
   <div class="summary-dashboard">
     <!-- Total Debt Card -->
-    <div class="summary-card total-card">
+    <div class="summary-card total-card clickable" (click)="openRepaymentScheduleFromWidget()" title="Click to view repayment schedule">
       <div class="card-icon">&#128184;</div>
       <div class="card-content">
         <div class="card-label">Current Debts (Outstanding)</div>
@@ -840,18 +839,34 @@
       <div class="modal interest-breakdown-modal">
         <div class="modal-header">
           <h3>Interest Paid Breakdown</h3>
+          <button class="close-btn" (click)="closeInterestBreakdownModal()">✕</button>
         </div>
         <div class="modal-body">
           <table class="breakdown-table">
             <thead>
               <tr>
-                <th>Loan Name</th>
-                <th>Bank/Person</th>
-                <th>Interest Paid</th>
+                <th class="sortable" (click)="sortInterestBreakdown('loanName')">
+                  Loan Name
+                  @if (interestSortColumn() === 'loanName') {
+                    <span class="sort-icon">{{ interestSortDirection() === 'asc' ? '▲' : '▼' }}</span>
+                  }
+                </th>
+                <th class="sortable" (click)="sortInterestBreakdown('bankOrPerson')">
+                  Bank/Person
+                  @if (interestSortColumn() === 'bankOrPerson') {
+                    <span class="sort-icon">{{ interestSortDirection() === 'asc' ? '▲' : '▼' }}</span>
+                  }
+                </th>
+                <th class="sortable" (click)="sortInterestBreakdown('interestPaid')">
+                  Interest Paid
+                  @if (interestSortColumn() === 'interestPaid') {
+                    <span class="sort-icon">{{ interestSortDirection() === 'asc' ? '▲' : '▼' }}</span>
+                  }
+                </th>
               </tr>
             </thead>
             <tbody>
-              @for (debt of activeDebts(); track debt.id) {
+              @for (debt of sortedInterestBreakdown(); track debt.id) {
                 <tr>
                   <td>{{ debt.loanName }}</td>
                   <td>{{ debt.bankOrPerson }}</td>

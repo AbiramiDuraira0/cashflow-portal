@@ -45,6 +45,10 @@ export class DebtsPage implements OnInit {
   protected sortColumn = signal<string>('');
   protected sortDirection = signal<'asc' | 'desc'>('asc');
 
+  // Sorting state for interest breakdown
+  protected interestSortColumn = signal<string>('');
+  protected interestSortDirection = signal<'asc' | 'desc'>('asc');
+
   // Form data signals
   protected formType = signal<DebtType>('debt');
   protected formLoanName = signal<string>('');
@@ -157,6 +161,40 @@ export class DebtsPage implements OnInit {
     }
   });
 
+  // Sorted interest breakdown
+  protected sortedInterestBreakdown = computed(() => {
+    const debts = this.activeDebts();
+    const column = this.interestSortColumn();
+    const direction = this.interestSortDirection();
+    
+    if (!column) return debts;
+    
+    return [...debts].sort((a, b) => {
+      let aVal: any, bVal: any;
+      
+      switch (column) {
+        case 'loanName':
+          aVal = a.loanName.toLowerCase();
+          bVal = b.loanName.toLowerCase();
+          break;
+        case 'bankOrPerson':
+          aVal = a.bankOrPerson.toLowerCase();
+          bVal = b.bankOrPerson.toLowerCase();
+          break;
+        case 'interestPaid':
+          aVal = this.getInterestPaid(a);
+          bVal = this.getInterestPaid(b);
+          break;
+        default:
+          return 0;
+      }
+      
+      if (aVal < bVal) return direction === 'asc' ? -1 : 1;
+      if (aVal > bVal) return direction === 'asc' ? 1 : -1;
+      return 0;
+    });
+  });
+
   // Loan names array for dropdown
   protected loanNames = Object.values(LoanName);
 
@@ -173,6 +211,18 @@ export class DebtsPage implements OnInit {
       // Set new column and default to ascending
       this.sortColumn.set(column);
       this.sortDirection.set('asc');
+    }
+  }
+
+  // Sort interest breakdown table
+  protected sortInterestBreakdown(column: string): void {
+    if (this.interestSortColumn() === column) {
+      // Toggle direction if same column
+      this.interestSortDirection.set(this.interestSortDirection() === 'asc' ? 'desc' : 'asc');
+    } else {
+      // Set new column and default to ascending
+      this.interestSortColumn.set(column);
+      this.interestSortDirection.set('asc');
     }
   }
 
@@ -239,6 +289,19 @@ export class DebtsPage implements OnInit {
   // Open consolidated view modal
   protected openConsolidatedModal(): void {
     this.showConsolidatedModal.set(true);
+  }
+
+  // Open repayment schedule for Personal Loan - Top Up from widget
+  protected async openRepaymentScheduleFromWidget(): Promise<void> {
+    // Find the Personal Loan - Top Up debt
+    const personalLoanTopUp = this.activeDebts().find(d => d.loanName === 'Personal Loan - Top Up');
+    
+    if (personalLoanTopUp) {
+      await this.openRepaymentScheduleModal(personalLoanTopUp);
+    } else {
+      // If no Personal Loan - Top Up found, show consolidated modal as fallback
+      this.openConsolidatedModal();
+    }
   }
 
   // Open EMI calculator
