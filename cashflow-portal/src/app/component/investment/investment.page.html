@@ -90,7 +90,7 @@
         <button class="btn-primary" (click)="openAddModal()">Add Investment</button>
       </div>
     } @else {
-      @for (investment of filteredInvestments(); track investment.id) {
+      @for (investment of filteredInvestments(); track investment.investment_id) {
         <div class="investment-card" [class]="'status-' + investment.status.toLowerCase().replace(' ', '-')">
           <!-- Card Header -->
           <div class="card-header">
@@ -112,12 +112,12 @@
             <div class="detail-row">
               <div class="detail-item">
                 <span class="detail-label">Invested</span>
-                <span class="detail-value">{{ formatCurrency(investment.investedAmount) }}</span>
+                <span class="detail-value">{{ formatCurrency(investment.invested_amount) }}</span>
               </div>
-              @if (investment.currentValue && investment.status === InvestmentStatus.ACTIVE) {
+              @if (investment.current_value && investment.status === InvestmentStatus.ACTIVE) {
                 <div class="detail-item">
                   <span class="detail-label">Current Value</span>
-                  <span class="detail-value">{{ formatCurrency(investment.currentValue) }}</span>
+                  <span class="detail-value">{{ formatCurrency(investment.current_value) }}</span>
                 </div>
               }
             </div>
@@ -128,13 +128,13 @@
                   <div class="returns-fill" 
                     [class.positive]="investment.returns >= 0" 
                     [class.negative]="investment.returns < 0"
-                    [style.width.%]="Math.abs(investment.returnsPercentage || 0)">
+                    [style.width.%]="Math.abs(investment.returns_percentage || 0)">
                   </div>
                 </div>
                 <div class="returns-text" [class.positive]="investment.returns >= 0" [class.negative]="investment.returns < 0">
                   <span>{{ formatCurrency(investment.returns) }}</span>
                   <span class="returns-percent">
-                    {{ investment.returns >= 0 ? '+' : '' }}{{ (investment.returnsPercentage || 0).toFixed(2) }}%
+                    {{ investment.returns >= 0 ? '+' : '' }}{{ (investment.returns_percentage || 0).toFixed(2) }}%
                   </span>
                 </div>
               </div>
@@ -148,17 +148,17 @@
               @if (investment.units) {
                 <span class="meta-tag">📦 {{ investment.units }} units</span>
               }
-              @if (investment.maturityDate) {
-                <span class="meta-tag">📅 Matures: {{ formatDate(investment.maturityDate) }}</span>
+              @if (investment.maturity_date) {
+                <span class="meta-tag">📅 Matures: {{ formatDate(investment.maturity_date) }}</span>
               }
             </div>
 
             <!-- Date Range -->
             <div class="date-range">
-              <span class="start-date">📅 {{ formatDate(investment.startDate) }}</span>
-              @if (investment.endDate) {
+              <span class="start-date">📅 {{ formatDate(investment.start_date) }}</span>
+              @if (investment.end_date) {
                 <span class="date-separator">→</span>
-                <span class="end-date">{{ formatDate(investment.endDate) }}</span>
+                <span class="end-date">{{ formatDate(investment.end_date) }}</span>
               }
             </div>
 
@@ -403,13 +403,13 @@
 
             <div class="detail-block">
               <div class="block-label">Invested Amount</div>
-              <div class="block-value highlight">{{ formatCurrency(selectedInvestment()!.investedAmount) }}</div>
+              <div class="block-value highlight">{{ formatCurrency(selectedInvestment()!.invested_amount) }}</div>
             </div>
 
-            @if (selectedInvestment()!.currentValue) {
+            @if (selectedInvestment()!.current_value) {
               <div class="detail-block">
                 <div class="block-label">Current Value</div>
-                <div class="block-value highlight">{{ formatCurrency(selectedInvestment()!.currentValue!) }}</div>
+                <div class="block-value highlight">{{ formatCurrency(selectedInvestment()!.current_value!) }}</div>
               </div>
             }
 
@@ -418,15 +418,15 @@
                 <div class="block-label">Returns</div>
                 <div class="block-value" [class]="getReturnsColorClass(selectedInvestment()!.returns)">
                   {{ formatCurrency(selectedInvestment()!.returns!) }}
-                  ({{ selectedInvestment()!.returns! >= 0 ? '+' : '' }}{{ selectedInvestment()!.returnsPercentage!.toFixed(2) }}%)
+                  ({{ selectedInvestment()!.returns! >= 0 ? '+' : '' }}{{ selectedInvestment()!.returns_percentage!.toFixed(2) }}%)
                 </div>
               </div>
             }
 
-            @if (selectedInvestment()!.maturityValue) {
+            @if (selectedInvestment()!.maturity_value) {
               <div class="detail-block">
                 <div class="block-label">Maturity Value</div>
-                <div class="block-value">{{ formatCurrency(selectedInvestment()!.maturityValue!) }}</div>
+                <div class="block-value">{{ formatCurrency(selectedInvestment()!.maturity_value!) }}</div>
               </div>
             }
 
@@ -437,17 +437,17 @@
               </div>
             }
 
-            @if (selectedInvestment()!.avgPrice) {
+            @if (selectedInvestment()!.avg_price) {
               <div class="detail-block">
                 <div class="block-label">Avg. Price</div>
-                <div class="block-value">{{ formatCurrency(selectedInvestment()!.avgPrice!) }}</div>
+                <div class="block-value">{{ formatCurrency(selectedInvestment()!.avg_price!) }}</div>
               </div>
             }
 
-            @if (selectedInvestment()!.currentPrice) {
+            @if (selectedInvestment()!.current_price) {
               <div class="detail-block">
                 <div class="block-label">Current Price</div>
-                <div class="block-value">{{ formatCurrency(selectedInvestment()!.currentPrice!) }}</div>
+                <div class="block-value">{{ formatCurrency(selectedInvestment()!.current_price!) }}</div>
               </div>
             }
 
@@ -460,20 +460,20 @@
 
             <div class="detail-block">
               <div class="block-label">Start Date</div>
-              <div class="block-value">{{ formatDate(selectedInvestment()!.startDate) }}</div>
+              <div class="block-value">{{ formatDate(selectedInvestment()!.start_date) }}</div>
             </div>
 
-            @if (selectedInvestment()!.endDate) {
+            @if (selectedInvestment()!.end_date) {
               <div class="detail-block">
                 <div class="block-label">End Date</div>
-                <div class="block-value">{{ formatDate(selectedInvestment()!.endDate!) }}</div>
+                <div class="block-value">{{ formatDate(selectedInvestment()!.end_date!) }}</div>
               </div>
             }
 
-            @if (selectedInvestment()!.maturityDate) {
+            @if (selectedInvestment()!.maturity_date) {
               <div class="detail-block">
                 <div class="block-label">Maturity Date</div>
-                <div class="block-value">{{ formatDate(selectedInvestment()!.maturityDate!) }}</div>
+                <div class="block-value">{{ formatDate(selectedInvestment()!.maturity_date!) }}</div>
               </div>
             }
 

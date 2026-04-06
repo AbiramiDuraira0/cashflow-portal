@@ -95,16 +95,16 @@ export class InvestmentPage implements OnInit {
     this.formType.set(investment.type);
     this.formStatus.set(investment.status);
     this.formName.set(investment.name);
-    this.formStartDate.set(investment.startDate);
-    this.formEndDate.set(investment.endDate || '');
-    this.formInvestedAmount.set(investment.investedAmount);
-    this.formCurrentValue.set(investment.currentValue || 0);
-    this.formMaturityValue.set(investment.maturityValue || 0);
-    this.formMaturityDate.set(investment.maturityDate || '');
+    this.formStartDate.set(investment.start_date);
+    this.formEndDate.set(investment.end_date || '');
+    this.formInvestedAmount.set(investment.invested_amount);
+    this.formCurrentValue.set(investment.current_value || 0);
+    this.formMaturityValue.set(investment.maturity_value || 0);
+    this.formMaturityDate.set(investment.maturity_date || '');
     this.formFrequency.set(investment.frequency || '');
     this.formUnits.set(investment.units || 0);
-    this.formAvgPrice.set(investment.avgPrice || 0);
-    this.formCurrentPrice.set(investment.currentPrice || 0);
+    this.formAvgPrice.set(investment.avg_price || 0);
+    this.formCurrentPrice.set(investment.current_price || 0);
     this.formNotes.set(investment.notes || '');
     this.showEditModal.set(true);
   }
@@ -160,16 +160,16 @@ export class InvestmentPage implements OnInit {
         type: this.formType(),
         status: this.formStatus(),
         name: this.formName(),
-        startDate: this.formStartDate(),
-        endDate: this.formEndDate() || undefined,
-        investedAmount: this.formInvestedAmount(),
-        currentValue: this.formCurrentValue() || undefined,
-        maturityValue: this.formMaturityValue() || undefined,
-        maturityDate: this.formMaturityDate() || undefined,
+        start_date: this.formStartDate(),
+        end_date: this.formEndDate() || undefined,
+        invested_amount: this.formInvestedAmount(),
+        current_value: this.formCurrentValue() || undefined,
+        maturity_value: this.formMaturityValue() || undefined,
+        maturity_date: this.formMaturityDate() || undefined,
         frequency: this.formFrequency() || undefined,
         units: this.formUnits() || undefined,
-        avgPrice: this.formAvgPrice() || undefined,
-        currentPrice: this.formCurrentPrice() || undefined,
+        avg_price: this.formAvgPrice() || undefined,
+        current_price: this.formCurrentPrice() || undefined,
         notes: this.formNotes()
       });
 
@@ -192,20 +192,20 @@ export class InvestmentPage implements OnInit {
     }
 
     try {
-      await this.investmentService.updateInvestment(investment.id, {
+      await this.investmentService.updateInvestment(investment.investment_id, {
         type: this.formType(),
         status: this.formStatus(),
         name: this.formName(),
-        startDate: this.formStartDate(),
-        endDate: this.formEndDate() || undefined,
-        investedAmount: this.formInvestedAmount(),
-        currentValue: this.formCurrentValue() || undefined,
-        maturityValue: this.formMaturityValue() || undefined,
-        maturityDate: this.formMaturityDate() || undefined,
+        start_date: this.formStartDate(),
+        end_date: this.formEndDate() || undefined,
+        invested_amount: this.formInvestedAmount(),
+        current_value: this.formCurrentValue() || undefined,
+        maturity_value: this.formMaturityValue() || undefined,
+        maturity_date: this.formMaturityDate() || undefined,
         frequency: this.formFrequency() || undefined,
         units: this.formUnits() || undefined,
-        avgPrice: this.formAvgPrice() || undefined,
-        currentPrice: this.formCurrentPrice() || undefined,
+        avg_price: this.formAvgPrice() || undefined,
+        current_price: this.formCurrentPrice() || undefined,
         notes: this.formNotes()
       });
 
@@ -223,7 +223,7 @@ export class InvestmentPage implements OnInit {
     if (!investment) return;
 
     try {
-      await this.investmentService.deleteInvestment(investment.id);
+      await this.investmentService.deleteInvestment(investment.investment_id);
       this.showToast('✅ Investment deleted successfully!');
       this.closeModals();
     } catch (err) {
