@@ -79,7 +79,9 @@ export class InvestmentService {
 
   // Computed analytics
   public readonly totalInvested = computed(() => 
-    this.investmentData().reduce((sum, inv) => sum + inv.invested_amount, 0)
+    this.investmentData()
+      .filter(inv => inv.status === InvestmentStatus.ACTIVE || inv.status === InvestmentStatus.PAST)
+      .reduce((sum, inv) => sum + inv.invested_amount, 0)
   );
 
   public readonly totalInterestEarned = computed(() => 

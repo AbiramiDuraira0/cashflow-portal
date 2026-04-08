@@ -17,17 +17,17 @@
   <!-- Summary Cards -->
   <div class="summary-cards">
     <!-- Total Invested Card -->
-    <div class="summary-card invested-card">
+    <div class="summary-card invested-card clickable" (click)="openSummaryModal('invested')">
       <div class="card-icon">💰</div>
       <div class="card-content">
         <div class="card-label">Total Invested</div>
         <div class="card-value">{{ formatCurrency(totalInvested()) }}</div>
-        <div class="card-meta">{{ activeInvestments().length }} active investments</div>
+        <div class="card-meta">{{ uniqueInvestmentTypesCount() }} investment types</div>
       </div>
     </div>
 
     <!-- Current Value Card -->
-    <div class="summary-card value-card">
+    <div class="summary-card value-card clickable" (click)="openSummaryModal('value')">
       <div class="card-icon">📈</div>
       <div class="card-content">
         <div class="card-label">Current Value</div>
@@ -37,7 +37,7 @@
     </div>
 
     <!-- Returns Card -->
-    <div class="summary-card returns-card" [class.positive]="totalReturns() >= 0" [class.negative]="totalReturns() < 0">
+    <div class="summary-card returns-card clickable" [class.positive]="totalReturns() >= 0" [class.negative]="totalReturns() < 0" (click)="openSummaryModal('returns')">
       <div class="card-icon">{{ totalReturns() >= 0 ? '📊' : '📉' }}</div>
       <div class="card-content">
         <div class="card-label">Total Interest</div>
@@ -108,46 +108,28 @@
           <!-- Card Body -->
           <div class="card-body">
             <!-- Consolidated Investment Details -->
-            <div class="detail-row">
+            <div class="detail-row single-line">
               <div class="detail-item">
-                <span class="detail-label">Total Invested</span>
+                <span class="detail-label">Invested</span>
                 <span class="detail-value">{{ formatCurrency(consolidated.total_invested_amount) }}</span>
               </div>
+              @if (consolidated.total_interest_earned && consolidated.status === InvestmentStatus.ACTIVE) {
+                <div class="detail-item">
+                  <span class="detail-label">Interest</span>
+                  <span class="detail-value">{{ formatCurrency(consolidated.total_interest_earned) }}</span>
+                </div>
+              }
               <div class="detail-item">
-                <span class="detail-label">Current Value</span>
+                <span class="detail-label">Current</span>
                 <span class="detail-value">{{ formatCurrency(consolidated.current_value) }}</span>
               </div>
-            </div>
-
-            @if (consolidated.total_interest_earned && consolidated.status === InvestmentStatus.ACTIVE) {
-              <div class="returns-section">
-                <div class="returns-bar">
-                  <div class="returns-fill" 
-                    [class.positive]="consolidated.total_interest_earned >= 0" 
-                    [class.negative]="consolidated.total_interest_earned < 0"
-                    [style.width.%]="Math.abs(calculateReturnsPercentage(consolidated.total_interest_earned, consolidated.total_invested_amount))">
-                  </div>
-                </div>
-                <div class="returns-text" [class.positive]="consolidated.total_interest_earned >= 0" [class.negative]="consolidated.total_interest_earned < 0">
-                  <span>Interest: {{ formatCurrency(consolidated.total_interest_earned) }}</span>
-                  <span class="returns-percent">
-                    {{ consolidated.total_interest_earned >= 0 ? '+' : '' }}{{ calculateReturnsPercentage(consolidated.total_interest_earned, consolidated.total_invested_amount).toFixed(2) }}%
-                  </span>
-                </div>
-              </div>
-            }
-
-            <!-- Years Info -->
-            <div class="years-info">
-              <span class="years-badge">📅 {{ consolidated.years_count }} {{ consolidated.years_count === 1 ? 'Year' : 'Years' }}</span>
-              <span class="year-range">{{ consolidated.earliest_year }} - {{ consolidated.latest_year }}</span>
             </div>
           </div>
 
           <!-- Card Actions -->
           <div class="card-actions">
             <button class="action-btn view-btn-large" (click)="openYearlyDetailsModal(consolidated)" title="View Year-wise Details">
-              👁️ View Details
+              View Details
             </button>
             <button class="action-btn edit-btn" (click)="openEditModal(consolidated.years[consolidated.years.length - 1])" title="Edit Latest Year">
               ✏️
@@ -179,11 +161,11 @@
                 <!-- Investment Info (Read-only in edit) -->
                 <div class="investment-info-header">
                   <div class="info-item">
-                    <span class="info-label">Type:</span>
-                    <span class="info-value">{{ getTypeIcon(formType()) }} {{ formType() }}</span>
+                    <span class="info-label">Type</span>
+                    <span class="info-value">@if (formType()) { {{ getTypeIcon(formType() || InvestmentType.PPF) }} {{ formType() }} }</span>
                   </div>
                   <div class="info-item">
-                    <span class="info-label">Status:</span>
+                    <span class="info-label">Status</span>
                     <select [(ngModel)]="formStatus" name="status" class="status-select">
                       @for (status of investmentStatuses; track status) {
                         <option [value]="status">{{ getStatusIcon(status) }} {{ status }}</option>
@@ -191,7 +173,7 @@
                     </select>
                   </div>
                   <div class="info-item">
-                    <span class="info-label">Name:</span>
+                    <span class="info-label">Name</span>
                     <input 
                       type="text" 
                       [(ngModel)]="formName" 
@@ -203,7 +185,12 @@
 
                 <!-- Editable Years Table -->
                 <div class="table-container edit-table-container">
-                  <h4 class="section-title">📊 Edit Year-wise Data</h4>
+                  <div class="section-header">
+                    <h4 class="section-title">📊 Edit Year-wise Data</h4>
+                    <button type="button" class="btn-add-year-small" (click)="addNewYearInEdit()" title="Add New Year">
+                      ➕ Add Year
+                    </button>
+                  </div>
                   <table class="edit-years-table">
                     <thead>
                       <tr>
@@ -410,7 +397,7 @@
             <!-- Form Actions -->
             <div class="form-actions">
               <button type="button" class="btn-secondary" (click)="closeModals()">Cancel</button>
-              <button type="submit" class="btn-primary">
+              <button type="submit" [class]="showEditModal() ? 'btn-update' : 'btn-primary'">
                 @if (showAddModal()) {
                   {{ yearEntries().length > 0 ? 'Save All (' + yearEntries().length + ' years)' : 'Add Investment' }}
                 } @else {
@@ -561,7 +548,6 @@
                   <th>Interest Earned</th>
                   <th>Value</th>
                   <th>Returns %</th>
-                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -584,14 +570,6 @@
                         -
                       }
                     </td>
-                    <td class="actions-cell">
-                      <button class="table-action-btn edit-btn" (click)="openEditModal(year)" title="Edit">
-                        ✏️
-                      </button>
-                      <button class="table-action-btn delete-btn" (click)="openDeleteModal(year)" title="Delete">
-                        🗑️
-                      </button>
-                    </td>
                   </tr>
                 }
               </tbody>
@@ -602,10 +580,122 @@
                   <td><strong>{{ formatCurrency(selectedConsolidated()!.total_interest_earned) }}</strong></td>
                   <td><strong>{{ formatCurrency(selectedConsolidated()!.current_value) }}</strong></td>
                   <td><strong>+{{ calculateReturnsPercentage(selectedConsolidated()!.total_interest_earned, selectedConsolidated()!.total_invested_amount).toFixed(2) }}%</strong></td>
-                  <td></td>
                 </tr>
               </tfoot>
             </table>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn-secondary" (click)="closeModals()">Close</button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Summary Analytics Modal -->
+  @if (showSummaryModal() && summaryModalType()) {
+    <div class="modal-overlay" (click)="closeModals()">
+      <div class="modal-content summary-modal" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2>
+            @if (summaryModalType() === 'invested') {
+              💰 Total Invested Breakdown
+            } @else if (summaryModalType() === 'value') {
+              📈 Current Value Analysis
+            } @else {
+              📊 Interest Returns Analysis
+            }
+          </h2>
+          <button class="close-btn" (click)="closeModals()">✕</button>
+        </div>
+
+        <div class="modal-body">
+          <!-- Summary Stats -->
+          <div class="summary-stats-grid">
+            <div class="stat-card">
+              <div class="stat-label">Total Invested</div>
+              <div class="stat-value">{{ formatCurrency(totalInvested()) }}</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Current Value</div>
+              <div class="stat-value">{{ formatCurrency(totalCurrentValue()) }}</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Total Interest</div>
+              <div class="stat-value positive">{{ formatCurrency(totalReturns()) }}</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Returns %</div>
+              <div class="stat-value positive">+{{ totalReturnsPercentage().toFixed(2) }}%</div>
+            </div>
+          </div>
+
+          <!-- Investment Type Breakdown -->
+          <div class="breakdown-section">
+            <h3 class="breakdown-title">📊 Breakdown by Investment Type</h3>
+            <div class="breakdown-table">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Type</th>
+                    <th>Invested</th>
+                    <th>Interest</th>
+                    <th>Current Value</th>
+                    <th>Count</th>
+                    <th>Share</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (item of investmentTypeBreakdown(); track item.type) {
+                    <tr>
+                      <td>
+                        <span class="type-badge">{{ getTypeIcon(item.type) }} {{ item.type }}</span>
+                      </td>
+                      <td class="amount">{{ formatCurrency(item.invested) }}</td>
+                      <td class="amount positive">{{ formatCurrency(item.interest) }}</td>
+                      <td class="amount highlight">{{ formatCurrency(item.value) }}</td>
+                      <td class="count">{{ item.count }}</td>
+                      <td class="percentage">
+                        <div class="percentage-bar-container">
+                          <div class="percentage-bar" [style.width.%]="item.percentage"></div>
+                          <span class="percentage-text">{{ item.percentage.toFixed(1) }}%</span>
+                        </div>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Year-wise Breakdown -->
+          <div class="breakdown-section">
+            <h3 class="breakdown-title">📅 Breakdown by Year</h3>
+            <div class="breakdown-table">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Year</th>
+                    <th>Invested</th>
+                    <th>Interest</th>
+                    <th>Investments</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (item of yearWiseBreakdown(); track item.year) {
+                    <tr>
+                      <td>
+                        <span class="year-badge">{{ item.year }}</span>
+                      </td>
+                      <td class="amount">{{ formatCurrency(item.invested) }}</td>
+                      <td class="amount positive">{{ formatCurrency(item.interest) }}</td>
+                      <td class="count">{{ item.count }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
 
