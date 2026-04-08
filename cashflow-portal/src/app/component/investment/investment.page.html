@@ -164,14 +164,127 @@
   <!-- Add/Edit Investment Modal -->
   @if (showAddModal() || showEditModal()) {
     <div class="modal-overlay" (click)="closeModals()">
-      <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-content" [class.edit-modal-large]="showEditModal()" (click)="$event.stopPropagation()">
         <div class="modal-header">
-          <h2>{{ showAddModal() ? 'Add New Investment' : '✏️ Edit Investment' }}</h2>
+          <h2>{{ showAddModal() ? 'Add New Investment' : '✏️ Edit Investment - ' + formName() }}</h2>
           <button class="close-btn" (click)="closeModals()">✕</button>
         </div>
 
         <div class="modal-body">
           <form (submit)="$event.preventDefault(); showAddModal() ? saveInvestment() : updateInvestment()">
+            
+            @if (showEditModal()) {
+              <!-- EDIT MODE: Table View for All Years -->
+              <div class="edit-table-section">
+                <!-- Investment Info (Read-only in edit) -->
+                <div class="investment-info-header">
+                  <div class="info-item">
+                    <span class="info-label">Type:</span>
+                    <span class="info-value">{{ getTypeIcon(formType()) }} {{ formType() }}</span>
+                  </div>
+                  <div class="info-item">
+                    <span class="info-label">Status:</span>
+                    <select [(ngModel)]="formStatus" name="status" class="status-select">
+                      @for (status of investmentStatuses; track status) {
+                        <option [value]="status">{{ getStatusIcon(status) }} {{ status }}</option>
+                      }
+                    </select>
+                  </div>
+                  <div class="info-item">
+                    <span class="info-label">Name:</span>
+                    <input 
+                      type="text" 
+                      [(ngModel)]="formName" 
+                      name="name"
+                      class="name-input"
+                      required>
+                  </div>
+                </div>
+
+                <!-- Editable Years Table -->
+                <div class="table-container edit-table-container">
+                  <h4 class="section-title">📊 Edit Year-wise Data</h4>
+                  <table class="edit-years-table">
+                    <thead>
+                      <tr>
+                        <th>Year</th>
+                        <th>Invested Amount (₹)</th>
+                        <th>Interest Earned (₹)</th>
+                        <th>Current Value</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (entry of yearEntries(); track $index) {
+                        <tr>
+                          <td class="year-cell">
+                            <span class="year-badge">{{ entry.year }}</span>
+                          </td>
+                          <td class="input-cell">
+                            <input 
+                              type="number" 
+                              [(ngModel)]="entry.invested_amount"
+                              [name]="'invested_' + $index"
+                              (ngModelChange)="updateYearEntryValue($index, 'invested_amount', $event)"
+                              min="0"
+                              step="100"
+                              class="table-input"
+                              required>
+                          </td>
+                          <td class="input-cell">
+                            <input 
+                              type="number" 
+                              [(ngModel)]="entry.interest_earned"
+                              [name]="'interest_' + $index"
+                              (ngModelChange)="updateYearEntryValue($index, 'interest_earned', $event)"
+                              min="0"
+                              step="100"
+                              class="table-input">
+                          </td>
+                          <td class="value-cell">
+                            <strong>{{ formatCurrency(entry.invested_amount + (entry.interest_earned || 0)) }}</strong>
+                          </td>
+                          <td class="actions-cell">
+                            <button type="button" class="table-action-btn delete-btn" (click)="removeYearEntry($index)" title="Remove Year">
+                              🗑️
+                            </button>
+                          </td>
+                        </tr>
+                      }
+                    </tbody>
+                    <tfoot>
+                      <tr class="total-row">
+                        <td><strong>Total</strong></td>
+                        <td>
+                          <strong>{{ formatCurrency(getTotalInvestedAmount()) }}</strong>
+                        </td>
+                        <td>
+                          <strong>{{ formatCurrency(getTotalInterestEarned()) }}</strong>
+                        </td>
+                        <td>
+                          <strong>{{ formatCurrency(getTotalCurrentValue()) }}</strong>
+                        </td>
+                        <td></td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+
+                <!-- Notes -->
+                <div class="form-group">
+                  <label for="notes">Notes</label>
+                  <textarea 
+                    id="notes" 
+                    [(ngModel)]="formNotes" 
+                    name="notes"
+                    rows="3"
+                    placeholder="Additional details about this investment..."></textarea>
+                </div>
+              </div>
+
+            } @else {
+              <!-- ADD MODE: Regular Form -->
+              
             <!-- Investment Type & Status -->
             <div class="form-row">
               <div class="form-group">
@@ -244,43 +357,41 @@
             </div>
 
             <!-- Add Year Button (for multiple years) -->
-            @if (showAddModal()) {
-              <div class="add-year-section">
-                <button type="button" class="btn-add-year" (click)="addYearEntry()">
-                  ➕ Add This Year
-                </button>
-                <span class="help-text">Add multiple years before saving</span>
-              </div>
+            <div class="add-year-section">
+              <button type="button" class="btn-add-year" (click)="addYearEntry()">
+                ➕ Add This Year
+              </button>
+              <span class="help-text">Add multiple years before saving</span>
+            </div>
 
-              <!-- Added Years List -->
-              @if (yearEntries().length > 0) {
-                <div class="added-years-section">
-                  <h4 class="section-title">📋 Years to be Added ({{ yearEntries().length }})</h4>
-                  <div class="years-list">
-                    @for (entry of yearEntries(); track $index) {
-                      <div class="year-entry-item">
-                        <div class="year-entry-info">
-                          <span class="year-badge-entry">{{ entry.year }}</span>
-                          <div class="year-entry-details">
-                            <span class="entry-amount">₹{{ entry.invested_amount.toLocaleString('en-IN') }}</span>
-                            @if (entry.interest_earned > 0) {
-                              <span class="entry-interest">+₹{{ entry.interest_earned.toLocaleString('en-IN') }}</span>
-                            }
-                          </div>
-                        </div>
-                        <div class="year-entry-actions">
-                          <button type="button" class="btn-icon edit" (click)="editYearEntry($index)" title="Edit">
-                            ✏️
-                          </button>
-                          <button type="button" class="btn-icon delete" (click)="removeYearEntry($index)" title="Remove">
-                            🗑️
-                          </button>
+            <!-- Added Years List -->
+            @if (yearEntries().length > 0) {
+              <div class="added-years-section">
+                <h4 class="section-title">📋 Years to be Added ({{ yearEntries().length }})</h4>
+                <div class="years-list">
+                  @for (entry of yearEntries(); track $index) {
+                    <div class="year-entry-item">
+                      <div class="year-entry-info">
+                        <span class="year-badge-entry">{{ entry.year }}</span>
+                        <div class="year-entry-details">
+                          <span class="entry-amount">₹{{ entry.invested_amount.toLocaleString('en-IN') }}</span>
+                          @if (entry.interest_earned > 0) {
+                            <span class="entry-interest">+₹{{ entry.interest_earned.toLocaleString('en-IN') }}</span>
+                          }
                         </div>
                       </div>
-                    }
-                  </div>
+                      <div class="year-entry-actions">
+                        <button type="button" class="btn-icon edit" (click)="editYearEntry($index)" title="Edit">
+                          ✏️
+                        </button>
+                        <button type="button" class="btn-icon delete" (click)="removeYearEntry($index)" title="Remove">
+                          🗑️
+                        </button>
+                      </div>
+                    </div>
+                  }
                 </div>
-              }
+              </div>
             }
 
             <!-- Notes -->
@@ -294,6 +405,8 @@
                 placeholder="Additional details about this investment..."></textarea>
             </div>
 
+            }
+
             <!-- Form Actions -->
             <div class="form-actions">
               <button type="button" class="btn-secondary" (click)="closeModals()">Cancel</button>
@@ -301,7 +414,7 @@
                 @if (showAddModal()) {
                   {{ yearEntries().length > 0 ? 'Save All (' + yearEntries().length + ' years)' : 'Add Investment' }}
                 } @else {
-                  ✅ Update Investment
+                  ✅ Update All Years
                 }
               </button>
             </div>
@@ -498,7 +611,6 @@
 
         <div class="modal-footer">
           <button class="btn-secondary" (click)="closeModals()">Close</button>
-          <button class="btn-primary" (click)="openAddModal(); closeModals()">Add New Year</button>
         </div>
       </div>
     </div>

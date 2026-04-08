@@ -11,6 +11,7 @@ import {
 
 // Year Entry interface for multiple years
 interface YearEntry {
+  investment_id?: number;
   year: number;
   invested_amount: number;
   interest_earned: number;
@@ -100,16 +101,28 @@ export class InvestmentPage implements OnInit {
     this.showAddModal.set(true);
   }
 
-  // Open edit modal
+  // Open edit modal - now shows all years for the investment
   protected openEditModal(investment: InvestmentEntry): void {
     this.selectedInvestment.set(investment);
     this.formType.set(investment.type);
     this.formStatus.set(investment.status);
     this.formName.set(investment.name);
-    this.formYear.set(investment.year);
-    this.formInvestedAmount.set(investment.invested_amount);
-    this.formInterestEarned.set(investment.interest_earned || 0);
     this.formNotes.set(investment.notes || '');
+    
+    // Find all years for this investment (same name and type)
+    const allYears = this.investments().filter(inv => 
+      inv.name === investment.name && 
+      inv.type === investment.type
+    ).sort((a, b) => a.year - b.year);
+    
+    // Populate yearEntries with all years
+    this.yearEntries.set(allYears.map(inv => ({
+      investment_id: inv.investment_id,
+      year: inv.year,
+      invested_amount: inv.invested_amount,
+      interest_earned: inv.interest_earned || 0
+    })));
+    
     this.showEditModal.set(true);
   }
 
@@ -203,6 +216,14 @@ export class InvestmentPage implements OnInit {
     this.removeYearEntry(index);
   }
 
+  // Update year entry value (for table editing)
+  protected updateYearEntryValue(index: number, field: keyof YearEntry, value: any): void {
+    const entries = [...this.yearEntries()];
+    const numValue = typeof value === 'string' ? parseFloat(value) || 0 : value;
+    entries[index] = { ...entries[index], [field]: numValue };
+    this.yearEntries.set(entries);
+  }
+
   // Save investment (add)
   protected async saveInvestment(): Promise<void> {
     if (!this.formName() || (!this.yearEntries().length && this.formInvestedAmount() <= 0)) {
@@ -258,28 +279,31 @@ export class InvestmentPage implements OnInit {
     }
   }
 
-  // Update investment
+  // Update investment - now updates all years
   protected async updateInvestment(): Promise<void> {
-    const investment = this.selectedInvestment();
-    if (!investment) return;
-
-    if (!this.formName() || this.formInvestedAmount() <= 0) {
+    if (!this.formName() || this.yearEntries().length === 0) {
       this.showToast('⚠️ Please fill required fields');
       return;
     }
 
     try {
-      await this.investmentService.updateInvestment(investment.investment_id, {
-        type: this.formType(),
-        status: this.formStatus(),
-        name: this.formName(),
-        year: this.formYear(),
-        invested_amount: this.formInvestedAmount(),
-        interest_earned: this.formInterestEarned() || undefined,
-        notes: this.formNotes()
-      });
+      // Update all year entries
+      for (const entry of this.yearEntries()) {
+        if (entry.investment_id) {
+          // Update existing year
+          await this.investmentService.updateInvestment(entry.investment_id, {
+            type: this.formType(),
+            status: this.formStatus(),
+            name: this.formName(),
+            year: entry.year,
+            invested_amount: entry.invested_amount,
+            interest_earned: entry.interest_earned || undefined,
+            notes: this.formNotes()
+          });
+        }
+      }
 
-      this.showToast('✅ Investment updated successfully!');
+      this.showToast(`✅ ${this.yearEntries().length} year(s) updated successfully!`);
       this.closeModals();
     } catch (err) {
       this.showToast('❌ Failed to update investment');
@@ -356,6 +380,21 @@ export class InvestmentPage implements OnInit {
       currency: 'INR',
       maximumFractionDigits: 0
     }).format(amount);
+  }
+
+  // Calculate total invested amount from year entries
+  protected getTotalInvestedAmount(): number {
+    return this.yearEntries().reduce((sum, entry) => sum + entry.invested_amount, 0);
+  }
+
+  // Calculate total interest earned from year entries
+  protected getTotalInterestEarned(): number {
+    return this.yearEntries().reduce((sum, entry) => sum + (entry.interest_earned || 0), 0);
+  }
+
+  // Calculate total current value from year entries
+  protected getTotalCurrentValue(): number {
+    return this.yearEntries().reduce((sum, entry) => sum + entry.invested_amount + (entry.interest_earned || 0), 0);
   }
 
   // Format year
