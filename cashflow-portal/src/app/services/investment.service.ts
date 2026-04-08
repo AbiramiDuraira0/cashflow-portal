@@ -27,22 +27,27 @@ export interface InvestmentEntry {
   type: InvestmentType;
   status: InvestmentStatus;
   name: string;
-  start_date: string;
-  end_date?: string;
+  year: number;
   invested_amount: number;
-  current_value?: number;
-  maturity_value?: number;
-  maturity_date?: string;
-  frequency?: string;
-  units?: number;
-  avg_price?: number;
-  current_price?: number;
-  returns?: number;
-  returns_percentage?: number;
+  interest_earned?: number;
   notes?: string;
   is_deleted: boolean;
   created_at: string;
   updated_at: string;
+}
+
+// Consolidated Investment interface (grouped by name)
+export interface ConsolidatedInvestment {
+  name: string;
+  type: InvestmentType;
+  status: InvestmentStatus;
+  total_invested_amount: number;
+  total_interest_earned: number;
+  current_value: number;
+  years: InvestmentEntry[];
+  earliest_year: number;
+  latest_year: number;
+  years_count: number;
 }
 
 // Form data interface (for create/update)
@@ -50,16 +55,9 @@ export interface InvestmentFormData {
   type: string;
   status: string;
   name: string;
-  start_date: string;
-  end_date?: string;
+  year: number;
   invested_amount: number;
-  current_value?: number;
-  maturity_value?: number;
-  maturity_date?: string;
-  frequency?: string;
-  units?: number;
-  avg_price?: number;
-  current_price?: number;
+  interest_earned?: number;
   notes?: string;
 }
 
@@ -84,18 +82,20 @@ export class InvestmentService {
     this.investmentData().reduce((sum, inv) => sum + inv.invested_amount, 0)
   );
 
+  public readonly totalInterestEarned = computed(() => 
+    this.investmentData()
+      .filter(inv => inv.status === InvestmentStatus.ACTIVE)
+      .reduce((sum, inv) => sum + (inv.interest_earned || 0), 0)
+  );
+
   public readonly totalCurrentValue = computed(() => 
     this.investmentData()
-      .filter(inv => inv.status === InvestmentStatus.ACTIVE && inv.current_value)
-      .reduce((sum, inv) => sum + (inv.current_value || 0), 0)
+      .filter(inv => inv.status === InvestmentStatus.ACTIVE)
+      .reduce((sum, inv) => sum + inv.invested_amount + (inv.interest_earned || 0), 0)
   );
 
   public readonly totalReturns = computed(() => {
-    const invested = this.investmentData()
-      .filter(inv => inv.status === InvestmentStatus.ACTIVE)
-      .reduce((sum, inv) => sum + inv.invested_amount, 0);
-    const current = this.totalCurrentValue();
-    return current - invested;
+    return this.totalInterestEarned();
   });
 
   public readonly totalReturnsPercentage = computed(() => {
@@ -118,6 +118,63 @@ export class InvestmentService {
     this.investmentData().filter(inv => inv.status === InvestmentStatus.TODO)
   );
 
+  // Consolidated investments grouped by name and type
+  public readonly consolidatedInvestments = computed(() => {
+    const grouped = new Map<string, ConsolidatedInvestment>();
+    
+    this.investmentData().forEach(inv => {
+      const key = `${inv.type}|${inv.name}`;
+      
+      if (!grouped.has(key)) {
+        grouped.set(key, {
+          name: inv.name,
+          type: inv.type,
+          status: inv.status,
+          total_invested_amount: 0,
+          total_interest_earned: 0,
+          current_value: 0,
+          years: [],
+          earliest_year: inv.year,
+          latest_year: inv.year,
+          years_count: 0
+        });
+      }
+      
+      const consolidated = grouped.get(key)!;
+      consolidated.total_invested_amount += inv.invested_amount;
+      consolidated.total_interest_earned += inv.interest_earned || 0;
+      consolidated.current_value += inv.invested_amount + (inv.interest_earned || 0);
+      consolidated.years.push(inv);
+      consolidated.earliest_year = Math.min(consolidated.earliest_year, inv.year);
+      consolidated.latest_year = Math.max(consolidated.latest_year, inv.year);
+      consolidated.years_count = consolidated.years.length;
+      
+      // Update status to Active if any year is Active
+      if (inv.status === InvestmentStatus.ACTIVE) {
+        consolidated.status = InvestmentStatus.ACTIVE;
+      }
+    });
+    
+    // Sort years within each consolidated investment
+    grouped.forEach(consolidated => {
+      consolidated.years.sort((a, b) => a.year - b.year);
+    });
+    
+    return Array.from(grouped.values());
+  });
+
+  public readonly activeConsolidatedInvestments = computed(() => 
+    this.consolidatedInvestments().filter(inv => inv.status === InvestmentStatus.ACTIVE)
+  );
+
+  public readonly pastConsolidatedInvestments = computed(() => 
+    this.consolidatedInvestments().filter(inv => inv.status === InvestmentStatus.PAST)
+  );
+
+  public readonly todoConsolidatedInvestments = computed(() => 
+    this.consolidatedInvestments().filter(inv => inv.status === InvestmentStatus.TODO)
+  );
+
   constructor() {
     // Auto-load on service initialization
     this.loadInvestmentData();
@@ -133,7 +190,7 @@ export class InvestmentService {
         .from('investment')
         .select('*')
         .eq('is_deleted', false)
-        .order('start_date', { ascending: false });
+        .order('year', { ascending: false });
 
       if (error) throw error;
 

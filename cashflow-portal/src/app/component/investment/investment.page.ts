@@ -4,9 +4,17 @@ import { FormsModule } from '@angular/forms';
 import { 
   InvestmentService, 
   InvestmentEntry, 
+  ConsolidatedInvestment,
   InvestmentType, 
   InvestmentStatus 
 } from '../../services/investment.service';
+
+// Year Entry interface for multiple years
+interface YearEntry {
+  year: number;
+  invested_amount: number;
+  interest_earned: number;
+}
 
 @Component({
   selector: 'app-investment',
@@ -30,28 +38,28 @@ export class InvestmentPage implements OnInit {
   protected showEditModal = signal<boolean>(false);
   protected showDeleteModal = signal<boolean>(false);
   protected showDetailsModal = signal<boolean>(false);
+  protected showYearlyDetailsModal = signal<boolean>(false);
   protected selectedInvestment = signal<InvestmentEntry | null>(null);
+  protected selectedConsolidated = signal<ConsolidatedInvestment | null>(null);
   protected toastMessage = signal<string>('');
   protected toastVisible = signal<boolean>(false);
 
   // Form data signals
-  protected formType = signal<InvestmentType>(InvestmentType.MUTUAL_FUND_SIP);
+  protected formType = signal<InvestmentType>(InvestmentType.PPF);
   protected formStatus = signal<InvestmentStatus>(InvestmentStatus.ACTIVE);
   protected formName = signal<string>('');
-  protected formStartDate = signal<string>('');
-  protected formEndDate = signal<string>('');
+  protected formYear = signal<number>(new Date().getFullYear());
   protected formInvestedAmount = signal<number>(0);
-  protected formCurrentValue = signal<number>(0);
-  protected formMaturityValue = signal<number>(0);
-  protected formMaturityDate = signal<string>('');
-  protected formFrequency = signal<string>('');
-  protected formUnits = signal<number>(0);
-  protected formAvgPrice = signal<number>(0);
-  protected formCurrentPrice = signal<number>(0);
+  protected formInterestEarned = signal<number>(0);
   protected formNotes = signal<string>('');
+
+  // Multiple years entries signal
+  protected yearEntries = signal<YearEntry[]>([]);
+  protected showMultipleYears = signal<boolean>(false);
 
   // Get data from service
   protected investments = computed(() => this.investmentService.investments());
+  protected consolidatedInvestments = computed(() => this.investmentService.consolidatedInvestments());
   protected totalInvested = computed(() => this.investmentService.totalInvested());
   protected totalCurrentValue = computed(() => this.investmentService.totalCurrentValue());
   protected totalReturns = computed(() => this.investmentService.totalReturns());
@@ -59,19 +67,22 @@ export class InvestmentPage implements OnInit {
   protected activeInvestments = computed(() => this.investmentService.activeInvestments());
   protected pastInvestments = computed(() => this.investmentService.pastInvestments());
   protected todoInvestments = computed(() => this.investmentService.todoInvestments());
+  protected activeConsolidatedInvestments = computed(() => this.investmentService.activeConsolidatedInvestments());
+  protected pastConsolidatedInvestments = computed(() => this.investmentService.pastConsolidatedInvestments());
+  protected todoConsolidatedInvestments = computed(() => this.investmentService.todoConsolidatedInvestments());
 
-  // Filtered investments based on selected tab
-  protected filteredInvestments = computed(() => {
+  // Filtered investments based on selected tab (consolidated view)
+  protected filteredConsolidatedInvestments = computed(() => {
     const tab = this.selectedTab();
     switch (tab) {
       case 'active':
-        return this.activeInvestments();
+        return this.activeConsolidatedInvestments();
       case 'past':
-        return this.pastInvestments();
+        return this.pastConsolidatedInvestments();
       case 'todo':
-        return this.todoInvestments();
+        return this.todoConsolidatedInvestments();
       default:
-        return this.investments();
+        return this.consolidatedInvestments();
     }
   });
 
@@ -95,16 +106,9 @@ export class InvestmentPage implements OnInit {
     this.formType.set(investment.type);
     this.formStatus.set(investment.status);
     this.formName.set(investment.name);
-    this.formStartDate.set(investment.start_date);
-    this.formEndDate.set(investment.end_date || '');
+    this.formYear.set(investment.year);
     this.formInvestedAmount.set(investment.invested_amount);
-    this.formCurrentValue.set(investment.current_value || 0);
-    this.formMaturityValue.set(investment.maturity_value || 0);
-    this.formMaturityDate.set(investment.maturity_date || '');
-    this.formFrequency.set(investment.frequency || '');
-    this.formUnits.set(investment.units || 0);
-    this.formAvgPrice.set(investment.avg_price || 0);
-    this.formCurrentPrice.set(investment.current_price || 0);
+    this.formInterestEarned.set(investment.interest_earned || 0);
     this.formNotes.set(investment.notes || '');
     this.showEditModal.set(true);
   }
@@ -121,59 +125,132 @@ export class InvestmentPage implements OnInit {
     this.showDetailsModal.set(true);
   }
 
+  // Open yearly details modal for consolidated investment
+  protected openYearlyDetailsModal(consolidated: ConsolidatedInvestment): void {
+    this.selectedConsolidated.set(consolidated);
+    this.showYearlyDetailsModal.set(true);
+  }
+
   // Close all modals
   protected closeModals(): void {
     this.showAddModal.set(false);
     this.showEditModal.set(false);
     this.showDeleteModal.set(false);
     this.showDetailsModal.set(false);
+    this.showYearlyDetailsModal.set(false);
     this.selectedInvestment.set(null);
+    this.selectedConsolidated.set(null);
   }
 
   // Reset form
   protected resetForm(): void {
-    this.formType.set(InvestmentType.MUTUAL_FUND_SIP);
+    this.formType.set(InvestmentType.PPF);
     this.formStatus.set(InvestmentStatus.ACTIVE);
     this.formName.set('');
-    this.formStartDate.set('');
-    this.formEndDate.set('');
+    this.formYear.set(new Date().getFullYear());
     this.formInvestedAmount.set(0);
-    this.formCurrentValue.set(0);
-    this.formMaturityValue.set(0);
-    this.formMaturityDate.set('');
-    this.formFrequency.set('');
-    this.formUnits.set(0);
-    this.formAvgPrice.set(0);
-    this.formCurrentPrice.set(0);
+    this.formInterestEarned.set(0);
     this.formNotes.set('');
+    this.yearEntries.set([]);
+    this.showMultipleYears.set(false);
+  }
+
+  // Add current form data to year entries
+  protected addYearEntry(): void {
+    if (this.formYear() && this.formInvestedAmount() > 0) {
+      const newEntry: YearEntry = {
+        year: this.formYear(),
+        invested_amount: this.formInvestedAmount(),
+        interest_earned: this.formInterestEarned()
+      };
+      
+      // Check if year already exists
+      const existingIndex = this.yearEntries().findIndex(e => e.year === newEntry.year);
+      if (existingIndex >= 0) {
+        this.showToast('⚠️ Year already added! Edit or remove it first.');
+        return;
+      }
+      
+      this.yearEntries.set([...this.yearEntries(), newEntry]);
+      this.showMultipleYears.set(true);
+      
+      // Reset only year-specific fields
+      this.formYear.set(this.formYear() + 1);
+      this.formInvestedAmount.set(0);
+      this.formInterestEarned.set(0);
+      
+      this.showToast('✅ Year added! Add more or save all.');
+    } else {
+      this.showToast('⚠️ Please fill year and invested amount');
+    }
+  }
+
+  // Remove year entry
+  protected removeYearEntry(index: number): void {
+    const entries = this.yearEntries().filter((_, i) => i !== index);
+    this.yearEntries.set(entries);
+    if (entries.length === 0) {
+      this.showMultipleYears.set(false);
+    }
+  }
+
+  // Edit year entry
+  protected editYearEntry(index: number): void {
+    const entry = this.yearEntries()[index];
+    this.formYear.set(entry.year);
+    this.formInvestedAmount.set(entry.invested_amount);
+    this.formInterestEarned.set(entry.interest_earned);
+    this.removeYearEntry(index);
   }
 
   // Save investment (add)
   protected async saveInvestment(): Promise<void> {
-    if (!this.formName() || this.formInvestedAmount() <= 0) {
+    if (!this.formName() || (!this.yearEntries().length && this.formInvestedAmount() <= 0)) {
       this.showToast('⚠️ Please fill required fields');
       return;
     }
 
     try {
-      await this.investmentService.addInvestment({
-        type: this.formType(),
-        status: this.formStatus(),
-        name: this.formName(),
-        start_date: this.formStartDate(),
-        end_date: this.formEndDate() || undefined,
-        invested_amount: this.formInvestedAmount(),
-        current_value: this.formCurrentValue() || undefined,
-        maturity_value: this.formMaturityValue() || undefined,
-        maturity_date: this.formMaturityDate() || undefined,
-        frequency: this.formFrequency() || undefined,
-        units: this.formUnits() || undefined,
-        avg_price: this.formAvgPrice() || undefined,
-        current_price: this.formCurrentPrice() || undefined,
-        notes: this.formNotes()
-      });
+      // If there are multiple year entries, save them all
+      if (this.yearEntries().length > 0) {
+        // Add current form entry if it has data
+        if (this.formYear() && this.formInvestedAmount() > 0) {
+          this.yearEntries.set([...this.yearEntries(), {
+            year: this.formYear(),
+            invested_amount: this.formInvestedAmount(),
+            interest_earned: this.formInterestEarned()
+          }]);
+        }
 
-      this.showToast('✅ Investment added successfully!');
+        // Save all year entries
+        for (const entry of this.yearEntries()) {
+          await this.investmentService.addInvestment({
+            type: this.formType(),
+            status: this.formStatus(),
+            name: this.formName(),
+            year: entry.year,
+            invested_amount: entry.invested_amount,
+            interest_earned: entry.interest_earned || undefined,
+            notes: this.formNotes()
+          });
+        }
+        
+        this.showToast(`✅ ${this.yearEntries().length} year(s) added successfully!`);
+      } else {
+        // Save single year entry
+        await this.investmentService.addInvestment({
+          type: this.formType(),
+          status: this.formStatus(),
+          name: this.formName(),
+          year: this.formYear(),
+          invested_amount: this.formInvestedAmount(),
+          interest_earned: this.formInterestEarned() || undefined,
+          notes: this.formNotes()
+        });
+        
+        this.showToast('✅ Investment added successfully!');
+      }
+      
       this.closeModals();
     } catch (err) {
       this.showToast('❌ Failed to add investment');
@@ -196,16 +273,9 @@ export class InvestmentPage implements OnInit {
         type: this.formType(),
         status: this.formStatus(),
         name: this.formName(),
-        start_date: this.formStartDate(),
-        end_date: this.formEndDate() || undefined,
+        year: this.formYear(),
         invested_amount: this.formInvestedAmount(),
-        current_value: this.formCurrentValue() || undefined,
-        maturity_value: this.formMaturityValue() || undefined,
-        maturity_date: this.formMaturityDate() || undefined,
-        frequency: this.formFrequency() || undefined,
-        units: this.formUnits() || undefined,
-        avg_price: this.formAvgPrice() || undefined,
-        current_price: this.formCurrentPrice() || undefined,
+        interest_earned: this.formInterestEarned() || undefined,
         notes: this.formNotes()
       });
 
@@ -288,20 +358,20 @@ export class InvestmentPage implements OnInit {
     }).format(amount);
   }
 
-  // Format date
-  protected formatDate(dateString: string): string {
-    if (!dateString) return '-';
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-IN', { 
-      day: '2-digit', 
-      month: 'short', 
-      year: 'numeric' 
-    });
+  // Format year
+  protected formatYear(year: number): string {
+    return year.toString();
   }
 
   // Get returns color class
-  protected getReturnsColorClass(returns: number | undefined): string {
-    if (!returns) return 'neutral';
-    return returns >= 0 ? 'positive' : 'negative';
+  protected getReturnsColorClass(interestEarned: number | undefined): string {
+    if (!interestEarned || interestEarned === 0) return 'neutral';
+    return interestEarned >= 0 ? 'positive' : 'negative';
+  }
+
+  // Calculate returns percentage
+  protected calculateReturnsPercentage(interestEarned: number, investedAmount: number): number {
+    if (investedAmount === 0) return 0;
+    return (interestEarned / investedAmount) * 100;
   }
 }

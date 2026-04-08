@@ -56,6 +56,7 @@
   .btn-primary {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 8px;
     padding: 12px 24px;
     background: linear-gradient(135deg, #ec4899 0%, #db2777 100%);
@@ -67,10 +68,12 @@
     cursor: pointer;
     box-shadow: 0 4px 6px rgba(236, 72, 153, 0.25);
     transition: all 0.3s ease;
+    font-family: 'Times New Roman', Times, serif;
 
     &:hover {
       transform: translateY(-2px);
       box-shadow: 0 6px 12px rgba(236, 72, 153, 0.35);
+      background: linear-gradient(135deg, #db2777 0%, #be185d 100%);
     }
 
     &:active {
@@ -537,11 +540,12 @@
 
 .card-actions {
   display: flex;
-  gap: 4px;
-  padding: 10px 16px;
+  gap: 8px;
+  padding: 12px 16px;
   background: transparent;
   border-top: 1px solid #f3f4f6;
-  justify-content: flex-end;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .action-btn {
@@ -557,6 +561,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
 
   &:hover {
     background: #f3f4f6;
@@ -570,6 +575,71 @@
   &.view-btn:hover { background: #eff6ff; }
   &.edit-btn:hover { background: #fffbeb; }
   &.delete-btn:hover { background: #fff1f2; }
+}
+
+.action-btn-large {
+  width: auto;
+  padding: 8px 16px;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: 'Times New Roman', Times, serif;
+}
+
+.view-btn-large {
+  flex: 1;
+  padding: 10px 16px;
+  background: linear-gradient(135deg, #ec4899 0%, #db2777 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-family: 'Times New Roman', Times, serif;
+
+  &:hover {
+    background: linear-gradient(135deg, #db2777 0%, #be185d 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(236, 72, 153, 0.3);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+// ==================== CONSOLIDATED CARD SPECIFIC STYLES ====================
+.consolidated-card {
+  .years-info {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 12px;
+    background: #f9fafb;
+    border-radius: 8px;
+    margin-top: 12px;
+    font-size: 13px;
+
+    .years-badge {
+      padding: 4px 10px;
+      background: #fce7f3;
+      color: #db2777;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 12px;
+    }
+
+    .year-range {
+      color: #6b7280;
+      font-weight: 500;
+    }
+  }
 }
 
 // ==================== EMPTY STATE ====================
@@ -603,7 +673,31 @@
   }
 
   .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     margin: 0 auto;
+    padding: 12px 24px;
+    background: linear-gradient(135deg, #ec4899 0%, #db2777 100%);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 4px 6px rgba(236, 72, 153, 0.25);
+    transition: all 0.3s ease;
+    font-family: 'Times New Roman', Times, serif;
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 12px rgba(236, 72, 153, 0.35);
+      background: linear-gradient(135deg, #db2777 0%, #be185d 100%);
+    }
+
+    &:active {
+      transform: translateY(0);
+    }
   }
 }
 
@@ -723,6 +817,51 @@
   padding: 20px 24px;
   background: #f9fafb;
   border-top: 1px solid #e5e7eb;
+
+  button {
+    flex: 1;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: 'Times New Roman', Times, serif;
+  }
+
+  .btn-secondary {
+    background: #f3f4f6;
+    color: #6b7280;
+
+    &:hover {
+      background: #e5e7eb;
+    }
+  }
+
+  .btn-primary {
+    background: linear-gradient(135deg, #ec4899 0%, #db2777 100%);
+    color: white;
+
+    &:hover {
+      background: linear-gradient(135deg, #db2777 0%, #be185d 100%);
+      box-shadow: 0 4px 12px rgba(236, 72, 153, 0.3);
+      transform: translateY(-2px);
+    }
+
+    &:active {
+      transform: translateY(0);
+    }
+  }
+
+  .btn-danger {
+    background: #ef4444;
+    color: white;
+
+    &:hover {
+      background: #dc2626;
+    }
+  }
 }
 
 // ==================== FORM STYLES ====================
@@ -735,6 +874,12 @@
     font-size: 13px;
     font-weight: 600;
     color: #374151;
+
+    .required {
+      color: #ef4444;
+      margin-left: 2px;
+      font-weight: 700;
+    }
   }
 
   input, select, textarea {
@@ -813,6 +958,162 @@
 
     &:hover {
       background: #dc2626;
+    }
+  }
+}
+
+// ==================== MULTIPLE YEARS SECTION ====================
+.add-year-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 20px 0;
+  padding: 16px;
+  background: #f0fdf4;
+  border: 2px dashed #86efac;
+  border-radius: 12px;
+  align-items: center;
+
+  .btn-add-year {
+    padding: 12px 24px;
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: 'Times New Roman', Times, serif;
+
+    &:hover {
+      background: linear-gradient(135deg, #059669 0%, #047857 100%);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    }
+
+    &:active {
+      transform: translateY(0);
+    }
+  }
+
+  .help-text {
+    font-size: 12px;
+    color: #059669;
+    font-style: italic;
+  }
+}
+
+.added-years-section {
+  margin: 20px 0;
+  padding: 16px;
+  background: #fef3c7;
+  border: 1px solid #fbbf24;
+  border-radius: 12px;
+
+  .section-title {
+    margin: 0 0 16px;
+    font-size: 14px;
+    font-weight: 700;
+    color: #92400e;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .years-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .year-entry-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    background: white;
+    border-radius: 10px;
+    border: 1px solid #fed7aa;
+    transition: all 0.2s ease;
+
+    &:hover {
+      border-color: #fb923c;
+      box-shadow: 0 2px 8px rgba(251, 146, 60, 0.15);
+    }
+
+    .year-entry-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex: 1;
+
+      .year-badge-entry {
+        padding: 6px 12px;
+        background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+        color: white;
+        border-radius: 8px;
+        font-weight: 700;
+        font-size: 14px;
+      }
+
+      .year-entry-details {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+
+        .entry-amount {
+          font-size: 15px;
+          font-weight: 700;
+          color: #1f2937;
+        }
+
+        .entry-interest {
+          font-size: 12px;
+          font-weight: 600;
+          color: #059669;
+        }
+      }
+    }
+
+    .year-entry-actions {
+      display: flex;
+      gap: 6px;
+
+      .btn-icon {
+        width: 32px;
+        height: 32px;
+        padding: 0;
+        border: none;
+        border-radius: 6px;
+        font-size: 14px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        background: transparent;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        &:hover {
+          transform: scale(1.1);
+        }
+
+        &:active {
+          transform: scale(0.95);
+        }
+
+        &.edit {
+          &:hover {
+            background: #fffbeb;
+          }
+        }
+
+        &.delete {
+          &:hover {
+            background: #fff1f2;
+          }
+        }
+      }
     }
   }
 }
@@ -920,10 +1221,250 @@
   }
 }
 
+// ==================== YEARLY DETAILS MODAL ====================
+.yearly-details-modal {
+  max-width: 900px;
+  max-height: 90vh;
+
+  @media (max-width: 768px) {
+    max-width: 100%;
+    width: 100%;
+  }
+}
+
+.summary-section {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  padding: 20px;
+  background: linear-gradient(135deg, #fce7f3 0%, #ffffff 100%);
+  border-radius: 12px;
+  margin-bottom: 24px;
+
+  @media (max-width: 768px) {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    padding: 16px;
+  }
+
+  .summary-item {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+
+    .summary-label {
+      font-size: 11px;
+      color: #6b7280;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-weight: 600;
+    }
+
+    .summary-value {
+      font-size: 18px;
+      font-weight: 700;
+      color: #1f2937;
+
+      &.positive {
+        color: #db2777;
+      }
+
+      &.highlight {
+        color: #ec4899;
+        font-size: 20px;
+      }
+    }
+  }
+}
+
+.table-container {
+  overflow-x: auto;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+
+  &::-webkit-scrollbar {
+    height: 8px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: #f3f4f6;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: #d1d5db;
+    border-radius: 4px;
+
+    &:hover {
+      background: #9ca3af;
+    }
+  }
+}
+
+.yearly-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  background: white;
+
+  thead {
+    background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+
+    tr {
+      th {
+        padding: 14px 16px;
+        text-align: left;
+        font-weight: 700;
+        color: #374151;
+        border-bottom: 2px solid #e5e7eb;
+        white-space: nowrap;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+
+        @media (max-width: 768px) {
+          padding: 12px 10px;
+          font-size: 11px;
+        }
+      }
+    }
+  }
+
+  tbody {
+    tr {
+      border-bottom: 1px solid #f3f4f6;
+      transition: background 0.2s ease;
+
+      &:hover {
+        background: #f9fafb;
+      }
+
+      td {
+        padding: 14px 16px;
+        color: #1f2937;
+
+        @media (max-width: 768px) {
+          padding: 12px 10px;
+          font-size: 13px;
+        }
+      }
+
+      .year-cell {
+        .year-badge {
+          padding: 6px 12px;
+          background: #fce7f3;
+          color: #db2777;
+          border-radius: 8px;
+          font-weight: 700;
+          font-size: 14px;
+          display: inline-block;
+        }
+      }
+
+      .amount-cell {
+        font-weight: 600;
+        color: #374151;
+      }
+
+      .interest-cell {
+        font-weight: 600;
+
+        &.positive {
+          color: #db2777;
+        }
+      }
+
+      .value-cell {
+        font-weight: 700;
+        color: #1f2937;
+      }
+
+      .returns-cell {
+        font-weight: 700;
+
+        &.positive {
+          color: #db2777;
+        }
+      }
+
+      .actions-cell {
+        display: flex;
+        gap: 6px;
+        align-items: center;
+      }
+    }
+  }
+
+  tfoot {
+    background: linear-gradient(135deg, #fce7f3 0%, #fdf2f8 100%);
+    position: sticky;
+    bottom: 0;
+
+    .total-row {
+      border-top: 3px solid #ec4899;
+
+      td {
+        padding: 16px;
+        font-size: 15px;
+        color: #1f2937;
+        font-weight: 600;
+
+        @media (max-width: 768px) {
+          padding: 12px 10px;
+          font-size: 14px;
+        }
+
+        strong {
+          color: #db2777;
+          font-weight: 800;
+        }
+
+        &:first-child strong {
+          color: #1f2937;
+        }
+      }
+    }
+  }
+}
+
+.table-action-btn {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  &:hover {
+    background: #f3f4f6;
+    transform: scale(1.1);
+  }
+
+  &:active {
+    transform: scale(0.95);
+  }
+
+  &.edit-btn:hover {
+    background: #fffbeb;
+  }
+
+  &.delete-btn:hover {
+    background: #fff1f2;
+  }
+}
+
 // ==================== TOAST NOTIFICATION ====================
 .toast-notification {
   position: fixed;
-  bottom: 24px;
+  top: 24px;
   right: 24px;
   padding: 16px 24px;
   background: #1f2937;
@@ -933,32 +1474,32 @@
   font-size: 14px;
   font-weight: 500;
   z-index: 2000;
-  animation: slideInRight 0.3s ease, slideOutRight 0.3s ease 2.7s;
+  animation: slideInDown 0.3s ease, slideOutUp 0.3s ease 2.7s;
 
-  @keyframes slideInRight {
+  @keyframes slideInDown {
     from {
       opacity: 0;
-      transform: translateX(100%);
+      transform: translateY(-100%);
     }
     to {
       opacity: 1;
-      transform: translateX(0);
+      transform: translateY(0);
     }
   }
 
-  @keyframes slideOutRight {
+  @keyframes slideOutUp {
     from {
       opacity: 1;
-      transform: translateX(0);
+      transform: translateY(0);
     }
     to {
       opacity: 0;
-      transform: translateX(100%);
+      transform: translateY(-100%);
     }
   }
 
   @media (max-width: 768px) {
-    bottom: 16px;
+    top: 16px;
     right: 16px;
     left: 16px;
     font-size: 13px;
@@ -981,14 +1522,18 @@
   transition: all 0.3s ease;
   z-index: 999;
   display: none;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
 
-  .fab-icon {
-    font-size: 28px;
+  &::before {
+    content: '➕';
   }
 
   &:hover {
     transform: scale(1.1) rotate(90deg);
-    box-shadow: 0 12px 32px rgba(99, 102, 241, 0.5);
+    box-shadow: 0 12px 32px rgba(236, 72, 153, 0.5);
+    background: linear-gradient(135deg, #db2777 0%, #be185d 100%);
   }
 
   &:active {
@@ -997,16 +1542,11 @@
 
   @media (max-width: 768px) {
     display: flex;
-    align-items: center;
-    justify-content: center;
     width: 56px;
     height: 56px;
     bottom: 20px;
     right: 20px;
-
-    .fab-icon {
-      font-size: 24px;
-    }
+    font-size: 28px;
   }
 }
 
