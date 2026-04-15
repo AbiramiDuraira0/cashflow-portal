@@ -80,7 +80,7 @@ export class InvestmentService {
   // Computed analytics
   public readonly totalInvested = computed(() => 
     this.investmentData()
-      .filter(inv => inv.status === InvestmentStatus.ACTIVE || inv.status === InvestmentStatus.PAST)
+      .filter(inv => inv.status === InvestmentStatus.ACTIVE)
       .reduce((sum, inv) => sum + inv.invested_amount, 0)
   );
 
@@ -101,9 +101,7 @@ export class InvestmentService {
   });
 
   public readonly totalReturnsPercentage = computed(() => {
-    const invested = this.investmentData()
-      .filter(inv => inv.status === InvestmentStatus.ACTIVE)
-      .reduce((sum, inv) => sum + inv.invested_amount, 0);
+    const invested = this.totalInvested();
     if (invested === 0) return 0;
     return (this.totalReturns() / invested) * 100;
   });
@@ -209,17 +207,20 @@ export class InvestmentService {
   }
 
   // Add new investment
-  async addInvestment(data: InvestmentFormData): Promise<void> {
+  async addInvestment(data: InvestmentFormData): Promise<InvestmentEntry> {
     this.loading.set(true);
     try {
-      const { error } = await this.supabase.db
+      const { data: insertedData, error } = await this.supabase.db
         .from('investment')
-        .insert([data]);
+        .insert([data])
+        .select()
+        .single();
 
       if (error) throw error;
 
       await this.loadInvestmentData();
       console.log('✅ Added investment');
+      return insertedData;
     } catch (err) {
       console.error('❌ Error adding investment:', err);
       throw err;

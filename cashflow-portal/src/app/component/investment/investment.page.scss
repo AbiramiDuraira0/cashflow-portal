@@ -1880,6 +1880,19 @@
   gap: 16px;
   margin-bottom: 32px;
 
+  // Single row layout (for Total Gross modal with 4 cards)
+  &.summary-stats-single-row {
+    grid-template-columns: repeat(4, 1fr);
+
+    @media (max-width: 1024px) {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    @media (max-width: 640px) {
+      grid-template-columns: 1fr;
+    }
+  }
+
   .stat-card {
     padding: 20px;
     background: linear-gradient(135deg, #fef3f8 0%, #ffffff 100%);
@@ -1912,15 +1925,39 @@
   }
 }
 
+// Side-by-side tables grid container
+.tables-grid-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-top: 24px;
+
+  @media (max-width: 968px) {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+}
+
 .breakdown-section {
   margin-bottom: 32px;
+  background: linear-gradient(135deg, #ffffff 0%, #fefefe 100%);
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border: 1px solid #f3f4f6;
+  transition: all 0.3s ease;
+
+  &:hover {
+    box-shadow: 0 4px 16px rgba(236, 72, 153, 0.15);
+    transform: translateY(-2px);
+  }
 
   &:last-child {
     margin-bottom: 0;
   }
 
   .breakdown-title {
-    font-size: 16px;
+    font-size: 15px;
     font-weight: 700;
     color: #1f2937;
     margin: 0 0 16px;
@@ -1928,9 +1965,15 @@
     align-items: center;
     gap: 8px;
     background: linear-gradient(135deg, #fce7f3 0%, #fdf2f8 100%);
-    padding: 12px 16px;
-    border-radius: 8px;
+    padding: 10px 14px;
+    border-radius: 10px;
     border-left: 4px solid #ec4899;
+    font-family: 'Times New Roman', Times, serif;
+
+    @media (max-width: 768px) {
+      font-size: 14px;
+      padding: 8px 12px;
+    }
   }
 }
 
@@ -1942,24 +1985,55 @@
 
 .breakdown-table {
   width: 100%;
-  border-collapse: collapse;
-  background: white;
+  overflow: hidden;
+  border-radius: 12px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+  }
 
   thead {
     background: linear-gradient(135deg, #ec4899 0%, #db2777 100%);
     color: white;
 
     th {
-      padding: 12px;
+      padding: 14px 16px;
       text-align: left;
-      font-size: 12px;
-      font-weight: 600;
+      font-size: 13px;
+      font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.5px;
+      font-family: 'Times New Roman', Times, serif;
 
       @media (max-width: 768px) {
-        padding: 10px 8px;
-        font-size: 11px;
+        padding: 12px 10px;
+        font-size: 12px;
+      }
+
+      &.sortable {
+        cursor: pointer;
+        user-select: none;
+        transition: all 0.2s ease;
+        position: relative;
+
+        &:hover {
+          background: rgba(255, 255, 255, 0.1);
+        }
+
+        .sort-icon {
+          margin-left: 6px;
+          font-size: 11px;
+          opacity: 0.8;
+          display: inline-block;
+          transition: opacity 0.2s ease;
+        }
+
+        &:hover .sort-icon {
+          opacity: 1;
+        }
       }
     }
   }
@@ -1967,10 +2041,11 @@
   tbody {
     tr {
       border-bottom: 1px solid #f3f4f6;
-      transition: background 0.2s ease;
+      transition: all 0.2s ease;
 
       &:hover {
-        background: #fef3f8;
+        background: linear-gradient(135deg, #fef3f8 0%, #fce7f3 100%);
+        transform: scale(1.01);
       }
 
       &:last-child {
@@ -1979,13 +2054,64 @@
     }
 
     td {
-      padding: 12px;
+      padding: 14px 16px;
       font-size: 14px;
       color: #1f2937;
+      font-family: 'Times New Roman', Times, serif;
 
       @media (max-width: 768px) {
-        padding: 10px 8px;
+        padding: 12px 10px;
         font-size: 13px;
+      }
+
+      &.amount {
+        font-weight: 600;
+        color: #ec4899;
+        text-align: right;
+
+        &.highlight {
+          font-weight: 700;
+          background: linear-gradient(135deg, #fef3f8 0%, #fce7f3 100%);
+          border-radius: 6px;
+          padding: 10px 16px;
+        }
+      }
+    }
+
+    .type-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px;
+      background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+      color: #166534;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 13px;
+      border: 1px solid #bbf7d0;
+      transition: all 0.2s ease;
+
+      &:hover {
+        background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+        transform: scale(1.05);
+      }
+    }
+
+    .year-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 6px 14px;
+      background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+      color: #1e40af;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 13px;
+      border: 1px solid #bfdbfe;
+      transition: all 0.2s ease;
+
+      &:hover {
+        background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+        transform: scale(1.05);
       }
     }
 
@@ -2059,4 +2185,48 @@
       }
     }
   }
+
+  tfoot {
+    background: linear-gradient(135deg, #fef3f8 0%, #fce7f3 100%);
+    border-top: 2px solid #ec4899;
+
+    .total-row {
+      &:hover {
+        background: linear-gradient(135deg, #fce7f3 0%, #fbcfe8 100%);
+      }
+
+      td {
+        padding: 16px;
+        font-size: 15px;
+        font-weight: 700;
+        color: #1f2937;
+        font-family: 'Times New Roman', Times, serif;
+
+        @media (max-width: 768px) {
+          padding: 14px 10px;
+          font-size: 14px;
+        }
+
+        &.amount {
+          color: #be185d;
+          font-size: 16px;
+          text-align: right;
+
+          &.highlight {
+            background: none;
+            padding: 16px;
+          }
+
+          &.positive {
+            color: #059669;
+          }
+        }
+
+        strong {
+          font-weight: 800;
+        }
+      }
+    }
+  }
 }
+

@@ -12,6 +12,10 @@
           <span class="btn-icon">🧮</span>
           <span class="btn-text">EMI Calculator</span>
         </button>
+        <button class="btn-secondary sync-btn" (click)="syncAllDebts()" title="Recalculate all outstanding amounts">
+          <span class="btn-icon">🔃</span>
+          <span class="btn-text">Sync All</span>
+        </button>
         <button class="btn-primary add-debt-btn" (click)="openAddModal()">
           <span class="btn-text">Add Debt/Loan</span>
         </button>
@@ -26,7 +30,7 @@
       <div class="card-icon">&#128184;</div>
       <div class="card-content">
         <div class="card-label">Current Debts (Outstanding)</div>
-        <div class="card-value">{{ formatCurrency(summary().totalDebts) }}</div>
+        <div class="card-value">{{ formatCurrency(enhancedSummary().totalDebts) }}</div>
         <div class="card-meta">Money you owe</div>
       </div>
     </div>
@@ -36,7 +40,7 @@
       <div class="card-icon">&#128200;</div>
       <div class="card-content">
         <div class="card-label">Total Interest Paid</div>
-        <div class="card-value">{{ formatCurrency(summary().totalInterestPaid) }}</div>
+        <div class="card-value">{{ formatCurrency(enhancedSummary().totalInterestPaid) }}</div>
         <div class="card-meta">Calculated interest</div>
       </div>
     </div>
@@ -158,11 +162,11 @@
               </div>
               <div class="amount-item paid">
                 <span class="amount-label">Paid</span>
-                <span class="amount-value">{{ formatCurrency(debt.amountPaid) }}</span>
+                <span class="amount-value">{{ formatCurrency(getAmountPaid(debt)) }}</span>
               </div>
               <div class="amount-item percentage">
                 <span class="amount-label">% Paid</span>
-                <span class="amount-value">{{ getDebtProgress(debt).toFixed(1) }}%</span>
+                <span class="amount-value">{{ getPercentPaid(debt).toFixed(1) }}%</span>
               </div>
             </div>
 
@@ -171,7 +175,7 @@
               <div class="amount-row outstanding-row">
                 <div class="amount-item outstanding">
                   <span class="amount-label">Outstanding</span>
-                  <span class="amount-value">{{ formatCurrency(debt.outstandingAmount) }}</span>
+                  <span class="amount-value">{{ formatCurrency(getOutstanding(debt)) }}</span>
                 </div>
               </div>
             }
@@ -805,10 +809,10 @@
                       </span>
                     </td>
                     <td class="amount-cell">{{ formatCurrency(debt.principalAmount) }}</td>
-                    <td class="amount-cell paid">{{ formatCurrency(debt.amountPaid) }}</td>
+                    <td class="amount-cell paid">{{ formatCurrency(getAmountPaid(debt)) }}</td>
                     <td class="amount-cell interest">{{ formatCurrency(getInterestPaid(debt)) }}</td>
-                    <td class="amount-cell outstanding">{{ formatCurrency(debt.outstandingAmount) }}</td>
-                    <td class="percent-cell">{{ getDebtProgress(debt).toFixed(1) }}%</td>
+                    <td class="amount-cell outstanding">{{ formatCurrency(getOutstanding(debt)) }}</td>
+                    <td class="percent-cell">{{ getPercentPaid(debt).toFixed(1) }}%</td>
                   </tr>
                 }
               </tbody>

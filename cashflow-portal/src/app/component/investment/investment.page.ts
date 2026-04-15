@@ -41,11 +41,25 @@ export class InvestmentPage implements OnInit {
   protected showDetailsModal = signal<boolean>(false);
   protected showYearlyDetailsModal = signal<boolean>(false);
   protected showSummaryModal = signal<boolean>(false);
-  protected summaryModalType = signal<'invested' | 'value' | 'returns' | null>(null);
+  protected summaryModalType = signal<'invested' | 'interest' | 'gross' | null>(null);
   protected selectedInvestment = signal<InvestmentEntry | null>(null);
   protected selectedConsolidated = signal<ConsolidatedInvestment | null>(null);
   protected toastMessage = signal<string>('');
   protected toastVisible = signal<boolean>(false);
+
+  // Sorting signals for tables
+  protected sortInvestedByType = signal<'asc' | 'desc' | null>(null);
+  protected sortInvestedByYear = signal<'asc' | 'desc' | null>(null);
+  protected sortInvestedByTypeName = signal<'asc' | 'desc' | null>(null);  // Sort by Type name
+  protected sortInvestedByYearValue = signal<'asc' | 'desc' | null>(null); // Sort by Year value
+  protected sortInterestByType = signal<'asc' | 'desc' | null>(null);
+  protected sortInterestByYear = signal<'asc' | 'desc' | null>(null);
+  protected sortInterestByTypeName = signal<'asc' | 'desc' | null>(null);  // Sort by Type name
+  protected sortInterestByYearValue = signal<'asc' | 'desc' | null>(null); // Sort by Year value
+  protected sortGrossByType = signal<'asc' | 'desc' | null>(null);
+  protected sortGrossByTypeName = signal<'asc' | 'desc' | null>(null);      // Sort by Type name
+  protected sortGrossByInvested = signal<'asc' | 'desc' | null>(null);      // Sort by Amount Invested
+  protected sortGrossByInterest = signal<'asc' | 'desc' | null>(null);      // Sort by Interest Earned
 
   // Form data signals
   protected formType = signal<InvestmentType | ''>(InvestmentType.PPF);
@@ -79,11 +93,12 @@ export class InvestmentPage implements OnInit {
     this.activeInvestments().length + this.pastInvestments().length
   );
 
-  // Count of unique investment types (Active + Past only)
+  // Count of unique investment types (Active + Past + Todo - ALL)
   protected uniqueInvestmentTypesCount = computed(() => {
     const types = new Set<InvestmentType>();
-    this.activeInvestments().forEach(inv => types.add(inv.type));
-    this.pastInvestments().forEach(inv => types.add(inv.type));
+    this.activeConsolidatedInvestments().forEach(inv => types.add(inv.type));
+    this.pastConsolidatedInvestments().forEach(inv => types.add(inv.type));
+    this.todoConsolidatedInvestments().forEach(inv => types.add(inv.type));
     return types.size;
   });
 
@@ -115,11 +130,29 @@ export class InvestmentPage implements OnInit {
       breakdown.set(inv.type, existing);
     });
 
-    return Array.from(breakdown.entries()).map(([type, data]) => ({
+    let result = Array.from(breakdown.entries()).map(([type, data]) => ({
       type,
       ...data,
       percentage: (data.invested / this.totalInvested()) * 100
-    })).sort((a, b) => b.invested - a.invested);
+    }));
+
+    // Apply sorting for Amount column
+    const sortDirAmount = this.sortInvestedByType();
+    const sortDirType = this.sortInvestedByTypeName();
+    
+    if (sortDirType === 'asc') {
+      result.sort((a, b) => a.type.localeCompare(b.type));
+    } else if (sortDirType === 'desc') {
+      result.sort((a, b) => b.type.localeCompare(a.type));
+    } else if (sortDirAmount === 'asc') {
+      result.sort((a, b) => a.invested - b.invested);
+    } else if (sortDirAmount === 'desc') {
+      result.sort((a, b) => b.invested - a.invested);
+    } else {
+      result.sort((a, b) => b.invested - a.invested); // Default: highest first
+    }
+
+    return result;
   });
 
   // Year-wise breakdown
@@ -134,10 +167,28 @@ export class InvestmentPage implements OnInit {
       breakdown.set(inv.year, existing);
     });
 
-    return Array.from(breakdown.entries()).map(([year, data]) => ({
+    let result = Array.from(breakdown.entries()).map(([year, data]) => ({
       year,
       ...data
-    })).sort((a, b) => b.year - a.year);
+    }));
+
+    // Apply sorting for Amount column or Year column
+    const sortDirAmount = this.sortInvestedByYear();
+    const sortDirYear = this.sortInvestedByYearValue();
+    
+    if (sortDirYear === 'asc') {
+      result.sort((a, b) => a.year - b.year);
+    } else if (sortDirYear === 'desc') {
+      result.sort((a, b) => b.year - a.year);
+    } else if (sortDirAmount === 'asc') {
+      result.sort((a, b) => a.invested - b.invested);
+    } else if (sortDirAmount === 'desc') {
+      result.sort((a, b) => b.invested - a.invested);
+    } else {
+      result.sort((a, b) => b.year - a.year); // Default: newest year first
+    }
+
+    return result;
   });
 
   // Investment types array for dropdown
@@ -211,7 +262,7 @@ export class InvestmentPage implements OnInit {
   }
 
   // Open summary modal
-  protected openSummaryModal(type: 'invested' | 'value' | 'returns'): void {
+  protected openSummaryModal(type: 'invested' | 'interest' | 'gross'): void {
     this.summaryModalType.set(type);
     this.showSummaryModal.set(true);
   }
@@ -230,7 +281,15 @@ export class InvestmentPage implements OnInit {
   }
 
   // Add current form data to year entries
-  protected addYearEntry(): void {
+  protected async addYearEntry(): Promise<void> {
+    console.log('🎯 addYearEntry called');
+    console.log('📋 Current state:', {
+      formYear: this.formYear(),
+      formInvestedAmount: this.formInvestedAmount(),
+      showEditModal: this.showEditModal(),
+      showAddModal: this.showAddModal()
+    });
+    
     if (this.formYear() && this.formInvestedAmount() > 0) {
       const newEntry: YearEntry = {
         year: this.formYear(),
@@ -242,7 +301,44 @@ export class InvestmentPage implements OnInit {
       const existingIndex = this.yearEntries().findIndex(e => e.year === newEntry.year);
       if (existingIndex >= 0) {
         this.showToast('⚠️ Year already added! Edit or remove it first.');
+        console.log('⚠️ Year already exists');
         return;
+      }
+
+      // If in edit mode, save to database immediately
+      if (this.showEditModal()) {
+        console.log('🔍 Edit Mode Detected - Saving to database...');
+        console.log('📝 Data to save:', {
+          type: this.formType(),
+          status: this.formStatus(),
+          name: this.formName(),
+          year: newEntry.year,
+          invested_amount: newEntry.invested_amount,
+          interest_earned: newEntry.interest_earned
+        });
+        
+        try {
+          const savedInvestment = await this.investmentService.addInvestment({
+            type: this.formType() as InvestmentType,
+            status: this.formStatus() as InvestmentStatus,
+            name: this.formName(),
+            year: newEntry.year,
+            invested_amount: newEntry.invested_amount,
+            interest_earned: newEntry.interest_earned || undefined,
+            notes: this.formNotes()
+          });
+          
+          console.log('✅ Saved to database:', savedInvestment);
+          
+          // Add the investment_id to the entry
+          newEntry.investment_id = savedInvestment.investment_id;
+          
+          this.showToast(`✅ Year ${newEntry.year} added to database (ID: ${savedInvestment.investment_id})!`);
+        } catch (err) {
+          this.showToast('❌ Failed to add year to database');
+          console.error('❌ Database save error:', err);
+          return;
+        }
       }
       
       this.yearEntries.set([...this.yearEntries(), newEntry]);
@@ -253,18 +349,41 @@ export class InvestmentPage implements OnInit {
       this.formInvestedAmount.set(0);
       this.formInterestEarned.set(0);
       
-      this.showToast('✅ Year added! Add more or save all.');
+      if (!this.showEditModal()) {
+        this.showToast('✅ Year added! Add more or save all.');
+      }
     } else {
       this.showToast('⚠️ Please fill year and invested amount');
     }
   }
 
   // Remove year entry
-  protected removeYearEntry(index: number): void {
+  protected async removeYearEntry(index: number): Promise<void> {
+    const entry = this.yearEntries()[index];
+    
+    // If entry has investment_id, it exists in database - delete it
+    if (entry.investment_id) {
+      try {
+        await this.investmentService.deleteInvestment(entry.investment_id);
+        this.showToast('✅ Year deleted from database');
+      } catch (err) {
+        this.showToast('❌ Failed to delete year');
+        console.error(err);
+        return; // Don't remove from UI if DB delete failed
+      }
+    }
+    
+    // Remove from local array
     const entries = this.yearEntries().filter((_, i) => i !== index);
     this.yearEntries.set(entries);
+    
     if (entries.length === 0) {
       this.showMultipleYears.set(false);
+      // If we deleted all years in edit mode, close the modal
+      if (this.showEditModal()) {
+        this.closeModals();
+        this.showToast('⚠️ All years deleted. Investment removed.');
+      }
     }
   }
 
@@ -383,10 +502,14 @@ export class InvestmentPage implements OnInit {
     }
 
     try {
-      // Update all year entries
+      let updatedCount = 0;
+      let insertedCount = 0;
+      
+      // Process all year entries
       for (const entry of this.yearEntries()) {
         if (entry.investment_id) {
           // Update existing year
+          console.log('📝 Updating existing investment:', entry.investment_id);
           await this.investmentService.updateInvestment(entry.investment_id, {
             type: this.formType(),
             status: this.formStatus(),
@@ -396,14 +519,36 @@ export class InvestmentPage implements OnInit {
             interest_earned: entry.interest_earned || undefined,
             notes: this.formNotes()
           });
+          updatedCount++;
+        } else {
+          // Insert new year (no investment_id means it's a new row)
+          console.log('➕ Inserting new investment for year:', entry.year);
+          const savedInvestment = await this.investmentService.addInvestment({
+            type: this.formType() as InvestmentType,
+            status: this.formStatus() as InvestmentStatus,
+            name: this.formName(),
+            year: entry.year,
+            invested_amount: entry.invested_amount,
+            interest_earned: entry.interest_earned || undefined,
+            notes: this.formNotes()
+          });
+          
+          // Update the entry with the new investment_id
+          entry.investment_id = savedInvestment.investment_id;
+          insertedCount++;
+          console.log('✅ New investment created with ID:', savedInvestment.investment_id);
         }
       }
 
-      this.showToast(`✅ ${this.yearEntries().length} year(s) updated successfully!`);
+      const message = insertedCount > 0 
+        ? `✅ ${updatedCount} updated, ${insertedCount} new year(s) added!`
+        : `✅ ${updatedCount} year(s) updated successfully!`;
+      
+      this.showToast(message);
       this.closeModals();
     } catch (err) {
       this.showToast('❌ Failed to update investment');
-      console.error(err);
+      console.error('❌ Update error:', err);
     }
   }
 
@@ -498,6 +643,167 @@ export class InvestmentPage implements OnInit {
     return year.toString();
   }
 
+  // Get all investments (flattened list for modal tables)
+  protected getAllInvestments(): InvestmentEntry[] {
+    return this.investments().sort((a, b) => {
+      // Sort by type, then by year
+      if (a.type !== b.type) {
+        return a.type.localeCompare(b.type);
+      }
+      return b.year - a.year; // Newest first
+    });
+  }
+
+  // Get all investments grouped by type (for Total Gross modal)
+  protected getAllInvestmentsGroupedByType(): InvestmentEntry[] {
+    return this.investments().sort((a, b) => {
+      // Primary sort: by type alphabetically
+      const typeCompare = a.type.localeCompare(b.type);
+      if (typeCompare !== 0) {
+        return typeCompare;
+      }
+      // Secondary sort: by year (newest first within same type)
+      return b.year - a.year;
+    });
+  }
+
+  // Get consolidated investment breakdown by type (for Total Gross modal table)
+  protected getConsolidatedInvestmentsByType(): Array<{
+    type: InvestmentType;
+    invested: number;
+    interest: number;
+    gross: number;
+    count: number;
+  }> {
+    const breakdown = new Map<InvestmentType, { invested: number, interest: number, gross: number, count: number }>();
+    
+    this.investments().forEach(inv => {
+      const existing = breakdown.get(inv.type) || { invested: 0, interest: 0, gross: 0, count: 0 };
+      existing.invested += inv.invested_amount;
+      existing.interest += inv.interest_earned || 0;
+      existing.gross += inv.invested_amount + (inv.interest_earned || 0);
+      existing.count += 1;
+      breakdown.set(inv.type, existing);
+    });
+
+    let result = Array.from(breakdown.entries())
+      .map(([type, data]) => ({ type, ...data }));
+
+    // Apply sorting for multiple columns
+    const sortDirGross = this.sortGrossByType();
+    const sortDirType = this.sortGrossByTypeName();
+    const sortDirInvested = this.sortGrossByInvested();
+    const sortDirInterest = this.sortGrossByInterest();
+    
+    if (sortDirType === 'asc') {
+      result.sort((a, b) => a.type.localeCompare(b.type));
+    } else if (sortDirType === 'desc') {
+      result.sort((a, b) => b.type.localeCompare(a.type));
+    } else if (sortDirInvested === 'asc') {
+      result.sort((a, b) => a.invested - b.invested);
+    } else if (sortDirInvested === 'desc') {
+      result.sort((a, b) => b.invested - a.invested);
+    } else if (sortDirInterest === 'asc') {
+      result.sort((a, b) => a.interest - b.interest);
+    } else if (sortDirInterest === 'desc') {
+      result.sort((a, b) => b.interest - a.interest);
+    } else if (sortDirGross === 'asc') {
+      result.sort((a, b) => a.gross - b.gross);
+    } else if (sortDirGross === 'desc') {
+      result.sort((a, b) => b.gross - a.gross);
+    } else {
+      result.sort((a, b) => a.type.localeCompare(b.type)); // Default: alphabetically by type
+    }
+
+    return result;
+  }
+
+  // Get interest breakdown by type (for Total Interest modal)
+  protected getInterestByType(): Array<{
+    type: InvestmentType;
+    interest: number;
+  }> {
+    const breakdown = new Map<InvestmentType, number>();
+    
+    this.investments().forEach(inv => {
+      const interest = inv.interest_earned || 0;
+      if (interest > 0) {
+        const existing = breakdown.get(inv.type) || 0;
+        breakdown.set(inv.type, existing + interest);
+      }
+    });
+
+    let result = Array.from(breakdown.entries())
+      .map(([type, interest]) => ({ type, interest }));
+
+    // Apply sorting for Interest Amount column or Type column
+    const sortDirAmount = this.sortInterestByType();
+    const sortDirType = this.sortInterestByTypeName();
+    
+    if (sortDirType === 'asc') {
+      result.sort((a, b) => a.type.localeCompare(b.type));
+    } else if (sortDirType === 'desc') {
+      result.sort((a, b) => b.type.localeCompare(a.type));
+    } else if (sortDirAmount === 'asc') {
+      result.sort((a, b) => a.interest - b.interest);
+    } else if (sortDirAmount === 'desc') {
+      result.sort((a, b) => b.interest - a.interest);
+    } else {
+      result.sort((a, b) => b.interest - a.interest); // Default: highest first
+    }
+
+    return result;
+  }
+
+  // Get interest breakdown by year (for Total Interest modal)
+  protected getInterestByYear(): Array<{
+    year: number;
+    interest: number;
+  }> {
+    const breakdown = new Map<number, number>();
+    
+    this.investments().forEach(inv => {
+      const interest = inv.interest_earned || 0;
+      if (interest > 0) {
+        const existing = breakdown.get(inv.year) || 0;
+        breakdown.set(inv.year, existing + interest);
+      }
+    });
+
+    let result = Array.from(breakdown.entries())
+      .map(([year, interest]) => ({ year, interest }));
+
+    // Apply sorting for Interest Amount column or Year column
+    const sortDirAmount = this.sortInterestByYear();
+    const sortDirYear = this.sortInterestByYearValue();
+    
+    if (sortDirYear === 'asc') {
+      result.sort((a, b) => a.year - b.year);
+    } else if (sortDirYear === 'desc') {
+      result.sort((a, b) => b.year - a.year);
+    } else if (sortDirAmount === 'asc') {
+      result.sort((a, b) => a.interest - b.interest);
+    } else if (sortDirAmount === 'desc') {
+      result.sort((a, b) => b.interest - a.interest);
+    } else {
+      result.sort((a, b) => b.year - a.year); // Default: newest year first
+    }
+
+    return result;
+  }
+
+  // Get highest earning investment type
+  protected getHighestEarningType(): string {
+    const breakdown = this.investmentTypeBreakdown();
+    if (breakdown.length === 0) return 'N/A';
+    
+    const highest = breakdown.reduce((max, item) => 
+      item.interest > max.interest ? item : max
+    );
+    
+    return `${this.getTypeIcon(highest.type)} ${highest.type}`;
+  }
+
   // Get returns color class
   protected getReturnsColorClass(interestEarned: number | undefined): string {
     if (!interestEarned || interestEarned === 0) return 'neutral';
@@ -508,5 +814,66 @@ export class InvestmentPage implements OnInit {
   protected calculateReturnsPercentage(interestEarned: number, investedAmount: number): number {
     if (investedAmount === 0) return 0;
     return (interestEarned / investedAmount) * 100;
+  }
+
+  // Sorting toggle methods
+  protected toggleSortInvestedByType(): void {
+    const current = this.sortInvestedByType();
+    this.sortInvestedByType.set(current === 'desc' ? 'asc' : 'desc');
+  }
+
+  protected toggleSortInvestedByTypeName(): void {
+    const current = this.sortInvestedByTypeName();
+    this.sortInvestedByTypeName.set(current === 'desc' ? 'asc' : 'desc');
+  }
+
+  protected toggleSortInvestedByYear(): void {
+    const current = this.sortInvestedByYear();
+    this.sortInvestedByYear.set(current === 'desc' ? 'asc' : 'desc');
+  }
+
+  protected toggleSortInvestedByYearValue(): void {
+    const current = this.sortInvestedByYearValue();
+    this.sortInvestedByYearValue.set(current === 'desc' ? 'asc' : 'desc');
+  }
+
+  protected toggleSortInterestByType(): void {
+    const current = this.sortInterestByType();
+    this.sortInterestByType.set(current === 'desc' ? 'asc' : 'desc');
+  }
+
+  protected toggleSortInterestByTypeName(): void {
+    const current = this.sortInterestByTypeName();
+    this.sortInterestByTypeName.set(current === 'desc' ? 'asc' : 'desc');
+  }
+
+  protected toggleSortInterestByYear(): void {
+    const current = this.sortInterestByYear();
+    this.sortInterestByYear.set(current === 'desc' ? 'asc' : 'desc');
+  }
+
+  protected toggleSortInterestByYearValue(): void {
+    const current = this.sortInterestByYearValue();
+    this.sortInterestByYearValue.set(current === 'desc' ? 'asc' : 'desc');
+  }
+
+  protected toggleSortGrossByType(): void {
+    const current = this.sortGrossByType();
+    this.sortGrossByType.set(current === 'desc' ? 'asc' : 'desc');
+  }
+
+  protected toggleSortGrossByTypeName(): void {
+    const current = this.sortGrossByTypeName();
+    this.sortGrossByTypeName.set(current === 'desc' ? 'asc' : 'desc');
+  }
+
+  protected toggleSortGrossByInvested(): void {
+    const current = this.sortGrossByInvested();
+    this.sortGrossByInvested.set(current === 'desc' ? 'asc' : 'desc');
+  }
+
+  protected toggleSortGrossByInterest(): void {
+    const current = this.sortGrossByInterest();
+    this.sortGrossByInterest.set(current === 'desc' ? 'asc' : 'desc');
   }
 }

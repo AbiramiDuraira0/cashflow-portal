@@ -16,28 +16,18 @@
 
   <!-- Summary Cards -->
   <div class="summary-cards">
-    <!-- Total Invested Card -->
+    <!-- Total Invested Card - 1st Position -->
     <div class="summary-card invested-card clickable" (click)="openSummaryModal('invested')">
       <div class="card-icon">💰</div>
       <div class="card-content">
         <div class="card-label">Total Invested</div>
         <div class="card-value">{{ formatCurrency(totalInvested()) }}</div>
-        <div class="card-meta">{{ uniqueInvestmentTypesCount() }} investment types</div>
+        
       </div>
     </div>
 
-    <!-- Current Value Card -->
-    <div class="summary-card value-card clickable" (click)="openSummaryModal('value')">
-      <div class="card-icon">📈</div>
-      <div class="card-content">
-        <div class="card-label">Current Value</div>
-        <div class="card-value">{{ formatCurrency(totalCurrentValue()) }}</div>
-        <div class="card-meta">Invested + Interest</div>
-      </div>
-    </div>
-
-    <!-- Returns Card -->
-    <div class="summary-card returns-card clickable" [class.positive]="totalReturns() >= 0" [class.negative]="totalReturns() < 0" (click)="openSummaryModal('returns')">
+    <!-- Total Interest Card - 2nd Position -->
+    <div class="summary-card returns-card clickable" [class.positive]="totalReturns() >= 0" [class.negative]="totalReturns() < 0" (click)="openSummaryModal('interest')">
       <div class="card-icon">{{ totalReturns() >= 0 ? '📊' : '📉' }}</div>
       <div class="card-content">
         <div class="card-label">Total Interest</div>
@@ -47,6 +37,16 @@
             {{ totalReturnsPercentage() >= 0 ? '+' : '' }}{{ totalReturnsPercentage().toFixed(2) }}%
           </span>
         </div>
+      </div>
+    </div>
+
+    <!-- Total Gross Card - 3rd Position -->
+    <div class="summary-card value-card clickable" (click)="openSummaryModal('gross')">
+      <div class="card-icon">📈</div>
+      <div class="card-content">
+        <div class="card-label">Total Gross</div>
+        <div class="card-value">{{ formatCurrency(totalCurrentValue()) }}</div>
+        
       </div>
     </div>
   </div>
@@ -600,103 +600,356 @@
         <div class="modal-header">
           <h2>
             @if (summaryModalType() === 'invested') {
-              💰 Total Invested Breakdown
-            } @else if (summaryModalType() === 'value') {
-              📈 Current Value Analysis
+              💰 Total Invested - Breakdown
+            } @else if (summaryModalType() === 'interest') {
+              📊 Total Interest - Breakdown
             } @else {
-              📊 Interest Returns Analysis
+              📈 Total Gross - Breakdown
             }
           </h2>
           <button class="close-btn" (click)="closeModals()">✕</button>
         </div>
 
         <div class="modal-body">
-          <!-- Summary Stats -->
-          <div class="summary-stats-grid">
-            <div class="stat-card">
-              <div class="stat-label">Total Invested</div>
-              <div class="stat-value">{{ formatCurrency(totalInvested()) }}</div>
+          <!-- MODAL 1: TOTAL INVESTED - Two Tables Side by Side -->
+          @if (summaryModalType() === 'invested') {
+            <!-- Summary Stats for Total Invested -->
+            <div class="summary-stats-grid">
+              <div class="stat-card">
+                <div class="stat-label">Total Amount Invested</div>
+                <div class="stat-value">{{ formatCurrency(totalInvested()) }}</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-label">Number of Investment Types</div>
+                <div class="stat-value">{{ uniqueInvestmentTypesCount() }}</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-label">Active Investments</div>
+                <div class="stat-value">{{ activeConsolidatedInvestments().length }}</div>
+              </div>
             </div>
-            <div class="stat-card">
-              <div class="stat-label">Current Value</div>
-              <div class="stat-value">{{ formatCurrency(totalCurrentValue()) }}</div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-label">Total Interest</div>
-              <div class="stat-value positive">{{ formatCurrency(totalReturns()) }}</div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-label">Returns %</div>
-              <div class="stat-value positive">+{{ totalReturnsPercentage().toFixed(2) }}%</div>
-            </div>
-          </div>
 
-          <!-- Investment Type Breakdown -->
-          <div class="breakdown-section">
-            <h3 class="breakdown-title">📊 Breakdown by Investment Type</h3>
-            <div class="breakdown-table">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Type</th>
-                    <th>Invested</th>
-                    <th>Interest</th>
-                    <th>Current Value</th>
-                    <th>Count</th>
-                    <th>Share</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  @for (item of investmentTypeBreakdown(); track item.type) {
-                    <tr>
-                      <td>
-                        <span class="type-badge">{{ getTypeIcon(item.type) }} {{ item.type }}</span>
-                      </td>
-                      <td class="amount">{{ formatCurrency(item.invested) }}</td>
-                      <td class="amount positive">{{ formatCurrency(item.interest) }}</td>
-                      <td class="amount highlight">{{ formatCurrency(item.value) }}</td>
-                      <td class="count">{{ item.count }}</td>
-                      <td class="percentage">
-                        <div class="percentage-bar-container">
-                          <div class="percentage-bar" [style.width.%]="item.percentage"></div>
-                          <span class="percentage-text">{{ item.percentage.toFixed(1) }}%</span>
-                        </div>
-                      </td>
-                    </tr>
-                  }
-                </tbody>
-              </table>
-            </div>
-          </div>
+            <!-- Two Tables Side by Side -->
+            <div class="tables-grid-container">
+              
+              <!-- Table 1: Invested Amount by Type -->
+              <div class="breakdown-section">
+                <h3 class="breakdown-title">📊 Invested Amount by Type</h3>
+                <div class="breakdown-table">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th class="sortable" (click)="toggleSortInvestedByTypeName()">
+                          Investment Type
+                          @if (sortInvestedByTypeName() === 'asc') {
+                            <span class="sort-icon">▲</span>
+                          } @else if (sortInvestedByTypeName() === 'desc') {
+                            <span class="sort-icon">▼</span>
+                          } @else {
+                            <span class="sort-icon">⇅</span>
+                          }
+                        </th>
+                        <th class="sortable" (click)="toggleSortInvestedByType()">
+                          Amount Invested
+                          @if (sortInvestedByType() === 'asc') {
+                            <span class="sort-icon">▲</span>
+                          } @else if (sortInvestedByType() === 'desc') {
+                            <span class="sort-icon">▼</span>
+                          } @else {
+                            <span class="sort-icon">⇅</span>
+                          }
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (item of investmentTypeBreakdown(); track item.type) {
+                        <tr>
+                          <td>
+                            <span class="type-badge">{{ getTypeIcon(item.type) }} {{ item.type }}</span>
+                          </td>
+                          <td class="amount">{{ formatCurrency(item.invested) }}</td>
+                        </tr>
+                      }
+                    </tbody>
+                    <tfoot>
+                      <tr class="total-row">
+                        <td><strong>Total</strong></td>
+                        <td class="amount"><strong>{{ formatCurrency(totalInvested()) }}</strong></td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+              </div>
 
-          <!-- Year-wise Breakdown -->
-          <div class="breakdown-section">
-            <h3 class="breakdown-title">📅 Breakdown by Year</h3>
-            <div class="breakdown-table">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Year</th>
-                    <th>Invested</th>
-                    <th>Interest</th>
-                    <th>Investments</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  @for (item of yearWiseBreakdown(); track item.year) {
-                    <tr>
-                      <td>
-                        <span class="year-badge">{{ item.year }}</span>
-                      </td>
-                      <td class="amount">{{ formatCurrency(item.invested) }}</td>
-                      <td class="amount positive">{{ formatCurrency(item.interest) }}</td>
-                      <td class="count">{{ item.count }}</td>
-                    </tr>
-                  }
-                </tbody>
-              </table>
+              <!-- Table 2: Invested Amount by Year -->
+              <div class="breakdown-section">
+                <h3 class="breakdown-title">📅 Invested Amount by Year</h3>
+                <div class="breakdown-table">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th class="sortable" (click)="toggleSortInvestedByYearValue()">
+                          Year
+                          @if (sortInvestedByYearValue() === 'asc') {
+                            <span class="sort-icon">▲</span>
+                          } @else if (sortInvestedByYearValue() === 'desc') {
+                            <span class="sort-icon">▼</span>
+                          } @else {
+                            <span class="sort-icon">⇅</span>
+                          }
+                        </th>
+                        <th class="sortable" (click)="toggleSortInvestedByYear()">
+                          Amount Invested
+                          @if (sortInvestedByYear() === 'asc') {
+                            <span class="sort-icon">▲</span>
+                          } @else if (sortInvestedByYear() === 'desc') {
+                            <span class="sort-icon">▼</span>
+                          } @else {
+                            <span class="sort-icon">⇅</span>
+                          }
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (item of yearWiseBreakdown(); track item.year) {
+                        <tr>
+                          <td>
+                            <span class="year-badge">{{ item.year }}</span>
+                          </td>
+                          <td class="amount">{{ formatCurrency(item.invested) }}</td>
+                        </tr>
+                      }
+                    </tbody>
+                    <tfoot>
+                      <tr class="total-row">
+                        <td><strong>Total</strong></td>
+                        <td class="amount"><strong>{{ formatCurrency(totalInvested()) }}</strong></td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+              </div>
+
             </div>
-          </div>
+          }
+
+          <!-- MODAL 2: TOTAL INTEREST - Two Tables Side by Side -->
+          @if (summaryModalType() === 'interest') {
+            <!-- Summary Stats for Total Interest -->
+            <div class="summary-stats-grid">
+              <div class="stat-card">
+                <div class="stat-label">Total Interest Earned</div>
+                <div class="stat-value positive">{{ formatCurrency(totalReturns()) }}</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-label">Average ROI</div>
+                <div class="stat-value positive">{{ totalReturnsPercentage().toFixed(2) }}%</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-label">Highest Earning Type</div>
+                <div class="stat-value">{{ getHighestEarningType() }}</div>
+              </div>
+            </div>
+
+            <!-- Two Tables Side by Side -->
+            <div class="tables-grid-container">
+              
+              <!-- Table 1: Interest Earned by Type -->
+              <div class="breakdown-section">
+                <h3 class="breakdown-title">📊 Interest Earned by Type</h3>
+                <div class="breakdown-table">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th class="sortable" (click)="toggleSortInterestByTypeName()">
+                          Investment Type
+                          @if (sortInterestByTypeName() === 'asc') {
+                            <span class="sort-icon">▲</span>
+                          } @else if (sortInterestByTypeName() === 'desc') {
+                            <span class="sort-icon">▼</span>
+                          } @else {
+                            <span class="sort-icon">⇅</span>
+                          }
+                        </th>
+                        <th class="sortable" (click)="toggleSortInterestByType()">
+                          Interest Earned
+                          @if (sortInterestByType() === 'asc') {
+                            <span class="sort-icon">▲</span>
+                          } @else if (sortInterestByType() === 'desc') {
+                            <span class="sort-icon">▼</span>
+                          } @else {
+                            <span class="sort-icon">⇅</span>
+                          }
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (item of getInterestByType(); track item.type) {
+                        <tr>
+                          <td>
+                            <span class="type-badge">{{ getTypeIcon(item.type) }} {{ item.type }}</span>
+                          </td>
+                          <td class="amount positive">{{ formatCurrency(item.interest) }}</td>
+                        </tr>
+                      }
+                    </tbody>
+                    <tfoot>
+                      <tr class="total-row">
+                        <td><strong>Total</strong></td>
+                        <td class="amount positive"><strong>{{ formatCurrency(totalReturns()) }}</strong></td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+              </div>
+
+              <!-- Table 2: Interest Earned by Year -->
+              <div class="breakdown-section">
+                <h3 class="breakdown-title">📅 Interest Earned by Year</h3>
+                <div class="breakdown-table">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th class="sortable" (click)="toggleSortInterestByYearValue()">
+                          Year
+                          @if (sortInterestByYearValue() === 'asc') {
+                            <span class="sort-icon">▲</span>
+                          } @else if (sortInterestByYearValue() === 'desc') {
+                            <span class="sort-icon">▼</span>
+                          } @else {
+                            <span class="sort-icon">⇅</span>
+                          }
+                        </th>
+                        <th class="sortable" (click)="toggleSortInterestByYear()">
+                          Interest Earned
+                          @if (sortInterestByYear() === 'asc') {
+                            <span class="sort-icon">▲</span>
+                          } @else if (sortInterestByYear() === 'desc') {
+                            <span class="sort-icon">▼</span>
+                          } @else {
+                            <span class="sort-icon">⇅</span>
+                          }
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (item of getInterestByYear(); track item.year) {
+                        <tr>
+                          <td>
+                            <span class="year-badge">{{ item.year }}</span>
+                          </td>
+                          <td class="amount positive">{{ formatCurrency(item.interest) }}</td>
+                        </tr>
+                      }
+                    </tbody>
+                    <tfoot>
+                      <tr class="total-row">
+                        <td><strong>Total</strong></td>
+                        <td class="amount positive"><strong>{{ formatCurrency(totalReturns()) }}</strong></td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+              </div>
+
+            </div>
+          }
+
+          <!-- MODAL 3: TOTAL GROSS - Table with Type, Year, Amount, Interest, Gross -->
+          @if (summaryModalType() === 'gross') {
+            <!-- Summary Stats for Total Gross - All in One Line -->
+            <div class="summary-stats-grid summary-stats-single-row">
+              <div class="stat-card">
+                <div class="stat-label">Principal Invested</div>
+                <div class="stat-value">{{ formatCurrency(totalInvested()) }}</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-label">Profit Earned</div>
+                <div class="stat-value positive">{{ formatCurrency(totalReturns()) }}</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-label">Total Gross Value</div>
+                <div class="stat-value highlight">{{ formatCurrency(totalCurrentValue()) }}</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-label">Overall Growth</div>
+                <div class="stat-value positive">+{{ totalReturnsPercentage().toFixed(2) }}%</div>
+              </div>
+            </div>
+
+            <!-- Complete Breakdown by Type & Year Table -->
+            <div class="breakdown-section">
+              <h3 class="breakdown-title">📊 Complete Investment - Breakdown</h3>
+              <div class="breakdown-table">
+                <table>
+                  <thead>
+                    <tr>
+                      <th class="sortable" (click)="toggleSortGrossByTypeName()">
+                        Investment Type
+                        @if (sortGrossByTypeName() === 'asc') {
+                          <span class="sort-icon">▲</span>
+                        } @else if (sortGrossByTypeName() === 'desc') {
+                          <span class="sort-icon">▼</span>
+                        } @else {
+                          <span class="sort-icon">⇅</span>
+                        }
+                      </th>
+                      <th class="sortable" (click)="toggleSortGrossByInvested()">
+                        Amount Invested
+                        @if (sortGrossByInvested() === 'asc') {
+                          <span class="sort-icon">▲</span>
+                        } @else if (sortGrossByInvested() === 'desc') {
+                          <span class="sort-icon">▼</span>
+                        } @else {
+                          <span class="sort-icon">⇅</span>
+                        }
+                      </th>
+                      <th class="sortable" (click)="toggleSortGrossByInterest()">
+                        Interest Earned
+                        @if (sortGrossByInterest() === 'asc') {
+                          <span class="sort-icon">▲</span>
+                        } @else if (sortGrossByInterest() === 'desc') {
+                          <span class="sort-icon">▼</span>
+                        } @else {
+                          <span class="sort-icon">⇅</span>
+                        }
+                      </th>
+                      <th class="sortable" (click)="toggleSortGrossByType()">
+                        Gross Value
+                        @if (sortGrossByType() === 'asc') {
+                          <span class="sort-icon">▲</span>
+                        } @else if (sortGrossByType() === 'desc') {
+                          <span class="sort-icon">▼</span>
+                        } @else {
+                          <span class="sort-icon">⇅</span>
+                        }
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (item of getConsolidatedInvestmentsByType(); track item.type) {
+                      <tr>
+                        <td>
+                          <span class="type-badge">{{ getTypeIcon(item.type) }} {{ item.type }}</span>
+                        </td>
+                        <td class="amount">{{ formatCurrency(item.invested) }}</td>
+                        <td class="amount positive">{{ formatCurrency(item.interest) }}</td>
+                        <td class="amount highlight"><strong>{{ formatCurrency(item.gross) }}</strong></td>
+                      </tr>
+                    }
+                  </tbody>
+                  <tfoot>
+                    <tr class="total-row">
+                      <td><strong>Totals</strong></td>
+                      <td class="amount"><strong>{{ formatCurrency(totalInvested()) }}</strong></td>
+                      <td class="amount positive"><strong>{{ formatCurrency(totalReturns()) }}</strong></td>
+                      <td class="amount highlight"><strong>{{ formatCurrency(totalCurrentValue()) }}</strong></td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            </div>
+          }
         </div>
 
         <div class="modal-footer">
@@ -705,7 +958,6 @@
       </div>
     </div>
   }
-
   <!-- Toast Notification -->
   @if (toastVisible()) {
     <div class="toast-notification">

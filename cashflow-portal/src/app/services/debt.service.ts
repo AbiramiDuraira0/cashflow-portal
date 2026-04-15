@@ -1,5 +1,6 @@
 import { Injectable, signal, inject } from '@angular/core';
 import { SupabaseService } from './supabase.service';
+import { DebtCalculatorService } from './debt-calculator.service';
 
 export enum LoanName {
   BOB_EDUCATION_LOAN = 'Education Loan',
@@ -119,6 +120,7 @@ export type RepaymentSchedule = {
 @Injectable({ providedIn: 'root' })
 export class DebtService {
   private supabase = inject(SupabaseService);
+  private calculator = inject(DebtCalculatorService);
   private debtData = signal<DebtEntry[]>([]);
   private loading = signal<boolean>(false);
   private error = signal<string | null>(null);
@@ -284,6 +286,112 @@ export class DebtService {
   }
 
   async reloadData(): Promise<void> { await this.loadDebtData(); }
+
+  // Get enriched debt data from CSV for Personal Loan - Top Up
+  async getEnrichedDebtFromCSV(debtId: number): Promise<DebtEntry | null> {
+    try {
+      const debt = this.debtData().find(d => d.id === debtId);
+      if (!debt || debt.loanName !== 'Personal Loan - Top Up') {
+        return null;
+      }
+
+      // Load CSV schedule
+      const schedules = await this.getRepaymentSchedule(debtId);
+      if (schedules.length === 0) {
+        return debt; // Return original if CSV not available
+      }
+
+      // Find the last paid installment based on current date
+      const today = new Date();
+      const paidSchedules = schedules.filter(s => new Date(s.dueDate) < today);
+      const lastPaidSchedule = paidSchedules.length > 0 ? paidSchedules[paidSchedules.length - 1] : null;
+
+      if (!lastPaidSchedule) {
+        // No payments made yet
+        return {
+          ...debt,
+          amountPaid: 0,
+          outstandingAmount: debt.principalAmount,
+        };
+      }
+
+      // Calculate values from CSV
+      const totalPaid = paidSchedules.reduce((sum, s) => sum + s.installmentAmount, 0);
+      const totalPrincipalPaid = paidSchedules.reduce((sum, s) => sum + s.principalAmount, 0);
+      const totalInterestPaid = paidSchedules.reduce((sum, s) => sum + s.interestAmount, 0);
+      const outstanding = lastPaidSchedule.outstandingPrincipal;
+
+      // Return enriched debt data from CSV
+      return {
+        ...debt,
+        amountPaid: totalPaid,
+        outstandingAmount: outstanding,
+        // Store additional CSV data in the object
+        principalAmount: debt.principalAmount,
+      };
+    } catch (error) {
+      console.error('Failed to enrich debt from CSV:', error);
+      return null;
+    }
+  }
+
+  // Get summary from CSV for Personal Loan - Top Up
+  async getCSVSummary(debtId: number): Promise<{
+    totalPaid: number;
+    principalPaid: number;
+    interestPaid: number;
+    outstanding: number;
+    percentPaid: number;
+    numberOfEMIsPaid: number;
+  } | null> {
+    try {
+      const debt = this.debtData().find(d => d.id === debtId);
+      if (!debt) return null;
+
+      const schedules = await this.getRepaymentSchedule(debtId);
+      if (schedules.length === 0) return null;
+
+      const today = new Date();
+      const paidSchedules = schedules.filter(s => new Date(s.dueDate) < today);
+
+      const totalPaid = paidSchedules.reduce((sum, s) => sum + s.installmentAmount, 0);
+      const principalPaid = paidSchedules.reduce((sum, s) => sum + s.principalAmount, 0);
+      const interestPaid = paidSchedules.reduce((sum, s) => sum + s.interestAmount, 0);
+      const lastPaid = paidSchedules.length > 0 ? paidSchedules[paidSchedules.length - 1] : null;
+      const outstanding = lastPaid ? lastPaid.outstandingPrincipal : debt.principalAmount;
+      const percentPaid = debt.principalAmount > 0 ? (principalPaid / debt.principalAmount) * 100 : 0;
+
+      return {
+        totalPaid,
+        principalPaid,
+        interestPaid,
+        outstanding,
+        percentPaid,
+        numberOfEMIsPaid: paidSchedules.length
+      };
+    } catch (error) {
+      console.error('Failed to get CSV summary:', error);
+      return null;
+    }
+  }
+
+  // Auto-calculate and update outstanding for a debt entry
+  autoCalculateOutstanding(data: DebtFormData): DebtFormData {
+    const breakdown = this.calculator.calculateDebtBreakdown(
+      data.principalAmount,
+      data.interestRate || 0,
+      data.amountPaid,
+      data.emiAmount,
+      data.emiStartDate,
+      data.emiEndDate
+    );
+
+    return {
+      ...data,
+      outstandingAmount: breakdown.outstanding,
+      status: breakdown.status
+    };
+  }
 
   // Repayment Schedule Methods - Using CSV Data
   async getRepaymentSchedule(debtId: number): Promise<RepaymentSchedule[]> {
