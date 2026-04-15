@@ -10,6 +10,7 @@ import {
   LoanName,
   RepaymentSchedule
 } from '../../services/debt.service';
+import { DebtAutoUpdateService } from '../../services/debt-auto-update.service';
 
 @Component({
   selector: 'app-debts',
@@ -20,6 +21,7 @@ import {
 })
 export class DebtsPage implements OnInit {
   private debtService = inject(DebtService);
+  private autoUpdateService = inject(DebtAutoUpdateService);
 
   // Loan names enum for template
   protected readonly LoanName = LoanName;
@@ -34,6 +36,7 @@ export class DebtsPage implements OnInit {
   protected showRepaymentScheduleModal = signal<boolean>(false);
   protected showConsolidatedModal = signal<boolean>(false);
   protected showEMICalculator = signal<boolean>(false);
+  protected showInterestBreakdownModal = signal<boolean>(false);
   protected selectedDebt = signal<DebtEntry | null>(null);
   protected repaymentSchedule = signal<RepaymentSchedule[]>([]);
   protected loadingSchedule = signal<boolean>(false);
@@ -43,6 +46,10 @@ export class DebtsPage implements OnInit {
   // Sorting state for consolidated table
   protected sortColumn = signal<string>('');
   protected sortDirection = signal<'asc' | 'desc'>('asc');
+
+  // Sorting state for interest breakdown
+  protected interestSortColumn = signal<string>('');
+  protected interestSortDirection = signal<'asc' | 'desc'>('asc');
 
   // Form data signals
   protected formType = signal<DebtType>('debt');
@@ -68,8 +75,60 @@ export class DebtsPage implements OnInit {
   protected debts = this.debtService.getDebtsSignal();
   protected loading = this.debtService.getLoadingSignal();
 
+  // Computed: Enriched debts with CSV data for Personal Loan - Top Up
+  protected enrichedDebts = computed(() => {
+    return this.debts().map(debt => {
+      // For Personal Loan - Top Up, we'll fetch CSV data separately
+      // This computed will be updated when we load CSV data
+      return debt;
+    });
+  });
+
+  // CSV Summary for Personal Loan - Top Up
+  protected personalLoanCSVSummary = signal<{
+    totalPaid: number;
+    principalPaid: number;
+    interestPaid: number;
+    outstanding: number;
+    percentPaid: number;
+    numberOfEMIsPaid: number;
+  } | null>(null);
+
   // Computed values
   protected summary = computed(() => this.debtService.getSummary());
+
+  // Enhanced summary with CSV data
+  protected enhancedSummary = computed(() => {
+    const baseSummary = this.summary();
+    const csvSummary = this.personalLoanCSVSummary();
+    
+    if (!csvSummary) {
+      return baseSummary; // Return original if CSV not loaded
+    }
+
+    // Find Personal Loan - Top Up in debts
+    const personalLoan = this.debts().find(d => d.loanName === 'Personal Loan - Top Up' && !d.isDeleted);
+    if (!personalLoan) {
+      return baseSummary;
+    }
+
+    // Calculate the difference between CSV and database values
+    const dbOutstanding = personalLoan.outstandingAmount;
+    const csvOutstanding = csvSummary.outstanding;
+    const outstandingDiff = csvOutstanding - dbOutstanding;
+
+    const dbInterestPaid = this.getInterestPaid(personalLoan);
+    const csvInterestPaid = csvSummary.interestPaid;
+    const interestDiff = csvInterestPaid - dbInterestPaid;
+
+    // Return enhanced summary with CSV data
+    return {
+      ...baseSummary,
+      totalDebts: baseSummary.totalDebts + outstandingDiff,
+      totalOutstanding: baseSummary.totalOutstanding + outstandingDiff,
+      totalInterestPaid: baseSummary.totalInterestPaid + interestDiff,
+    };
+  });
 
   protected activeCount = computed(() => this.debts().filter(d => !d.isDeleted).length);
   protected deactivatedCount = computed(() => this.debts().filter(d => d.isDeleted).length);
@@ -132,9 +191,19 @@ export class DebtsPage implements OnInit {
   protected totalPrincipal = computed(() => 
     this.activeDebts().reduce((sum, d) => sum + d.principalAmount, 0)
   );
+  
   protected totalPaid = computed(() => 
-    this.activeDebts().reduce((sum, d) => sum + d.amountPaid, 0)
+    this.activeDebts().reduce((sum, d) => sum + this.getAmountPaid(d), 0)
   );
+  
+  protected totalOutstanding = computed(() =>
+    this.activeDebts().reduce((sum, d) => sum + this.getOutstanding(d), 0)
+  );
+  
+  protected totalInterestPaid = computed(() =>
+    this.activeDebts().reduce((sum, d) => sum + this.getInterestPaid(d), 0)
+  );
+  
   protected totalPercentPaid = computed(() => 
     this.totalPrincipal() > 0 ? (this.totalPaid() / this.totalPrincipal()) * 100 : 0
   );
@@ -156,11 +225,67 @@ export class DebtsPage implements OnInit {
     }
   });
 
+  // Sorted interest breakdown
+  protected sortedInterestBreakdown = computed(() => {
+    const debts = this.activeDebts();
+    const column = this.interestSortColumn();
+    const direction = this.interestSortDirection();
+    
+    if (!column) return debts;
+    
+    return [...debts].sort((a, b) => {
+      let aVal: any, bVal: any;
+      
+      switch (column) {
+        case 'loanName':
+          aVal = a.loanName.toLowerCase();
+          bVal = b.loanName.toLowerCase();
+          break;
+        case 'bankOrPerson':
+          aVal = a.bankOrPerson.toLowerCase();
+          bVal = b.bankOrPerson.toLowerCase();
+          break;
+        case 'interestPaid':
+          aVal = this.getInterestPaid(a);
+          bVal = this.getInterestPaid(b);
+          break;
+        default:
+          return 0;
+      }
+      
+      if (aVal < bVal) return direction === 'asc' ? -1 : 1;
+      if (aVal > bVal) return direction === 'asc' ? 1 : -1;
+      return 0;
+    });
+  });
+
   // Loan names array for dropdown
   protected loanNames = Object.values(LoanName);
 
   ngOnInit(): void {
     console.log('🏦 Debts Page Initialized');
+    
+    // Check for automatic monthly updates
+    this.autoUpdateService.checkAndRunMonthlyUpdate().catch(err => {
+      console.error('Auto-update check failed:', err);
+    });
+
+    // Load CSV summary for Personal Loan - Top Up
+    this.loadPersonalLoanCSVSummary();
+  }
+
+  // Load CSV summary for Personal Loan - Top Up
+  protected async loadPersonalLoanCSVSummary(): Promise<void> {
+    try {
+      const personalLoan = this.debts().find(d => d.loanName === 'Personal Loan - Top Up' && !d.isDeleted);
+      if (personalLoan) {
+        const summary = await this.debtService.getCSVSummary(personalLoan.id);
+        this.personalLoanCSVSummary.set(summary);
+        console.log('📊 CSV Summary loaded:', summary);
+      }
+    } catch (error) {
+      console.error('Failed to load CSV summary:', error);
+    }
   }
 
   // Sort table
@@ -172,6 +297,18 @@ export class DebtsPage implements OnInit {
       // Set new column and default to ascending
       this.sortColumn.set(column);
       this.sortDirection.set('asc');
+    }
+  }
+
+  // Sort interest breakdown table
+  protected sortInterestBreakdown(column: string): void {
+    if (this.interestSortColumn() === column) {
+      // Toggle direction if same column
+      this.interestSortDirection.set(this.interestSortDirection() === 'asc' ? 'desc' : 'asc');
+    } else {
+      // Set new column and default to ascending
+      this.interestSortColumn.set(column);
+      this.interestSortDirection.set('asc');
     }
   }
 
@@ -240,9 +377,32 @@ export class DebtsPage implements OnInit {
     this.showConsolidatedModal.set(true);
   }
 
+  // Open repayment schedule for Personal Loan - Top Up from widget
+  protected async openRepaymentScheduleFromWidget(): Promise<void> {
+    // Find the Personal Loan - Top Up debt
+    const personalLoanTopUp = this.activeDebts().find(d => d.loanName === 'Personal Loan - Top Up');
+    
+    if (personalLoanTopUp) {
+      await this.openRepaymentScheduleModal(personalLoanTopUp);
+    } else {
+      // If no Personal Loan - Top Up found, show consolidated modal as fallback
+      this.openConsolidatedModal();
+    }
+  }
+
   // Open EMI calculator
   protected openEMICalculator(): void {
     this.showEMICalculator.set(true);
+  }
+
+  // Open interest breakdown modal
+  protected openInterestBreakdownModal(): void {
+    this.showInterestBreakdownModal.set(true);
+  }
+
+  // Close interest breakdown modal
+  protected closeInterestBreakdownModal(): void {
+    this.showInterestBreakdownModal.set(false);
   }
 
   // Close all modals
@@ -254,6 +414,7 @@ export class DebtsPage implements OnInit {
     this.showRepaymentScheduleModal.set(false);
     this.showConsolidatedModal.set(false);
     this.showEMICalculator.set(false);
+    this.showInterestBreakdownModal.set(false);
     this.selectedDebt.set(null);
     this.repaymentSchedule.set([]);
   }
@@ -282,7 +443,7 @@ export class DebtsPage implements OnInit {
     }
 
     try {
-      const data: DebtFormData = {
+      let data: DebtFormData = {
         type: this.formType(),
         loanName: this.formLoanName(),
         bankOrPerson: this.formBankOrPerson(),
@@ -296,6 +457,9 @@ export class DebtsPage implements OnInit {
         status: this.formStatus(),
         notes: this.formNotes() || undefined
       };
+
+      // Auto-calculate outstanding and status
+      data = this.debtService.autoCalculateOutstanding(data);
 
       await this.debtService.addDebt(data);
       this.showToast('✅ Debt added successfully!');
@@ -317,7 +481,7 @@ export class DebtsPage implements OnInit {
     }
 
     try {
-      const data: DebtFormData = {
+      let data: DebtFormData = {
         type: this.formType(),
         loanName: this.formLoanName(),
         bankOrPerson: this.formBankOrPerson(),
@@ -331,6 +495,9 @@ export class DebtsPage implements OnInit {
         status: this.formStatus(),
         notes: this.formNotes() || undefined
       };
+
+      // Auto-calculate outstanding and status
+      data = this.debtService.autoCalculateOutstanding(data);
 
       await this.debtService.updateDebt(debt.id, data);
       this.showToast('✅ Debt updated successfully!');
@@ -416,9 +583,39 @@ export class DebtsPage implements OnInit {
 
   // Calculate interest paid for a specific debt
   protected getInterestPaid(debt: DebtEntry): number {
+    // For Personal Loan - Top Up, use CSV data
+    if (debt.loanName === 'Personal Loan - Top Up' && this.personalLoanCSVSummary()) {
+      return this.personalLoanCSVSummary()!.interestPaid;
+    }
+
+    // For other debts, calculate normally
     const principalRepaid = debt.principalAmount - debt.outstandingAmount;
     const interestPaid = debt.amountPaid - principalRepaid;
     return interestPaid > 0 ? interestPaid : 0;
+  }
+
+  // Get amount paid (use CSV for Personal Loan - Top Up)
+  protected getAmountPaid(debt: DebtEntry): number {
+    if (debt.loanName === 'Personal Loan - Top Up' && this.personalLoanCSVSummary()) {
+      return this.personalLoanCSVSummary()!.totalPaid;
+    }
+    return debt.amountPaid;
+  }
+
+  // Get outstanding amount (use CSV for Personal Loan - Top Up)
+  protected getOutstanding(debt: DebtEntry): number {
+    if (debt.loanName === 'Personal Loan - Top Up' && this.personalLoanCSVSummary()) {
+      return this.personalLoanCSVSummary()!.outstanding;
+    }
+    return debt.outstandingAmount;
+  }
+
+  // Get percent paid (use CSV for Personal Loan - Top Up)
+  protected getPercentPaid(debt: DebtEntry): number {
+    if (debt.loanName === 'Personal Loan - Top Up' && this.personalLoanCSVSummary()) {
+      return this.personalLoanCSVSummary()!.percentPaid;
+    }
+    return this.getDebtProgress(debt);
   }
 
   // Calculate EMI in EMI calculator
@@ -478,6 +675,59 @@ export class DebtsPage implements OnInit {
     const schedules = this.repaymentSchedule();
     if (schedules.length === 0) return null;
     return this.debtService.getScheduleSummary(schedules);
+  }
+
+  // Trigger monthly payment update
+  protected async triggerMonthlyUpdate(): Promise<void> {
+    try {
+      this.showToast('🔄 Processing monthly payments...');
+      const result = await this.autoUpdateService.runMonthlyUpdate();
+      
+      if (result.success && result.updatedCount > 0) {
+        this.showToast(`✅ Updated ${result.updatedCount} debt payment(s) successfully!`);
+      } else if (result.success) {
+        this.showToast('ℹ️ No payments to update.');
+      } else {
+        this.showToast(`❌ ${result.message}`);
+      }
+    } catch (err) {
+      this.showToast('❌ Failed to update monthly payments');
+      console.error(err);
+    }
+  }
+
+  // Add manual payment
+  protected async addManualPayment(debt: DebtEntry, amount: number): Promise<void> {
+    if (!amount || amount <= 0) {
+      this.showToast('⚠️ Please enter a valid payment amount');
+      return;
+    }
+
+    try {
+      await this.autoUpdateService.addPayment(debt, amount);
+      this.showToast('✅ Payment added successfully!');
+      this.closeModals();
+    } catch (err) {
+      this.showToast('❌ Failed to add payment');
+      console.error(err);
+    }
+  }
+
+  // Sync all debts (recalculate all outstanding amounts)
+  protected async syncAllDebts(): Promise<void> {
+    try {
+      this.showToast('🔄 Syncing all debts...');
+      const result = await this.autoUpdateService.syncAllDebts();
+      
+      if (result.success) {
+        this.showToast(`✅ Synced ${result.syncedCount} debt(s)`);
+      } else {
+        this.showToast(`❌ ${result.message}`);
+      }
+    } catch (err) {
+      this.showToast('❌ Failed to sync debts');
+      console.error(err);
+    }
   }
 
   // Format date for display

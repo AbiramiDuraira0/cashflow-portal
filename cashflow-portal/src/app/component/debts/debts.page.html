@@ -12,8 +12,11 @@
           <span class="btn-icon">🧮</span>
           <span class="btn-text">EMI Calculator</span>
         </button>
+        <button class="btn-secondary sync-btn" (click)="syncAllDebts()" title="Recalculate all outstanding amounts">
+          <span class="btn-icon">🔃</span>
+          <span class="btn-text">Sync All</span>
+        </button>
         <button class="btn-primary add-debt-btn" (click)="openAddModal()">
-          <span class="btn-icon">➕</span>
           <span class="btn-text">Add Debt/Loan</span>
         </button>
       </div>
@@ -23,21 +26,21 @@
   <!-- Summary Dashboard -->
   <div class="summary-dashboard">
     <!-- Total Debt Card -->
-    <div class="summary-card total-card">
+    <div class="summary-card total-card clickable" (click)="openRepaymentScheduleFromWidget()" title="Click to view repayment schedule">
       <div class="card-icon">&#128184;</div>
       <div class="card-content">
-        <div class="card-label">Total Debts (Borrowed)</div>
-        <div class="card-value">{{ formatCurrency(summary().totalDebts) }}</div>
+        <div class="card-label">Current Debts (Outstanding)</div>
+        <div class="card-value">{{ formatCurrency(enhancedSummary().totalDebts) }}</div>
         <div class="card-meta">Money you owe</div>
       </div>
     </div>
 
     <!-- Interest Paid Card -->
-    <div class="summary-card interest-card">
+    <div class="summary-card interest-card clickable" (click)="openInterestBreakdownModal()" title="Click to view interest breakdown">
       <div class="card-icon">&#128200;</div>
       <div class="card-content">
         <div class="card-label">Total Interest Paid</div>
-        <div class="card-value">{{ formatCurrency(summary().totalInterestPaid) }}</div>
+        <div class="card-value">{{ formatCurrency(enhancedSummary().totalInterestPaid) }}</div>
         <div class="card-meta">Calculated interest</div>
       </div>
     </div>
@@ -46,7 +49,7 @@
     <div class="summary-card count-card clickable" (click)="openConsolidatedModal()" title="Click to view consolidated summary">
       <div class="card-icon">&#128203;</div>
       <div class="card-content">
-        <div class="card-label">Total Entries</div>
+        <div class="card-label">Total Loans</div>
         <div class="card-value">{{ activeCount() }}</div>
         <div class="card-meta">{{ summary().openCount }} open, {{ summary().closedCount }} closed</div>
       </div>
@@ -159,11 +162,11 @@
               </div>
               <div class="amount-item paid">
                 <span class="amount-label">Paid</span>
-                <span class="amount-value">{{ formatCurrency(debt.amountPaid) }}</span>
+                <span class="amount-value">{{ formatCurrency(getAmountPaid(debt)) }}</span>
               </div>
               <div class="amount-item percentage">
                 <span class="amount-label">% Paid</span>
-                <span class="amount-value">{{ getDebtProgress(debt).toFixed(1) }}%</span>
+                <span class="amount-value">{{ getPercentPaid(debt).toFixed(1) }}%</span>
               </div>
             </div>
 
@@ -172,7 +175,7 @@
               <div class="amount-row outstanding-row">
                 <div class="amount-item outstanding">
                   <span class="amount-label">Outstanding</span>
-                  <span class="amount-value">{{ formatCurrency(debt.outstandingAmount) }}</span>
+                  <span class="amount-value">{{ formatCurrency(getOutstanding(debt)) }}</span>
                 </div>
               </div>
             }
@@ -806,10 +809,10 @@
                       </span>
                     </td>
                     <td class="amount-cell">{{ formatCurrency(debt.principalAmount) }}</td>
-                    <td class="amount-cell paid">{{ formatCurrency(debt.amountPaid) }}</td>
+                    <td class="amount-cell paid">{{ formatCurrency(getAmountPaid(debt)) }}</td>
                     <td class="amount-cell interest">{{ formatCurrency(getInterestPaid(debt)) }}</td>
-                    <td class="amount-cell outstanding">{{ formatCurrency(debt.outstandingAmount) }}</td>
-                    <td class="percent-cell">{{ getDebtProgress(debt).toFixed(1) }}%</td>
+                    <td class="amount-cell outstanding">{{ formatCurrency(getOutstanding(debt)) }}</td>
+                    <td class="percent-cell">{{ getPercentPaid(debt).toFixed(1) }}%</td>
                   </tr>
                 }
               </tbody>
@@ -829,6 +832,56 @@
 
         <div class="modal-footer">
           <button class="btn-secondary" (click)="closeModals()">Close</button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Interest Breakdown Modal -->
+  @if (showInterestBreakdownModal()) {
+    <div class="modal-backdrop">
+      <div class="modal interest-breakdown-modal">
+        <div class="modal-header">
+          <h3>Interest Paid Breakdown</h3>
+          <button class="close-btn" (click)="closeInterestBreakdownModal()">✕</button>
+        </div>
+        <div class="modal-body">
+          <table class="breakdown-table">
+            <thead>
+              <tr>
+                <th class="sortable" (click)="sortInterestBreakdown('loanName')">
+                  Loan Name
+                  @if (interestSortColumn() === 'loanName') {
+                    <span class="sort-icon">{{ interestSortDirection() === 'asc' ? '▲' : '▼' }}</span>
+                  }
+                </th>
+                <th class="sortable" (click)="sortInterestBreakdown('bankOrPerson')">
+                  Bank/Person
+                  @if (interestSortColumn() === 'bankOrPerson') {
+                    <span class="sort-icon">{{ interestSortDirection() === 'asc' ? '▲' : '▼' }}</span>
+                  }
+                </th>
+                <th class="sortable" (click)="sortInterestBreakdown('interestPaid')">
+                  Interest Paid
+                  @if (interestSortColumn() === 'interestPaid') {
+                    <span class="sort-icon">{{ interestSortDirection() === 'asc' ? '▲' : '▼' }}</span>
+                  }
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (debt of sortedInterestBreakdown(); track debt.id) {
+                <tr>
+                  <td>{{ debt.loanName }}</td>
+                  <td>{{ debt.bankOrPerson }}</td>
+                  <td class="amount-cell">{{ formatCurrency(getInterestPaid(debt)) }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-secondary" (click)="closeInterestBreakdownModal()">Close</button>
         </div>
       </div>
     </div>
