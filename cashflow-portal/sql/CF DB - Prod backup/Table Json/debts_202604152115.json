@@ -78,16 +78,16 @@
 		"loan_name" : "Personal Loan - Top Up",
 		"bank_or_person" : "HDFC",
 		"principal_amount" : 850000.00,
-		"interest_rate" : 11.00,
+		"interest_rate" : null,
 		"emi_amount" : 18418.00,
 		"emi_start_date" : null,
 		"emi_end_date" : null,
-		"outstanding_amount" : 603037.00,
+		"outstanding_amount" : 463222.00,
 		"amount_paid" : 386778.00,
 		"status" : "open",
 		"notes" : "Open - July 2024 | Closed - ",
 		"is_delete" : false,
 		"created_at" : "2026-04-03T10:21:17.036Z",
-		"updated_at" : "2026-04-03T11:26:38.325Z"
+		"updated_at" : "2026-04-15T12:13:23.973Z"
 	}
 ]}
