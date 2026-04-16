@@ -1,0 +1,77 @@
+-- public.category_category_id_seq definition
+
+-- DROP SEQUENCE public.category_category_id_seq;
+
+CREATE SEQUENCE public.category_category_id_seq
+	INCREMENT BY 1
+	MINVALUE 1
+	MAXVALUE 2147483647
+	START 1
+	CACHE 1
+	NO CYCLE;
+
+
+
+-- public.debts_debt_id_seq definition
+
+-- DROP SEQUENCE public.debts_debt_id_seq;
+
+CREATE SEQUENCE public.debts_debt_id_seq
+	INCREMENT BY 1
+	MINVALUE 1
+	MAXVALUE 2147483647
+	START 1
+	CACHE 1
+	NO CYCLE;
+
+
+-- public.expense_2021_expense_id_seq definition
+
+-- DROP SEQUENCE public.expense_2021_expense_id_seq;
+
+CREATE SEQUENCE public.expense_2021_expense_id_seq
+	INCREMENT BY 1
+	MINVALUE 1
+	MAXVALUE 2147483647
+	START 1
+	CACHE 1
+	NO CYCLE;
+
+
+-- public.income_income_id_seq definition
+
+-- DROP SEQUENCE public.income_income_id_seq;
+
+CREATE SEQUENCE public.income_income_id_seq
+	INCREMENT BY 1
+	MINVALUE 1
+	MAXVALUE 2147483647
+	START 1
+	CACHE 1
+	NO CYCLE;
+
+
+-- public.investment_investment_id_seq definition
+
+-- DROP SEQUENCE public.investment_investment_id_seq;
+
+CREATE SEQUENCE public.investment_investment_id_seq
+	INCREMENT BY 1
+	MINVALUE 1
+	MAXVALUE 2147483647
+	START 1
+	CACHE 1
+	NO CYCLE;
+
+
+-- public.tax_tax_id_seq definition
+
+-- DROP SEQUENCE public.tax_tax_id_seq;
+
+CREATE SEQUENCE public.tax_tax_id_seq
+	INCREMENT BY 1
+	MINVALUE 1
+	MAXVALUE 2147483647
+	START 1
+	CACHE 1
+	NO CYCLE;
