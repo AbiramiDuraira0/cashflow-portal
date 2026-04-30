@@ -117,6 +117,158 @@ export type RepaymentSchedule = {
   updatedAt: string;
 };
 
+// ============================================
+// Mock Data for QA/Demo environment
+// ============================================
+const MOCK_DEBTS: DebtEntry[] = [
+  {
+    id: 1,
+    type: 'debt',
+    loanName: 'Education Loan',
+    bankOrPerson: 'Bank of Baroda',
+    principalAmount: 500000,
+    interestRate: 8.5,
+    emiAmount: 12500,
+    emiStartDate: '2022-06-01',
+    emiEndDate: '2027-05-01',
+    outstandingAmount: 185000,
+    amountPaid: 315000,
+    status: 'open',
+    notes: 'Higher education loan - 5 year tenure',
+    isDeleted: false,
+    createdAt: '2022-06-01T00:00:00Z',
+    updatedAt: '2026-04-01T00:00:00Z'
+  },
+  {
+    id: 2,
+    type: 'debt',
+    loanName: 'Gold Loan',
+    bankOrPerson: 'SBI',
+    principalAmount: 200000,
+    interestRate: 7.5,
+    emiAmount: 8500,
+    emiStartDate: '2024-01-01',
+    emiEndDate: '2026-12-01',
+    outstandingAmount: 72000,
+    amountPaid: 128000,
+    status: 'open',
+    notes: 'Gold loan against 50g gold',
+    isDeleted: false,
+    createdAt: '2024-01-01T00:00:00Z',
+    updatedAt: '2026-04-01T00:00:00Z'
+  },
+  {
+    id: 3,
+    type: 'debt',
+    loanName: 'Personal Loan',
+    bankOrPerson: 'HDFC Bank',
+    principalAmount: 300000,
+    interestRate: 12.0,
+    emiAmount: 10000,
+    emiStartDate: '2023-03-01',
+    emiEndDate: '2026-02-01',
+    outstandingAmount: 0,
+    amountPaid: 360000,
+    status: 'closed',
+    notes: 'Personal loan - fully repaid',
+    isDeleted: false,
+    createdAt: '2023-03-01T00:00:00Z',
+    updatedAt: '2026-02-15T00:00:00Z'
+  },
+  {
+    id: 4,
+    type: 'debt',
+    loanName: 'Car Loan',
+    bankOrPerson: 'ICICI Bank',
+    principalAmount: 600000,
+    interestRate: 9.0,
+    emiAmount: 13500,
+    emiStartDate: '2024-06-01',
+    emiEndDate: '2029-05-01',
+    outstandingAmount: 485000,
+    amountPaid: 115000,
+    status: 'open',
+    notes: 'Car loan for Honda City',
+    isDeleted: false,
+    createdAt: '2024-06-01T00:00:00Z',
+    updatedAt: '2026-04-01T00:00:00Z'
+  },
+  {
+    id: 5,
+    type: 'debt',
+    loanName: 'Credit Card',
+    bankOrPerson: 'Axis Bank',
+    principalAmount: 50000,
+    interestRate: 36.0,
+    emiAmount: undefined,
+    emiStartDate: undefined,
+    emiEndDate: undefined,
+    outstandingAmount: 25000,
+    amountPaid: 25000,
+    status: 'open',
+    notes: 'Credit card outstanding balance',
+    isDeleted: false,
+    createdAt: '2026-01-15T00:00:00Z',
+    updatedAt: '2026-04-01T00:00:00Z'
+  },
+  {
+    id: 6,
+    type: 'receivable',
+    loanName: 'Personal Loan',
+    bankOrPerson: 'Rahul (Friend)',
+    principalAmount: 30000,
+    interestRate: undefined,
+    emiAmount: undefined,
+    emiStartDate: '2025-10-01',
+    emiEndDate: '2026-06-01',
+    outstandingAmount: 15000,
+    amountPaid: 15000,
+    status: 'open',
+    notes: 'Lent to friend for emergency',
+    isDeleted: false,
+    createdAt: '2025-10-01T00:00:00Z',
+    updatedAt: '2026-03-01T00:00:00Z'
+  },
+  {
+    id: 7,
+    type: 'receivable',
+    loanName: 'Other',
+    bankOrPerson: 'Cousin - Arun',
+    principalAmount: 50000,
+    interestRate: undefined,
+    emiAmount: undefined,
+    emiStartDate: '2025-06-01',
+    emiEndDate: undefined,
+    outstandingAmount: 50000,
+    amountPaid: 0,
+    status: 'open',
+    notes: 'Lent for house renovation',
+    isDeleted: false,
+    createdAt: '2025-06-01T00:00:00Z',
+    updatedAt: '2025-06-01T00:00:00Z'
+  },
+  {
+    id: 8,
+    type: 'receivable',
+    loanName: 'Other',
+    bankOrPerson: 'Office Colleague',
+    principalAmount: 10000,
+    interestRate: undefined,
+    emiAmount: undefined,
+    emiStartDate: '2026-01-01',
+    emiEndDate: '2026-02-01',
+    outstandingAmount: 0,
+    amountPaid: 10000,
+    status: 'closed',
+    notes: 'Short term loan - returned',
+    isDeleted: false,
+    createdAt: '2026-01-01T00:00:00Z',
+    updatedAt: '2026-02-05T00:00:00Z'
+  }
+];
+
+const MOCK_NEXT_ID = 100;
+
 @Injectable({ providedIn: 'root' })
 export class DebtService {
   private supabase = inject(SupabaseService);
@@ -166,6 +318,11 @@ export class DebtService {
         if (error) throw error;
         const entries: DebtEntry[] = (data || []).map(this.transformDbToApp.bind(this));
         this.debtData.set(entries);
+      } else {
+        // Use mock data for QA environment
+        console.log('💳 Loading mock debt data (QA mode)...');
+        this.debtData.set([...MOCK_DEBTS]);
+        console.log('✅ Loaded mock debts:', MOCK_DEBTS.length);
       }
     } catch (err: any) {
       this.error.set(err.message || 'Failed to load debt data');
