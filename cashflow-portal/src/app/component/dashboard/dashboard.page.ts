@@ -43,18 +43,8 @@ export class DashboardPage implements OnInit {
   protected showTestPopup = signal<boolean>(false);
   protected testResult = signal<{ success: boolean; message: string; } | null>(null);
 
-  // Current date - formatted dynamically
-  protected currentDate: string;
-
   constructor() {
-    // Format current date as "Month Day, Year" (e.g., "March 31, 2026")
-    const now = new Date();
-    const options: Intl.DateTimeFormatOptions = { 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric' 
-    };
-    this.currentDate = now.toLocaleDateString('en-US', options);
+    // Date is already initialized above
   }
 
   // Dashboard widgets - Pre-initialized for instant display

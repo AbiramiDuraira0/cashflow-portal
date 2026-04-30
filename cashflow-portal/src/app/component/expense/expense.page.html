@@ -141,47 +141,6 @@
         }
       </div>
 
-      <!-- Month Buttons -->
-      <div class="month-tabs">
-        @for (month of months; track month) {
-          <button
-            class="month-tab"
-            [class.active]="selectedMonth() === month"
-            (click)="changeMonth(month)">
-            {{ month.substring(0, 3) }}
-          </button>
-        }
-      </div>
-
-      <!-- Toggle Button for Expense vs Income -->
-      @if (monthlyIncome() > 0) {
-        <button 
-          class="toggle-chart-btn" 
-          (click)="toggleExpenseVsIncome()"
-          [title]="showExpenseVsIncome() ? 'Hide Expense vs Income' : 'Show Expense vs Income'">
-          {{ showExpenseVsIncome() ? '📊 Hide Chart' : '📊 Show Chart' }}
-        </button>
-      }
-    </div>
-  </div>
-
-  <!-- ============================== -->
-  <!-- Year & Month Filter            -->
-  <!-- ============================== -->
-  <div class="filter-section">
-    <div class="filter-row">
-      <!-- Year Tabs -->
-      <div class="year-tabs">
-        @for (year of availableYears(); track year) {
-          <button
-            class="year-tab"
-            [class.active]="selectedYear() === year"
-            (click)="changeYear(year)">
-            {{ year }}
-          </button>
-        }
-      </div>
-
       <!-- Month Dropdown -->
       <div class="month-dropdown-wrapper">
         <select
@@ -193,6 +152,16 @@
           }
         </select>
       </div>
+
+      <!-- Toggle Button for Expense vs Income -->
+      @if (monthlyIncome() > 0) {
+        <button 
+          class="toggle-chart-btn" 
+          (click)="toggleExpenseVsIncome()"
+          [title]="showExpenseVsIncome() ? 'Hide Expense vs Income' : 'Show Expense vs Income'">
+          {{ showExpenseVsIncome() ? '📊 Hide Chart' : '📊 Show Chart' }}
+        </button>
+      }
     </div>
   </div>
 
