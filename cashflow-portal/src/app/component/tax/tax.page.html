@@ -1,0 +1,397 @@
+<section class="tax-page">
+  <!-- Page Header -->
+  <header class="page-header">
+    <div class="header-content">
+      <div class="title-section">
+        <h1>🧾 Tax Management</h1>
+        <p class="subtitle">Track your monthly tax payments</p>
+      </div>
+      <button class="btn-add" (click)="openAddModal()">
+        <span class="icon">+</span>
+        Add Tax Entry
+      </button>
+    </div>
+  </header>
+
+  <!-- Summary Cards -->
+  <div class="summary-cards">
+    <div class="summary-card clickable" (click)="openFinancialYearModal()">
+      <div class="card-icon">📅</div>
+      <div class="card-content">
+        <p class="card-label">Financial Year Tax</p>
+        <h2 class="card-value">{{ formatCurrency(financialYearTotal()) }}</h2>
+        <p class="card-subtitle">Apr {{ selectedYear() - 1 }} - Mar {{ selectedYear() }}</p>
+      </div>
+    </div>
+
+    <div class="summary-card center-card">
+      <div class="card-icon">🎯</div>
+      <div class="card-content">
+        <p class="card-label">{{ selectedYear() }} Total Tax</p>
+        <h2 class="card-value">{{ formatCurrency(summary().totalTaxPaid) }}</h2>
+        <p class="card-subtitle">Calendar year</p>
+      </div>
+    </div>
+
+    <div class="summary-card clickable" (click)="openYearWiseTaxModal()">
+      <div class="card-icon">📊</div>
+      <div class="card-content">
+        <p class="card-label">Total Income Tax</p>
+        <h2 class="card-value">{{ formatCurrency(totalIncomeTax()) }}</h2>
+        <p class="card-subtitle">All years consolidated</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Year Tabs -->
+  <div class="year-tabs-container">
+    <div class="year-tabs">
+      @for (year of availableYears(); track year) {
+        <button 
+          class="year-tab"
+          [class.active]="selectedYear() === year"
+          (click)="changeYear(year)">
+          {{ year }}
+        </button>
+      }
+    </div>
+  </div>
+
+  <!-- Monthly Grid -->
+  @if (loading()) {
+    <div class="loading-state">
+      <div class="spinner">⏳</div>
+      <p>Loading tax data...</p>
+    </div>
+  } @else {
+    <div class="monthly-grid-container">
+      <div class="monthly-grid">
+        @for (monthData of monthlyData(); track monthData.month) {
+          <div 
+            class="month-cell"
+            [class.has-data]="monthData.taxPaid > 0"
+            [class.status-paid]="monthData.status === 'paid'"
+            [class.status-pending]="monthData.status === 'pending'"
+            [class.status-overdue]="monthData.status === 'overdue'"
+            (click)="openCell(monthData)"
+            [title]="monthData.entry ? 'Click to edit' : 'Click to add tax entry'">
+            <div class="month-name">{{ monthData.monthName }} - {{ selectedYear() }}</div>
+            @if (monthData.taxPaid > 0) {
+              <div class="month-content">
+                <div class="month-detail">
+                  <span class="detail-label">IT RS:</span>
+                  <span class="detail-value amount">{{ formatCurrency(monthData.taxPaid) }}</span>
+                </div>
+                @if (monthData.entry && monthData.entry.notes) {
+                  <div class="month-detail">
+                    <span class="detail-label">Reason:</span>
+                    <span class="detail-value notes">{{ monthData.entry.notes }}</span>
+                  </div>
+                }
+              </div>
+            } @else {
+              <div class="month-amount">
+                <span class="no-data-text">No data</span>
+              </div>
+            }
+            <div class="month-actions">
+              @if (monthData.entry) {
+                <button 
+                  class="action-btn edit"
+                  (click)="$event.stopPropagation(); openEditModal(monthData.entry!)"
+                  title="Edit">
+                  ✏️
+                </button>
+                <button 
+                  class="action-btn delete"
+                  (click)="$event.stopPropagation(); openDeleteModal(monthData.entry!)"
+                  title="Delete">
+                  🗑️
+                </button>
+              } @else {
+                <button 
+                  class="action-btn add"
+                  (click)="$event.stopPropagation(); openAddModalForMonth(monthData.month)"
+                  title="Add">
+                  ➕
+                </button>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- Add/Edit Modal -->
+  @if (showAddEditModal()) {
+    <div class="modal-backdrop" (click)="closeModals()">
+      <div class="modal tax-modal" (click)="$event.stopPropagation()" (keydown.enter)="saveTaxEntry()">
+        <div class="modal-header">
+          <h3>{{ editingEntry() ? '✏️ Edit Tax Entry' : 'Add Tax Entry' }}</h3>
+          <button class="close-btn" (click)="closeModals()">✕</button>
+        </div>
+
+        <div class="modal-body">
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="year">Year</label>
+              <select id="year" [(ngModel)]="formYear" [disabled]="!!editingEntry()">
+                @for (year of availableYears(); track year) {
+                  <option [value]="year">{{ year }}</option>
+                }
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="month">Month</label>
+              <select id="month" [(ngModel)]="formMonth" [disabled]="!!editingEntry()">
+                @for (month of [1,2,3,4,5,6,7,8,9,10,11,12]; track month) {
+                  <option [value]="month">{{ monthNames[month - 1] }}</option>
+                }
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="taxPaid">Tax Paid *</label>
+              <input 
+                type="number" 
+                id="taxPaid" 
+                [(ngModel)]="formTaxPaid"
+                placeholder="Enter tax amount"
+                min="0"
+                step="100"
+                required>
+            </div>
+
+            <div class="form-group">
+              <label for="taxableIncome">Taxable Income</label>
+              <input 
+                type="number" 
+                id="taxableIncome" 
+                [(ngModel)]="formTaxableIncome"
+                placeholder="Enter income"
+                min="0"
+                step="1000">
+            </div>
+
+            <div class="form-group">
+              <label for="status">Status</label>
+              <select id="status" [(ngModel)]="formStatus">
+                <option value="paid">Paid</option>
+                <option value="pending">Pending</option>
+                <option value="overdue">Overdue</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="paymentDate">Payment Date</label>
+              <input 
+                type="date" 
+                id="paymentDate" 
+                [(ngModel)]="formPaymentDate">
+            </div>
+
+            <div class="form-group full-width">
+              <label for="paymentMode">Payment Mode</label>
+              <input 
+                type="text" 
+                id="paymentMode" 
+                [(ngModel)]="formPaymentMode"
+                placeholder="e.g., Online, Cheque, Cash">
+            </div>
+
+            <div class="form-group full-width">
+              <label for="notes">Notes</label>
+              <textarea 
+                id="notes" 
+                [(ngModel)]="formNotes"
+                placeholder="Add any additional notes"
+                rows="3"></textarea>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn-secondary" (click)="closeModals()">Cancel</button>
+          <button class="btn-primary" (click)="saveTaxEntry()">
+            {{ editingEntry() ? 'Update' : 'Save' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Delete Confirmation Modal -->
+  @if (showDeleteModal() && editingEntry()) {
+    <div class="modal-backdrop" (click)="closeModals()">
+      <div class="modal delete-modal" (click)="$event.stopPropagation()">
+        <div class="modal-header delete-header">
+          <h3>🗑️ Delete Tax Entry</h3>
+          <button class="close-btn" (click)="closeModals()">✕</button>
+        </div>
+
+        <div class="modal-body">
+          <p>Are you sure you want to delete the tax entry for:</p>
+          <div class="delete-details">
+            <p><strong>Year:</strong> {{ editingEntry()!.year }}</p>
+            <p><strong>Month:</strong> {{ monthNames[editingEntry()!.month - 1] }}</p>
+            <p><strong>Tax Paid:</strong> {{ formatCurrency(editingEntry()!.tax_paid) }}</p>
+          </div>
+          <p class="warning-text">This action cannot be undone.</p>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn-secondary" (click)="closeModals()">Cancel</button>
+          <button class="btn-danger" (click)="confirmDelete()">Delete</button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Financial Year Modal -->
+  @if (showFinancialYearModal()) {
+    <div class="modal-backdrop" (click)="closeModals()">
+      <div class="modal fy-modal" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3>📅 Financial Year Tax Breakdown</h3>
+          <button class="close-btn" (click)="closeModals()">✕</button>
+        </div>
+
+        <div class="modal-body">
+          <div class="fy-info">
+            <p class="fy-period">
+              <strong>Financial Year:</strong> April {{ selectedYear() - 1 }} - March {{ selectedYear() }}
+            </p>
+            <p class="fy-total">
+              <strong>Total Tax Paid:</strong> 
+              <span class="amount">{{ formatCurrency(financialYearTotal()) }}</span>
+            </p>
+          </div>
+
+          <div class="fy-table-container">
+            <table class="fy-table">
+              <thead>
+                <tr>
+                  <th>Month</th>
+                  <th>Year</th>
+                  <th>Tax Paid</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (month of financialYearBreakdown(); track month.month + '-' + month.year) {
+                  <tr [class.has-data]="month.taxPaid > 0">
+                    <td>{{ month.monthName }}</td>
+                    <td>{{ month.year }}</td>
+                    <td class="amount-cell">
+                      @if (month.taxPaid > 0) {
+                        <span class="amount">{{ formatCurrency(month.taxPaid) }}</span>
+                      } @else {
+                        <span class="no-data">—</span>
+                      }
+                    </td>
+                    <td>
+                      <span class="status-badge" [class]="'status-' + month.status">
+                        {{ month.status }}
+                      </span>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+              <tfoot>
+                <tr class="total-row">
+                  <td colspan="2"><strong>Total</strong></td>
+                  <td class="amount-cell">
+                    <strong class="amount">{{ formatCurrency(financialYearTotal()) }}</strong>
+                  </td>
+                  <td></td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn-secondary" (click)="closeModals()">Close</button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Year-wise Tax Modal -->
+  @if (showYearWiseTaxModal()) {
+    <div class="modal-backdrop" (click)="closeModals()">
+      <div class="modal fy-modal" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3>📊 Year-wise Total Income Tax</h3>
+          <button class="close-btn" (click)="closeModals()">✕</button>
+        </div>
+
+        <div class="modal-body">
+          <div class="fy-info">
+            <p class="fy-total">
+              <strong>Total Income Tax (All Years):</strong> 
+              <span class="amount">{{ formatCurrency(totalIncomeTax()) }}</span>
+            </p>
+          </div>
+
+          <div class="fy-table-container">
+            <table class="fy-table">
+              <thead>
+                <tr>
+                  <th>Year</th>
+                  <th>Total Tax Paid</th>
+                  <th>Months Paid</th>
+                  <th>Average per Month</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (yearData of yearWiseTaxBreakdown(); track yearData.year) {
+                  <tr [class.has-data]="yearData.totalTax > 0">
+                    <td><strong>{{ yearData.year }}</strong></td>
+                    <td class="amount-cell">
+                      @if (yearData.totalTax > 0) {
+                        <span class="amount">{{ formatCurrency(yearData.totalTax) }}</span>
+                      } @else {
+                        <span class="no-data">—</span>
+                      }
+                    </td>
+                    <td>{{ yearData.monthsPaid }} / 12</td>
+                    <td class="amount-cell">
+                      @if (yearData.averagePerMonth > 0) {
+                        <span class="amount">{{ formatCurrency(yearData.averagePerMonth) }}</span>
+                      } @else {
+                        <span class="no-data">—</span>
+                      }
+                    </td>
+                  </tr>
+                }
+              </tbody>
+              <tfoot>
+                <tr class="total-row">
+                  <td><strong>Grand Total</strong></td>
+                  <td class="amount-cell">
+                    <strong class="amount">{{ formatCurrency(totalIncomeTax()) }}</strong>
+                  </td>
+                  <td colspan="2"></td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn-secondary" (click)="closeModals()">Close</button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Toast Notification -->
+  @if (toastVisible()) {
+    <div class="toast-notification">
+      {{ toastMessage() }}
+    </div>
+  }
+</section>

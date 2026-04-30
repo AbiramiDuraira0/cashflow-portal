@@ -115,6 +115,16 @@
         </a>
       </li>
       <li class="menu-item">
+        <a [routerLink]="['/tax']" routerLinkActive="active" 
+           class="menu-link" 
+           [attr.data-tooltip]="isMenuCollapsed() ? 'Tax' : null"
+           (click)="onMenuItemClick()" 
+           (mousedown)="$event.preventDefault()">
+          <span class="menu-icon-emoji">🧾</span>
+          <span class="menu-text" *ngIf="!isMenuCollapsed()">Tax</span>
+        </a>
+      </li>
+      <li class="menu-item">
         <a [routerLink]="['/report']" routerLinkActive="active" 
            class="menu-link" 
            [attr.data-tooltip]="isMenuCollapsed() ? 'Report' : null"

@@ -9,7 +9,6 @@ import { IncomeService } from './income.service';
 
 export type DbExpenseEntry = {
   expense_id: number;
-  date: string;
   month: string;
   year: number;
   category_id: number;
@@ -30,7 +29,6 @@ export type DbExpenseEntry = {
 
 export type ExpenseEntry = {
   id: number;
-  date: string;            // YYYY-MM-DD
   month: string;           // January, February, etc.
   year: number;
   categoryId: number;
@@ -46,7 +44,8 @@ export type ExpenseEntry = {
 };
 
 export type ExpenseFormData = {
-  date: string;
+  month: string;
+  year: number;
   categoryId: number;
   amount: number;
   notes?: string;
@@ -64,70 +63,70 @@ export type MonthlySummary = {
 
 const MOCK_EXPENSES: ExpenseEntry[] = [
   {
-    id: 1, date: '2026-03-01', month: 'March', year: 2026,
+    id: 1, month: 'March', year: 2026,
     categoryId: 1, categoryName: 'Rent', categoryIcon: '🏠',
     subcategory: 'Monthly Rent', subcategoryIcon: '🏡',
     amount: 15000, notes: 'March rent payment',
     isDeleted: false, createdAt: '2026-03-01T10:00:00Z', updatedAt: '2026-03-01T10:00:00Z'
   },
   {
-    id: 2, date: '2026-03-02', month: 'March', year: 2026,
+    id: 2, month: 'March', year: 2026,
     categoryId: 2, categoryName: 'Groceries', categoryIcon: '🛒',
     subcategory: 'Vegetables', subcategoryIcon: '🥬',
     amount: 2500, notes: 'Weekly vegetables',
     isDeleted: false, createdAt: '2026-03-02T11:00:00Z', updatedAt: '2026-03-02T11:00:00Z'
   },
   {
-    id: 3, date: '2026-03-05', month: 'March', year: 2026,
+    id: 3, month: 'March', year: 2026,
     categoryId: 3, categoryName: 'Transport', categoryIcon: '🚗',
     subcategory: 'Fuel', subcategoryIcon: '⛽',
     amount: 3000, notes: 'Petrol filling',
     isDeleted: false, createdAt: '2026-03-05T09:00:00Z', updatedAt: '2026-03-05T09:00:00Z'
   },
   {
-    id: 4, date: '2026-03-08', month: 'March', year: 2026,
+    id: 4, month: 'March', year: 2026,
     categoryId: 4, categoryName: 'Utilities', categoryIcon: '💡',
     subcategory: 'Electricity', subcategoryIcon: '⚡',
     amount: 1800, notes: 'EB bill March',
     isDeleted: false, createdAt: '2026-03-08T14:00:00Z', updatedAt: '2026-03-08T14:00:00Z'
   },
   {
-    id: 5, date: '2026-03-10', month: 'March', year: 2026,
+    id: 5, month: 'March', year: 2026,
     categoryId: 5, categoryName: 'Food', categoryIcon: '🍔',
     subcategory: 'Dining Out', subcategoryIcon: '🍽️',
     amount: 1200, notes: 'Weekend dinner',
     isDeleted: false, createdAt: '2026-03-10T20:00:00Z', updatedAt: '2026-03-10T20:00:00Z'
   },
   {
-    id: 6, date: '2026-03-12', month: 'March', year: 2026,
+    id: 6, month: 'March', year: 2026,
     categoryId: 6, categoryName: 'Health', categoryIcon: '🏥',
     subcategory: 'Medicine', subcategoryIcon: '💊',
     amount: 800, notes: 'Monthly medicines',
     isDeleted: false, createdAt: '2026-03-12T10:00:00Z', updatedAt: '2026-03-12T10:00:00Z'
   },
   {
-    id: 7, date: '2026-03-15', month: 'March', year: 2026,
+    id: 7, month: 'March', year: 2026,
     categoryId: 2, categoryName: 'Groceries', categoryIcon: '🛒',
     subcategory: 'Fruits', subcategoryIcon: '🍎',
     amount: 1500, notes: 'Weekly fruits',
     isDeleted: false, createdAt: '2026-03-15T11:30:00Z', updatedAt: '2026-03-15T11:30:00Z'
   },
   {
-    id: 8, date: '2026-03-18', month: 'March', year: 2026,
+    id: 8, month: 'March', year: 2026,
     categoryId: 7, categoryName: 'Entertainment', categoryIcon: '🎬',
     subcategory: 'Movies', subcategoryIcon: '🎥',
     amount: 600, notes: 'Movie tickets',
     isDeleted: false, createdAt: '2026-03-18T18:00:00Z', updatedAt: '2026-03-18T18:00:00Z'
   },
   {
-    id: 9, date: '2026-03-20', month: 'March', year: 2026,
+    id: 9, month: 'March', year: 2026,
     categoryId: 4, categoryName: 'Utilities', categoryIcon: '💡',
     subcategory: 'Internet', subcategoryIcon: '📡',
     amount: 999, notes: 'Broadband bill',
     isDeleted: false, createdAt: '2026-03-20T10:00:00Z', updatedAt: '2026-03-20T10:00:00Z'
   },
   {
-    id: 10, date: '2026-03-22', month: 'March', year: 2026,
+    id: 10, month: 'March', year: 2026,
     categoryId: 8, categoryName: 'Shopping', categoryIcon: '🛍️',
     subcategory: 'Clothing', subcategoryIcon: '👕',
     amount: 3500, notes: 'New shirts',
@@ -135,28 +134,28 @@ const MOCK_EXPENSES: ExpenseEntry[] = [
   },
   // February entries
   {
-    id: 11, date: '2026-02-01', month: 'February', year: 2026,
+    id: 11, month: 'February', year: 2026,
     categoryId: 1, categoryName: 'Rent', categoryIcon: '🏠',
     subcategory: 'Monthly Rent', subcategoryIcon: '🏡',
     amount: 15000, notes: 'Feb rent',
     isDeleted: false, createdAt: '2026-02-01T10:00:00Z', updatedAt: '2026-02-01T10:00:00Z'
   },
   {
-    id: 12, date: '2026-02-05', month: 'February', year: 2026,
+    id: 12, month: 'February', year: 2026,
     categoryId: 2, categoryName: 'Groceries', categoryIcon: '🛒',
     subcategory: 'Vegetables', subcategoryIcon: '🥬',
     amount: 2200, notes: 'Weekly groceries',
     isDeleted: false, createdAt: '2026-02-05T11:00:00Z', updatedAt: '2026-02-05T11:00:00Z'
   },
   {
-    id: 13, date: '2026-02-10', month: 'February', year: 2026,
+    id: 13, month: 'February', year: 2026,
     categoryId: 3, categoryName: 'Transport', categoryIcon: '🚗',
     subcategory: 'Fuel', subcategoryIcon: '⛽',
     amount: 2800, notes: 'Petrol',
     isDeleted: false, createdAt: '2026-02-10T09:00:00Z', updatedAt: '2026-02-10T09:00:00Z'
   },
   {
-    id: 14, date: '2026-02-15', month: 'February', year: 2026,
+    id: 14, month: 'February', year: 2026,
     categoryId: 5, categoryName: 'Food', categoryIcon: '🍔',
     subcategory: 'Dining Out', subcategoryIcon: '🍽️',
     amount: 1500, notes: 'Valentine dinner',
@@ -164,14 +163,14 @@ const MOCK_EXPENSES: ExpenseEntry[] = [
   },
   // January entries
   {
-    id: 15, date: '2026-01-01', month: 'January', year: 2026,
+    id: 15, month: 'January', year: 2026,
     categoryId: 1, categoryName: 'Rent', categoryIcon: '🏠',
     subcategory: 'Monthly Rent', subcategoryIcon: '🏡',
     amount: 15000, notes: 'Jan rent',
     isDeleted: false, createdAt: '2026-01-01T10:00:00Z', updatedAt: '2026-01-01T10:00:00Z'
   },
   {
-    id: 16, date: '2026-01-10', month: 'January', year: 2026,
+    id: 16, month: 'January', year: 2026,
     categoryId: 2, categoryName: 'Groceries', categoryIcon: '🛒',
     subcategory: 'Vegetables', subcategoryIcon: '🥬',
     amount: 3000, notes: 'New year groceries',
@@ -198,6 +197,7 @@ export class ExpenseService {
 
   // Flag: set to true once the 'expense' table exists in Supabase
   // For now, false → uses mock data
+  // Set to false for QA environment with static demo data
   private readonly USE_DB = false;
 
   private nextMockId = 100;
@@ -208,6 +208,24 @@ export class ExpenseService {
     this.loadExpenseData().catch(err => {
       console.error('❌ Failed to auto-load expenses in constructor:', err);
     });
+  }
+
+  // ============================================
+  // Year-Based Table Name Helper
+  // ============================================
+
+  /**
+   * Get the table name for a specific year
+   * Tables: expense_2021, expense_2022, expense_2023, expense_2024, expense_2025, expense_2026
+   */
+  private getTableNameForYear(year: number): string {
+    // Supported years: 2021-2026
+    if (year >= 2021 && year <= 2026) {
+      return `expense_${year}`;
+    }
+    // Default to current year table if outside range
+    console.warn(`⚠️ Year ${year} outside supported range (2021-2026). Using expense_2026.`);
+    return 'expense_2026';
   }
 
   // ============================================
@@ -234,7 +252,6 @@ export class ExpenseService {
   private transformDbToApp(dbEntry: DbExpenseEntry): ExpenseEntry {
     return {
       id: dbEntry.expense_id,
-      date: dbEntry.date || '',
       month: dbEntry.month,
       year: dbEntry.year,
       categoryId: dbEntry.category_id,
@@ -252,18 +269,6 @@ export class ExpenseService {
 
   private transformAppToDb(appEntry: Partial<ExpenseEntry>): Partial<DbExpenseEntry> {
     const dbEntry: any = {};
-
-    if (appEntry.date !== undefined) {
-      // Ensure date is stored as plain YYYY-MM-DD string (same pattern as IncomeService)
-      if (typeof appEntry.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(appEntry.date)) {
-        dbEntry.date = appEntry.date;
-      } else if (appEntry.date) {
-        const d = new Date(appEntry.date);
-        dbEntry.date = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-      } else {
-        dbEntry.date = null;
-      }
-    }
 
     if (appEntry.month !== undefined) dbEntry.month = appEntry.month;
     if (appEntry.year !== undefined) dbEntry.year = appEntry.year;
@@ -301,6 +306,7 @@ export class ExpenseService {
   /**
    * Load all expense entries from Supabase (excluding soft-deleted)
    * Falls back to mock data if DB table doesn't exist yet
+   * Note: Queries from year-based tables (expense_2021 through expense_2026)
    */
   async loadExpenseData(): Promise<void> {
     this.loading.set(true);
@@ -308,23 +314,41 @@ export class ExpenseService {
 
     try {
       if (this.USE_DB) {
-        console.log('📂 Loading expense data from database...');
+        console.log('📂 Loading expense data from year-based tables...');
 
-        const { data, error } = await this.supabase.db
-          .from('expense')
-          .select('*')
-          .eq('is_delete', false)
-          .order('year', { ascending: false })
-          .order('date', { ascending: false });
+        // Query all year tables (2021-2026)
+        const years = [2021, 2022, 2023, 2024, 2025, 2026];
+        const allEntries: ExpenseEntry[] = [];
 
-        if (error) {
-          console.error('❌ Database error:', error.message);
-          throw error;
+        for (const year of years) {
+          const tableName = this.getTableNameForYear(year);
+          
+          try {
+            const { data, error } = await this.supabase.db
+              .from(tableName)
+              .select('*')
+              .eq('is_delete', false)
+              .order('year', { ascending: false })
+              .order('month', { ascending: false });
+
+            if (error) {
+              console.warn(`⚠️ Error loading from ${tableName}:`, error.message);
+              continue; // Skip this year if table doesn't exist or has errors
+            }
+
+            if (data && data.length > 0) {
+              const entries = data.map(this.transformDbToApp.bind(this));
+              allEntries.push(...entries);
+              console.log(`✅ Loaded ${entries.length} entries from ${tableName}`);
+            }
+          } catch (err: any) {
+            console.warn(`⚠️ Failed to load from ${tableName}:`, err.message);
+            continue; // Skip this year and continue with others
+          }
         }
 
-        const entries: ExpenseEntry[] = (data || []).map(this.transformDbToApp.bind(this));
-        this.expenseData.set(entries);
-        console.log('✅ Loaded expense entries from DB:', entries.length);
+        this.expenseData.set(allEntries);
+        console.log('✅ Total expense entries loaded from all tables:', allEntries.length);
       } else {
         // Use mock data
         console.log('📂 Loading expense mock data...');
@@ -355,18 +379,16 @@ export class ExpenseService {
     this.error.set(null);
 
     try {
-      const date = new Date(data.date);
-      const month = this.getMonthName(date.getMonth());
-      const year = date.getFullYear();
-
       // Lookup category details from CategoryService
       const category = this.categoryService.getCategoryById(data.categoryId);
 
       if (this.USE_DB) {
+        // Determine which table to insert into based on year
+        const tableName = this.getTableNameForYear(data.year);
+
         const newEntry = {
-          date: data.date,
-          month: month,
-          year: year,
+          month: data.month,
+          year: data.year,
           category_id: data.categoryId,
           category_name: category?.category_name || 'Unknown',
           category_icon: category?.category_icon || null,
@@ -377,10 +399,10 @@ export class ExpenseService {
           is_delete: false
         };
 
-        console.log('➕ Adding new expense entry:', newEntry);
+        console.log(`➕ Adding new expense entry to ${tableName}:`, newEntry);
 
         const { data: dbData, error } = await this.supabase.db
-          .from('expense')
+          .from(tableName)
           .insert([newEntry])
           .select()
           .single();
@@ -392,7 +414,7 @@ export class ExpenseService {
 
         const addedEntry = this.transformDbToApp(dbData);
         this.expenseData.set([...this.expenseData(), addedEntry]);
-        console.log('✅ Expense entry added to DB. Total:', this.expenseData().length);
+        console.log(`✅ Expense entry added to ${tableName}. Total:`, this.expenseData().length);
 
         return addedEntry;
       } else {
@@ -401,9 +423,8 @@ export class ExpenseService {
 
         const newEntry: ExpenseEntry = {
           id: this.nextMockId++,
-          date: data.date,
-          month: month,
-          year: year,
+          month: data.month,
+          year: data.year,
           categoryId: data.categoryId,
           categoryName: category?.category_name || 'Unknown',
           categoryIcon: category?.category_icon || '📁',
@@ -433,64 +454,131 @@ export class ExpenseService {
 
   /**
    * Update existing expense entry
+   * Note: If year changes, deletes from old table and inserts into new table.
+   * This is necessary because of year constraints on each table.
    */
   async updateExpense(id: number, data: ExpenseFormData): Promise<ExpenseEntry> {
     this.loading.set(true);
     this.error.set(null);
 
     try {
-      const date = new Date(data.date);
-      const month = this.getMonthName(date.getMonth());
-      const year = date.getFullYear();
-
       const category = this.categoryService.getCategoryById(data.categoryId);
 
       if (this.USE_DB) {
-        const dbUpdates = {
-          date: data.date,
-          month: month,
-          year: year,
-          category_id: data.categoryId,
-          category_name: category?.category_name || 'Unknown',
-          category_icon: category?.category_icon || null,
-          sub_category: category?.sub_category || null,
-          subcategory_icon: category?.subcategory_icon || null,
-          amount_inr: data.amount,
-          notes: data.notes || null
-        };
-
-        console.log('✏️ Updating expense entry:', id, dbUpdates);
-
-        const { data: dbData, error } = await this.supabase.db
-          .from('expense')
-          .update(dbUpdates)
-          .eq('expense_id', id)
-          .eq('is_delete', false)
-          .select()
-          .single();
-
-        if (error) {
-          console.error('❌ Database error:', error.message);
-          throw error;
+        // Find the existing entry to determine which table it's in
+        const existingEntry = this.expenseData().find(e => e.id === id);
+        if (!existingEntry) {
+          throw new Error('Expense entry not found');
         }
 
-        if (!dbData) {
-          throw new Error('Expense entry not found or already deleted');
+        const oldTableName = this.getTableNameForYear(existingEntry.year);
+        const newTableName = this.getTableNameForYear(data.year);
+
+        // Check if year has changed (requires moving between tables)
+        if (existingEntry.year !== data.year) {
+          console.log(`🔄 Year changed: ${existingEntry.year} → ${data.year}`);
+          console.log(`🔄 Moving record from ${oldTableName} to ${newTableName}`);
+
+          // Step 1: Delete from old table (hard delete since we're moving)
+          const { error: deleteError } = await this.supabase.db
+            .from(oldTableName)
+            .delete()
+            .eq('expense_id', id);
+
+          if (deleteError) {
+            console.error('❌ Delete error:', deleteError.message);
+            throw new Error(`Failed to delete from ${oldTableName}: ${deleteError.message}`);
+          }
+
+          console.log(`✅ Deleted from ${oldTableName}`);
+
+          // Step 2: Insert into new table
+          const newEntry = {
+            month: data.month,
+            year: data.year,
+            category_id: data.categoryId,
+            category_name: category?.category_name || 'Unknown',
+            category_icon: category?.category_icon || null,
+            sub_category: category?.sub_category || null,
+            subcategory_icon: category?.subcategory_icon || null,
+            amount_inr: data.amount,
+            notes: data.notes || null,
+            is_delete: false
+          };
+
+          const { data: insertedData, error: insertError } = await this.supabase.db
+            .from(newTableName)
+            .insert([newEntry])
+            .select()
+            .single();
+
+          if (insertError) {
+            console.error('❌ Insert error:', insertError.message);
+            throw new Error(`Failed to insert into ${newTableName}: ${insertError.message}`);
+          }
+
+          console.log(`✅ Inserted into ${newTableName} with new ID:`, insertedData.expense_id);
+
+          const updatedEntry = this.transformDbToApp(insertedData);
+
+          // Update local state (replace old entry with new one)
+          const currentEntries = this.expenseData();
+          const index = currentEntries.findIndex(e => e.id === id);
+          if (index !== -1) {
+            const newEntries = [...currentEntries];
+            newEntries[index] = updatedEntry;
+            this.expenseData.set(newEntries);
+          }
+
+          console.log(`✅ Expense moved from ${oldTableName} to ${newTableName}`);
+          return updatedEntry;
+        } else {
+          // Year hasn't changed - simple update in same table
+          const dbUpdates = {
+            month: data.month,
+            year: data.year,
+            category_id: data.categoryId,
+            category_name: category?.category_name || 'Unknown',
+            category_icon: category?.category_icon || null,
+            sub_category: category?.sub_category || null,
+            subcategory_icon: category?.subcategory_icon || null,
+            amount_inr: data.amount,
+            notes: data.notes || null
+          };
+
+          console.log(`✏️ Updating expense entry in ${oldTableName}:`, id, dbUpdates);
+
+          const { data: dbData, error } = await this.supabase.db
+            .from(oldTableName)
+            .update(dbUpdates)
+            .eq('expense_id', id)
+            .eq('is_delete', false)
+            .select()
+            .single();
+
+          if (error) {
+            console.error('❌ Database error:', error.message);
+            throw error;
+          }
+
+          if (!dbData) {
+            throw new Error('Expense entry not found or already deleted');
+          }
+
+          const updatedEntry = this.transformDbToApp(dbData);
+
+          // Update local state
+          const currentEntries = this.expenseData();
+          const index = currentEntries.findIndex(e => e.id === id);
+          if (index !== -1) {
+            const newEntries = [...currentEntries];
+            newEntries[index] = updatedEntry;
+            this.expenseData.set(newEntries);
+          }
+
+          console.log(`✅ Expense entry updated in ${oldTableName}`);
+          return updatedEntry;
         }
-
-        const updatedEntry = this.transformDbToApp(dbData);
-
-        // Update local state
-        const currentEntries = this.expenseData();
-        const index = currentEntries.findIndex(e => e.id === id);
-        if (index !== -1) {
-          const newEntries = [...currentEntries];
-          newEntries[index] = updatedEntry;
-          this.expenseData.set(newEntries);
-        }
-
-        console.log('✅ Expense entry updated in DB');
-        return updatedEntry;
       } else {
         // Mock implementation
         await new Promise(resolve => setTimeout(resolve, 200));
@@ -504,9 +592,8 @@ export class ExpenseService {
 
         const updatedEntry: ExpenseEntry = {
           ...currentEntries[index],
-          date: data.date,
-          month: month,
-          year: year,
+          month: data.month,
+          year: data.year,
           categoryId: data.categoryId,
           categoryName: category?.category_name || 'Unknown',
           categoryIcon: category?.category_icon || '📁',
@@ -543,10 +630,19 @@ export class ExpenseService {
 
     try {
       if (this.USE_DB) {
-        console.log('🗑️ Soft deleting expense entry:', id);
+        // Find the existing entry to determine which table it's in
+        const existingEntry = this.expenseData().find(e => e.id === id);
+        if (!existingEntry) {
+          throw new Error('Expense entry not found');
+        }
+
+        // Use the table based on the entry's year
+        const tableName = this.getTableNameForYear(existingEntry.year);
+
+        console.log(`🗑️ Soft deleting expense entry from ${tableName}:`, id);
 
         const { error } = await this.supabase.db
-          .from('expense')
+          .from(tableName)
           .update({ is_delete: true })
           .eq('expense_id', id);
 
@@ -559,7 +655,7 @@ export class ExpenseService {
         const filtered = this.expenseData().filter(e => e.id !== id);
         this.expenseData.set(filtered);
 
-        console.log('✅ Expense entry soft deleted from DB. Remaining:', filtered.length);
+        console.log(`✅ Expense entry soft deleted from ${tableName}. Remaining:`, filtered.length);
       } else {
         // Mock implementation
         await new Promise(resolve => setTimeout(resolve, 200));

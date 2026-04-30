@@ -1,6 +1,7 @@
 import { Component, OnInit, signal, computed, inject, ElementRef, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { ExpenseService, ExpenseEntry, ExpenseFormData } from '../../services/expense.service';
 import { CategoryService } from '../../services/category.service';
 import { IncomeService } from '../../services/income.service';
@@ -16,6 +17,7 @@ export class ExpensePage implements OnInit {
   private expenseService = inject(ExpenseService);
   private categoryService = inject(CategoryService);
   private incomeService = inject(IncomeService);
+  private router = inject(Router);
 
   @ViewChild('amountInput') amountInputRef!: ElementRef<HTMLInputElement>;
 
@@ -35,7 +37,22 @@ export class ExpensePage implements OnInit {
 
   // Filters
   protected selectedYear = signal<number>(new Date().getFullYear());
-  protected selectedMonth = signal<string>(this.getCurrentMonthName());
+  protected selectedMonth = signal<string>('January');
+
+  // Search, Sort, Pagination
+  protected searchQuery = signal<string>('');
+  protected sortColumn = signal<'date' | 'categoryName' | 'subcategory' | 'amount'>('amount');
+  protected sortDirection = signal<'asc' | 'desc'>('desc');
+  protected secondarySortColumn = signal<'subcategory' | null>(null);
+  protected secondarySortDirection = signal<'asc' | 'desc'>('asc');
+  protected currentPage = signal<number>(1);
+  protected pageSize = signal<number>(10);
+  protected readonly pageSizeOptions = [5, 10, 25, 50, 100];
+
+  // Toggle states
+  protected showExpenseVsIncome = signal(false);
+  protected groupByCategory = signal(true); // Enable grouping by default
+  protected expandedCategories = signal<Set<string>>(new Set()); // Track expanded categories
 
   // Modal states
   protected showExpenseModal = signal(false);
@@ -47,7 +64,6 @@ export class ExpensePage implements OnInit {
   protected deletingEntry = signal<ExpenseEntry | null>(null);
 
   // Form fields (signal-based, same pattern as IncomePage)
-  protected formDate = signal<string>(this.getTodayString());
   protected formCategoryName = signal<string>('');
   protected formCategoryId = signal<number>(0);
   protected formAmount = signal<number>(0);
@@ -79,9 +95,127 @@ export class ExpensePage implements OnInit {
     const all = this.expenses();
     const month = this.selectedMonth();
     const year = this.selectedYear();
-    return all
-      .filter(e => e.month === month && e.year === year && !e.isDeleted)
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    const query = this.searchQuery().toLowerCase();
+    
+    let filtered = all.filter(e => e.month === month && e.year === year && !e.isDeleted);
+    
+    // Apply search filter
+    if (query) {
+      filtered = filtered.filter(e =>
+        e.categoryName.toLowerCase().includes(query) ||
+        (e.subcategory && e.subcategory.toLowerCase().includes(query)) ||
+        (e.notes && e.notes.toLowerCase().includes(query)) ||
+        e.amount.toString().includes(query)
+      );
+    }
+    
+    return filtered;
+  });
+
+  /** Sorted expenses with multi-level sorting support */
+  protected sortedExpenses = computed(() => {
+    const expenses = [...this.filteredExpenses()];
+    const col = this.sortColumn();
+    const dir = this.sortDirection();
+    const secondaryCol = this.secondarySortColumn();
+    const secondaryDir = this.secondarySortDirection();
+    
+    expenses.sort((a, b) => {
+      let aVal: any, bVal: any;
+      
+      if (col === 'date') {
+        // Sort by year first, then by month
+        const aMonthIndex = this.months.indexOf(a.month);
+        const bMonthIndex = this.months.indexOf(b.month);
+        const aDate = a.year * 12 + aMonthIndex;
+        const bDate = b.year * 12 + bMonthIndex;
+        aVal = aDate;
+        bVal = bDate;
+      } else if (col === 'categoryName') {
+        aVal = a.categoryName.toLowerCase();
+        bVal = b.categoryName.toLowerCase();
+      } else if (col === 'subcategory') {
+        aVal = (a.subcategory || '').toLowerCase();
+        bVal = (b.subcategory || '').toLowerCase();
+      } else if (col === 'amount') {
+        aVal = a.amount;
+        bVal = b.amount;
+      }
+      
+      // Primary sort comparison
+      let primaryComparison = 0;
+      if (aVal < bVal) primaryComparison = dir === 'asc' ? -1 : 1;
+      else if (aVal > bVal) primaryComparison = dir === 'asc' ? 1 : -1;
+      
+      // If primary values are equal and secondary sort is enabled
+      if (primaryComparison === 0 && col === 'categoryName' && secondaryCol === 'subcategory') {
+        const aSubVal = (a.subcategory || '').toLowerCase();
+        const bSubVal = (b.subcategory || '').toLowerCase();
+        if (aSubVal < bSubVal) return secondaryDir === 'asc' ? -1 : 1;
+        if (aSubVal > bSubVal) return secondaryDir === 'asc' ? 1 : -1;
+      }
+      
+      return primaryComparison;
+    });
+    
+    return expenses;
+  });
+
+  /** Grouped expenses by category */
+  protected groupedExpenses = computed(() => {
+    const sorted = this.sortedExpenses();
+    const groups = new Map<string, ExpenseEntry[]>();
+    
+    sorted.forEach(expense => {
+      const categoryKey = expense.categoryName;
+      if (!groups.has(categoryKey)) {
+        groups.set(categoryKey, []);
+      }
+      groups.get(categoryKey)!.push(expense);
+    });
+    
+    // Calculate total for percentage calculation
+    const grandTotal = sorted.reduce((sum, exp) => sum + exp.amount, 0);
+    
+    // Convert to array with category info and percentage
+    return Array.from(groups.entries()).map(([categoryName, expenses]) => {
+      const total = expenses.reduce((sum, exp) => sum + exp.amount, 0);
+      const percentage = grandTotal > 0 ? (total / grandTotal) * 100 : 0;
+      
+      return {
+        categoryName,
+        categoryIcon: expenses[0].categoryIcon,
+        expenses,
+        total,
+        count: expenses.length,
+        percentage
+      };
+    });
+  });
+
+  /** Paginated expenses (flat list or grouped) */
+  protected paginatedExpenses = computed(() => {
+    const sorted = this.sortedExpenses();
+    const page = this.currentPage();
+    const size = this.pageSize();
+    const start = (page - 1) * size;
+    const end = start + size;
+    return sorted.slice(start, end);
+  });
+
+  /** Total pages */
+  protected totalPages = computed(() => {
+    return Math.ceil(this.sortedExpenses().length / this.pageSize());
+  });
+
+  /** Pagination info */
+  protected paginationInfo = computed(() => {
+    const total = this.sortedExpenses().length;
+    const page = this.currentPage();
+    const size = this.pageSize();
+    const start = total === 0 ? 0 : (page - 1) * size + 1;
+    const end = Math.min(page * size, total);
+    return `${start}-${end} of ${total}`;
   });
 
   /** Total expense for the selected month */
@@ -147,14 +281,43 @@ export class ExpensePage implements OnInit {
     return Array.from(names).sort();
   });
 
+  /** Search query for category dropdown */
+  protected categorySearchQuery = signal<string>('');
+
+  /** Filtered category names based on search */
+  protected filteredCategoryNames = computed(() => {
+    const allNames = this.uniqueCategoryNames();
+    const searchTerm = this.categorySearchQuery().toLowerCase().trim();
+    
+    if (!searchTerm) return allNames;
+    
+    return allNames.filter(name => 
+      name.toLowerCase().includes(searchTerm)
+    );
+  });
+
   /** Subcategories (categories with same name that have sub_category) for the selected category name */
   protected filteredSubcategories = computed(() => {
     const catName = this.formCategoryName();
     if (!catName) return [];
-    return this.categoryService.getAllCategories().filter(
+    const subcategories = this.categoryService.getAllCategories().filter(
       c => c.category_name === catName && c.sub_category && c.is_active
     );
+    // Sort subcategories in ascending order by sub_category name
+    return subcategories.sort((a, b) => {
+      const aName = (a.sub_category || '').toLowerCase();
+      const bName = (b.sub_category || '').toLowerCase();
+      return aName.localeCompare(bName);
+    });
   });
+
+  /** Get category icon for category name */
+  protected getCategoryIconForName(categoryName: string): string {
+    const category = this.categoryService.getAllCategories().find(
+      c => c.category_name === categoryName && c.is_active
+    );
+    return category?.category_icon || '📁';
+  }
 
   // ============================================
   // Lifecycle (same pattern as IncomePage)
@@ -165,6 +328,13 @@ export class ExpensePage implements OnInit {
     console.log('📊 Initial expenses signal:', this.expenses());
     console.log('⏳ Is loading:', this.isLoading());
     this.loadData();
+    
+    // Initialize expanded categories (expand all by default)
+    setTimeout(() => {
+      if (this.groupByCategory()) {
+        this.expandAllCategories();
+      }
+    }, 100);
   }
 
   private async loadData(): Promise<void> {
@@ -198,6 +368,136 @@ export class ExpensePage implements OnInit {
 
   protected changeMonth(month: string): void {
     this.selectedMonth.set(month);
+    this.currentPage.set(1); // Reset to first page when changing month
+  }
+
+  // ============================================
+  // Search, Sort, Pagination
+  // ============================================
+
+  protected onSearchChange(value: string): void {
+    this.searchQuery.set(value);
+    this.currentPage.set(1); // Reset to first page on search
+  }
+
+  protected toggleGroupByCategory(): void {
+    this.groupByCategory.update(v => !v);
+    // If enabling grouping, expand all categories by default
+    if (this.groupByCategory()) {
+      const allCategories = new Set(this.groupedExpenses().map(g => g.categoryName));
+      this.expandedCategories.set(allCategories);
+    }
+  }
+
+  protected toggleCategoryExpand(categoryName: string): void {
+    this.expandedCategories.update(set => {
+      const newSet = new Set(set);
+      if (newSet.has(categoryName)) {
+        newSet.delete(categoryName);
+      } else {
+        newSet.add(categoryName);
+      }
+      return newSet;
+    });
+  }
+
+  protected isCategoryExpanded(categoryName: string): boolean {
+    return this.expandedCategories().has(categoryName);
+  }
+
+  protected expandAllCategories(): void {
+    const allCategories = new Set(this.groupedExpenses().map(g => g.categoryName));
+    this.expandedCategories.set(allCategories);
+  }
+
+  protected collapseAllCategories(): void {
+    this.expandedCategories.set(new Set());
+  }
+
+  protected areAllCategoriesExpanded(): boolean {
+    const allCategories = this.groupedExpenses().map(g => g.categoryName);
+    const expandedSet = this.expandedCategories();
+    return allCategories.length > 0 && allCategories.every(cat => expandedSet.has(cat));
+  }
+
+  protected areAllCategoriesCollapsed(): boolean {
+    return this.expandedCategories().size === 0;
+  }
+
+  protected sortBy(column: 'date' | 'categoryName' | 'subcategory' | 'amount'): void {
+    const currentPrimary = this.sortColumn();
+    const currentSecondary = this.secondarySortColumn();
+    
+    // If clicking on subcategory and categoryName is already primary sort
+    if (column === 'subcategory' && currentPrimary === 'categoryName') {
+      if (currentSecondary === 'subcategory') {
+        // Toggle secondary sort direction
+        this.secondarySortDirection.update(dir => dir === 'asc' ? 'desc' : 'asc');
+      } else {
+        // Enable secondary sort
+        this.secondarySortColumn.set('subcategory');
+        this.secondarySortDirection.set('asc');
+      }
+    }
+    // If clicking on categoryName
+    else if (column === 'categoryName') {
+      if (currentPrimary === 'categoryName') {
+        // Toggle primary sort direction
+        this.sortDirection.update(dir => dir === 'asc' ? 'desc' : 'asc');
+      } else {
+        // Set as new primary sort, reset secondary
+        this.sortColumn.set('categoryName');
+        this.sortDirection.set('asc');
+        this.secondarySortColumn.set(null);
+      }
+    }
+    // Any other column
+    else {
+      if (this.sortColumn() === column) {
+        // Toggle direction if same column
+        this.sortDirection.update(dir => dir === 'asc' ? 'desc' : 'asc');
+      } else {
+        // New column, default to ascending, clear secondary sort
+        this.sortColumn.set(column);
+        this.sortDirection.set('asc');
+        this.secondarySortColumn.set(null);
+      }
+    }
+  }
+
+  protected getSortIcon(column: string): string {
+    const isPrimary = this.sortColumn() === column;
+    const isSecondary = this.secondarySortColumn() === column;
+    
+    if (isPrimary) {
+      return this.sortDirection() === 'asc' ? '↑' : '↓';
+    }
+    
+    if (isSecondary && column === 'subcategory') {
+      // Show secondary sort indicator (smaller/different style)
+      return this.secondarySortDirection() === 'asc' ? '▲²' : '▼²';
+    }
+    
+    return '↕️';
+  }
+
+  protected goToPage(page: number): void {
+    if (page >= 1 && page <= this.totalPages()) {
+      this.currentPage.set(page);
+    }
+  }
+
+  protected changePageSize(size: number): void {
+    this.pageSize.set(size);
+    this.currentPage.set(1); // Reset to first page when changing page size
+  }
+
+  protected toggleExpenseVsIncome(): void {
+    this.showExpenseVsIncome.update(v => !v);
+  }
+
+  protected navigateToCategories(): void {
+    this.router.navigate(['/category']);
   }
 
   // ============================================
@@ -214,13 +514,27 @@ export class ExpensePage implements OnInit {
 
   protected openEditExpenseModal(entry: ExpenseEntry): void {
     this.editingEntry.set(entry);
-    this.formDate.set(entry.date);
     this.formAmount.set(entry.amount);
     this.formNotes.set(entry.notes || '');
 
     // Set category name first, then pick the right subcategory
     this.formCategoryName.set(entry.categoryName);
     // Find the matching category record
+    const matchingCat = this.categoryService.getAllCategories().find(
+      c => c.category_name === entry.categoryName && c.sub_category === entry.subcategory
+    );
+    this.formCategoryId.set(matchingCat?.category_id || 0);
+
+    this.showExpenseModal.set(true);
+    setTimeout(() => this.amountInputRef?.nativeElement?.focus(), 150);
+  }
+
+  protected duplicateExpense(entry: ExpenseEntry): void {
+    this.editingEntry.set(null); // Clear editing state - this will be a new entry
+    this.formAmount.set(entry.amount);
+    this.formNotes.set(entry.notes || '');
+    this.formCategoryName.set(entry.categoryName);
+
     const matchingCat = this.categoryService.getAllCategories().find(
       c => c.category_name === entry.categoryName && c.sub_category === entry.subcategory
     );
@@ -273,7 +587,7 @@ export class ExpensePage implements OnInit {
 
   protected async saveExpense(): Promise<void> {
     // Validation
-    if (!this.formDate() || this.formAmount() <= 0 || !this.formCategoryName()) {
+    if (this.formAmount() <= 0 || !this.formCategoryName()) {
       this.showToastNotification('Please fill all required fields', 'error');
       return;
     }
@@ -297,7 +611,8 @@ export class ExpensePage implements OnInit {
 
     try {
       const formData: ExpenseFormData = {
-        date: this.formDate(),
+        month: this.selectedMonth(),
+        year: this.selectedYear(),
         categoryId: categoryId,
         amount: this.formAmount(),
         notes: this.formNotes() || undefined
@@ -400,13 +715,7 @@ export class ExpensePage implements OnInit {
     return this.months[new Date().getMonth()];
   }
 
-  private getTodayString(): string {
-    const d = new Date();
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-  }
-
   private resetForm(): void {
-    this.formDate.set(this.getTodayString());
     this.formCategoryName.set('');
     this.formCategoryId.set(0);
     this.formAmount.set(0);

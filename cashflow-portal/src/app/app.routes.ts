@@ -1,12 +1,13 @@
 import { Routes } from '@angular/router';
 import { LoginPage } from './component/login/login.page';
-import { HomePage } from './component/home/home.page';
+import { DashboardPage } from './component/dashboard/dashboard.page';
 import { IncomePage } from './component/income/income.page';
 import { ExpensePage } from './component/expense/expense.page';
 import { CategoryPage } from './component/category/category.page';
 import { InvestmentPage } from './component/investment/investment.page';
 import { DebtsPage } from './component/debts/debts.page';
 import { ReportPage } from './component/Report/report.page';
+import { TaxPage } from './component/tax/tax.page';
 import { authGuard } from './guards/auth.guard';
 
 export const routes: Routes = [
@@ -21,7 +22,7 @@ export const routes: Routes = [
 	},
 	{
 		path: 'dashboard',
-		component: HomePage,
+		component: DashboardPage,
 		canActivate: [authGuard]
 	},
 	{
@@ -52,6 +53,11 @@ export const routes: Routes = [
 	{
 		path: 'report',
 		component: ReportPage,
+		canActivate: [authGuard]
+	},
+	{
+		path: 'tax',
+		component: TaxPage,
 		canActivate: [authGuard]
 	},
 	{

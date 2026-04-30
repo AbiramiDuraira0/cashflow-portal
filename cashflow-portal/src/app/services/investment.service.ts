@@ -1,4 +1,5 @@
-import { Injectable, signal, computed } from '@angular/core';
+import { Injectable, signal, computed, inject } from '@angular/core';
+import { SupabaseService } from './supabase.service';
 
 // Investment types enum
 export enum InvestmentType {
@@ -22,55 +23,121 @@ export enum InvestmentStatus {
 
 // Investment Entry interface
 export interface InvestmentEntry {
-  id: string;
+  investment_id: number;
   type: InvestmentType;
   status: InvestmentStatus;
-  name: string; // e.g., "HDFC Top 100 Fund", "Infosys Stock"
-  startDate: string; // YYYY-MM-DD
-  endDate?: string; // For closed investments
-  investedAmount: number; // Total amount invested
-  currentValue?: number; // Current market value (for active)
-  maturityValue?: number; // Expected/actual maturity value
-  maturityDate?: string; // Expected/actual maturity date
-  frequency?: string; // For SIP: Monthly, Quarterly, etc.
-  units?: number; // For stocks/MF
-  avgPrice?: number; // Average purchase price
-  currentPrice?: number; // Current market price
-  returns?: number; // Calculated returns
-  returnsPercentage?: number; // Calculated returns %
-  notes?: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-// Database format (for future Supabase integration)
-export interface DbInvestmentEntry {
-  investment_id: string;
-  type: string;
-  status: string;
   name: string;
-  start_date: string;
-  end_date: string | null;
+  year: number;
   invested_amount: number;
-  current_value: number | null;
-  maturity_value: number | null;
-  maturity_date: string | null;
-  frequency: string | null;
-  units: number | null;
-  avg_price: number | null;
-  current_price: number | null;
-  returns: number | null;
-  returns_percentage: number | null;
-  notes: string | null;
-  is_delete: boolean;
+  interest_earned?: number;
+  notes?: string;
+  is_deleted: boolean;
   created_at: string;
   updated_at: string;
 }
+
+// Consolidated Investment interface (grouped by name)
+export interface ConsolidatedInvestment {
+  name: string;
+  type: InvestmentType;
+  status: InvestmentStatus;
+  total_invested_amount: number;
+  total_interest_earned: number;
+  current_value: number;
+  years: InvestmentEntry[];
+  earliest_year: number;
+  latest_year: number;
+  years_count: number;
+}
+
+// Form data interface (for create/update)
+export interface InvestmentFormData {
+  type: string;
+  status: string;
+  name: string;
+  year: number;
+  invested_amount: number;
+  interest_earned?: number;
+  notes?: string;
+}
+
+// ============================================
+// Mock Data for QA/Demo environment
+// ============================================
+const MOCK_INVESTMENTS: InvestmentEntry[] = [
+  {
+    investment_id: 1, type: InvestmentType.PPF, status: InvestmentStatus.ACTIVE,
+    name: 'PPF Account', year: 2024, invested_amount: 150000, interest_earned: 12000,
+    notes: 'Annual PPF investment', is_deleted: false,
+    created_at: '2024-04-01T00:00:00Z', updated_at: '2024-04-01T00:00:00Z'
+  },
+  {
+    investment_id: 2, type: InvestmentType.PPF, status: InvestmentStatus.ACTIVE,
+    name: 'PPF Account', year: 2025, invested_amount: 150000, interest_earned: 11500,
+    notes: 'Annual PPF investment', is_deleted: false,
+    created_at: '2025-04-01T00:00:00Z', updated_at: '2025-04-01T00:00:00Z'
+  },
+  {
+    investment_id: 3, type: InvestmentType.MUTUAL_FUND_SIP, status: InvestmentStatus.ACTIVE,
+    name: 'HDFC Top 100 Fund', year: 2024, invested_amount: 60000, interest_earned: 8500,
+    notes: 'SIP @ 5000/month', is_deleted: false,
+    created_at: '2024-01-01T00:00:00Z', updated_at: '2024-12-31T00:00:00Z'
+  },
+  {
+    investment_id: 4, type: InvestmentType.MUTUAL_FUND_SIP, status: InvestmentStatus.ACTIVE,
+    name: 'HDFC Top 100 Fund', year: 2025, invested_amount: 60000, interest_earned: 7200,
+    notes: 'SIP @ 5000/month', is_deleted: false,
+    created_at: '2025-01-01T00:00:00Z', updated_at: '2025-12-31T00:00:00Z'
+  },
+  {
+    investment_id: 5, type: InvestmentType.PHYSICAL_GOLD, status: InvestmentStatus.ACTIVE,
+    name: 'Gold Coins', year: 2023, invested_amount: 100000, interest_earned: 15000,
+    notes: '10g gold coin purchase', is_deleted: false,
+    created_at: '2023-11-01T00:00:00Z', updated_at: '2023-11-01T00:00:00Z'
+  },
+  {
+    investment_id: 6, type: InvestmentType.PF, status: InvestmentStatus.ACTIVE,
+    name: 'Employee PF', year: 2024, invested_amount: 180000, interest_earned: 14400,
+    notes: 'EPF contribution', is_deleted: false,
+    created_at: '2024-04-01T00:00:00Z', updated_at: '2024-04-01T00:00:00Z'
+  },
+  {
+    investment_id: 7, type: InvestmentType.PF, status: InvestmentStatus.ACTIVE,
+    name: 'Employee PF', year: 2025, invested_amount: 195000, interest_earned: 15600,
+    notes: 'EPF contribution', is_deleted: false,
+    created_at: '2025-04-01T00:00:00Z', updated_at: '2025-04-01T00:00:00Z'
+  },
+  {
+    investment_id: 8, type: InvestmentType.RD, status: InvestmentStatus.PAST,
+    name: 'SBI RD', year: 2023, invested_amount: 36000, interest_earned: 2880,
+    notes: 'Completed RD', is_deleted: false,
+    created_at: '2023-01-01T00:00:00Z', updated_at: '2024-01-01T00:00:00Z'
+  },
+  {
+    investment_id: 9, type: InvestmentType.STOCKS, status: InvestmentStatus.ACTIVE,
+    name: 'Reliance Industries', year: 2024, invested_amount: 50000, interest_earned: 7500,
+    notes: '20 shares', is_deleted: false,
+    created_at: '2024-03-01T00:00:00Z', updated_at: '2024-03-01T00:00:00Z'
+  },
+  {
+    investment_id: 10, type: InvestmentType.NPS, status: InvestmentStatus.TODO,
+    name: 'National Pension Scheme', year: 2026, invested_amount: 50000, interest_earned: 0,
+    notes: 'Planning to start NPS', is_deleted: false,
+    created_at: '2026-01-01T00:00:00Z', updated_at: '2026-01-01T00:00:00Z'
+  }
+];
 
 @Injectable({
   providedIn: 'root'
 })
 export class InvestmentService {
+  private supabase = inject(SupabaseService);
+  
+  // Toggle between mock data (QA) and real DB (Production)
+  private readonly USE_DB = false; // Set to false for QA environment with static demo data
+  
+  private nextMockId = 100; // For generating new IDs in mock mode
+  
   // Signal-based state management
   private investmentData = signal<InvestmentEntry[]>([]);
   private loading = signal<boolean>(false);
@@ -83,27 +150,29 @@ export class InvestmentService {
 
   // Computed analytics
   public readonly totalInvested = computed(() => 
-    this.investmentData().reduce((sum, inv) => sum + inv.investedAmount, 0)
+    this.investmentData()
+      .filter(inv => inv.status === InvestmentStatus.ACTIVE)
+      .reduce((sum, inv) => sum + inv.invested_amount, 0)
+  );
+
+  public readonly totalInterestEarned = computed(() => 
+    this.investmentData()
+      .filter(inv => inv.status === InvestmentStatus.ACTIVE)
+      .reduce((sum, inv) => sum + (inv.interest_earned || 0), 0)
   );
 
   public readonly totalCurrentValue = computed(() => 
     this.investmentData()
-      .filter(inv => inv.status === InvestmentStatus.ACTIVE && inv.currentValue)
-      .reduce((sum, inv) => sum + (inv.currentValue || 0), 0)
+      .filter(inv => inv.status === InvestmentStatus.ACTIVE)
+      .reduce((sum, inv) => sum + inv.invested_amount + (inv.interest_earned || 0), 0)
   );
 
   public readonly totalReturns = computed(() => {
-    const invested = this.investmentData()
-      .filter(inv => inv.status === InvestmentStatus.ACTIVE)
-      .reduce((sum, inv) => sum + inv.investedAmount, 0);
-    const current = this.totalCurrentValue();
-    return current - invested;
+    return this.totalInterestEarned();
   });
 
   public readonly totalReturnsPercentage = computed(() => {
-    const invested = this.investmentData()
-      .filter(inv => inv.status === InvestmentStatus.ACTIVE)
-      .reduce((sum, inv) => sum + inv.investedAmount, 0);
+    const invested = this.totalInvested();
     if (invested === 0) return 0;
     return (this.totalReturns() / invested) * 100;
   });
@@ -120,80 +189,136 @@ export class InvestmentService {
     this.investmentData().filter(inv => inv.status === InvestmentStatus.TODO)
   );
 
-  // Toggle between mock data and real DB
-  private readonly USE_DB = false;
+  // Consolidated investments grouped by name and type
+  public readonly consolidatedInvestments = computed(() => {
+    const grouped = new Map<string, ConsolidatedInvestment>();
+    
+    this.investmentData().forEach(inv => {
+      const key = `${inv.type}|${inv.name}`;
+      
+      if (!grouped.has(key)) {
+        grouped.set(key, {
+          name: inv.name,
+          type: inv.type,
+          status: inv.status,
+          total_invested_amount: 0,
+          total_interest_earned: 0,
+          current_value: 0,
+          years: [],
+          earliest_year: inv.year,
+          latest_year: inv.year,
+          years_count: 0
+        });
+      }
+      
+      const consolidated = grouped.get(key)!;
+      consolidated.total_invested_amount += inv.invested_amount;
+      consolidated.total_interest_earned += inv.interest_earned || 0;
+      consolidated.current_value += inv.invested_amount + (inv.interest_earned || 0);
+      consolidated.years.push(inv);
+      consolidated.earliest_year = Math.min(consolidated.earliest_year, inv.year);
+      consolidated.latest_year = Math.max(consolidated.latest_year, inv.year);
+      consolidated.years_count = consolidated.years.length;
+      
+      // Update status to Active if any year is Active
+      if (inv.status === InvestmentStatus.ACTIVE) {
+        consolidated.status = InvestmentStatus.ACTIVE;
+      }
+    });
+    
+    // Sort years within each consolidated investment
+    grouped.forEach(consolidated => {
+      consolidated.years.sort((a, b) => a.year - b.year);
+    });
+    
+    return Array.from(grouped.values());
+  });
 
-  private nextMockId = 200;
+  public readonly activeConsolidatedInvestments = computed(() => 
+    this.consolidatedInvestments().filter(inv => inv.status === InvestmentStatus.ACTIVE)
+  );
+
+  public readonly pastConsolidatedInvestments = computed(() => 
+    this.consolidatedInvestments().filter(inv => inv.status === InvestmentStatus.PAST)
+  );
+
+  public readonly todoConsolidatedInvestments = computed(() => 
+    this.consolidatedInvestments().filter(inv => inv.status === InvestmentStatus.TODO)
+  );
 
   constructor() {
     // Auto-load on service initialization
-    this.loadInvestmentData().catch(err => {
-      console.error('❌ Failed to auto-load investments:', err);
-    });
+    this.loadInvestmentData();
   }
 
-  // Load investment data (mock or from DB)
+  // Load investment data from database or mock data
   async loadInvestmentData(): Promise<void> {
     this.loading.set(true);
     this.error.set(null);
 
     try {
       if (this.USE_DB) {
-        // TODO: Implement Supabase integration when table is ready
-        console.log('📊 Loading from database...');
-        // const { data, error } = await supabase.from('investments').select('*');
+        const { data, error } = await this.supabase.db
+          .from('investment')
+          .select('*')
+          .eq('is_deleted', false)
+          .order('year', { ascending: false });
+
+        if (error) throw error;
+
+        this.investmentData.set(data || []);
+        console.log('✅ Loaded investments:', (data || []).length);
       } else {
-        // Use mock data
-        console.log('📊 Loading investment mock data...');
-        this.investmentData.set(MOCK_INVESTMENTS);
+        // Use mock data for QA environment
+        console.log('📊 Loading mock investment data (QA mode)...');
+        this.investmentData.set([...MOCK_INVESTMENTS]);
         console.log('✅ Loaded mock investments:', MOCK_INVESTMENTS.length);
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Unknown error';
       this.error.set(message);
       console.error('❌ Error loading investments:', err);
+      throw err;
     } finally {
       this.loading.set(false);
     }
   }
 
   // Add new investment
-  async addInvestment(data: Partial<InvestmentEntry>): Promise<void> {
+  async addInvestment(data: InvestmentFormData): Promise<InvestmentEntry> {
     this.loading.set(true);
     try {
       if (this.USE_DB) {
-        // TODO: Supabase insert
+        const { data: insertedData, error } = await this.supabase.db
+          .from('investment')
+          .insert([data])
+          .select()
+          .single();
+
+        if (error) throw error;
+
+        await this.loadInvestmentData();
+        console.log('✅ Added investment');
+        return insertedData;
       } else {
+        // Mock mode - add to local data
         const newInvestment: InvestmentEntry = {
-          id: String(this.nextMockId++),
-          type: data.type || InvestmentType.MUTUAL_FUND_SIP,
-          status: data.status || InvestmentStatus.ACTIVE,
-          name: data.name || '',
-          startDate: data.startDate || new Date().toISOString().split('T')[0],
-          endDate: data.endDate,
-          investedAmount: data.investedAmount || 0,
-          currentValue: data.currentValue,
-          maturityValue: data.maturityValue,
-          maturityDate: data.maturityDate,
-          frequency: data.frequency,
-          units: data.units,
-          avgPrice: data.avgPrice,
-          currentPrice: data.currentPrice,
-          returns: data.returns,
-          returnsPercentage: data.returnsPercentage,
+          investment_id: this.nextMockId++,
+          type: data.type as InvestmentType,
+          status: data.status as InvestmentStatus,
+          name: data.name,
+          year: data.year,
+          invested_amount: data.invested_amount,
+          interest_earned: data.interest_earned || 0,
           notes: data.notes,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
+          is_deleted: false,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
         };
-
-        // Calculate returns if current value is provided
-        if (newInvestment.currentValue && newInvestment.status === InvestmentStatus.ACTIVE) {
-          newInvestment.returns = newInvestment.currentValue - newInvestment.investedAmount;
-          newInvestment.returnsPercentage = (newInvestment.returns / newInvestment.investedAmount) * 100;
-        }
-
-        this.investmentData.update(current => [newInvestment, ...current]);
-        console.log('✅ Added investment:', newInvestment);
+        
+        this.investmentData.set([...this.investmentData(), newInvestment]);
+        console.log('✅ Added investment (mock):', newInvestment);
+        return newInvestment;
       }
     } catch (err) {
       console.error('❌ Error adding investment:', err);
@@ -204,29 +329,28 @@ export class InvestmentService {
   }
 
   // Update investment
-  async updateInvestment(id: string, data: Partial<InvestmentEntry>): Promise<void> {
+  async updateInvestment(investment_id: number, data: Partial<InvestmentFormData>): Promise<void> {
     this.loading.set(true);
     try {
       if (this.USE_DB) {
-        // TODO: Supabase update
+        const { error } = await this.supabase.db
+          .from('investment')
+          .update(data)
+          .eq('investment_id', investment_id);
+
+        if (error) throw error;
+
+        await this.loadInvestmentData();
+        console.log('✅ Updated investment:', investment_id);
       } else {
-        this.investmentData.update(current => 
-          current.map(inv => {
-            if (inv.id === id) {
-              const updated = { ...inv, ...data, updatedAt: new Date().toISOString() };
-              
-              // Recalculate returns if values changed
-              if (updated.currentValue && updated.status === InvestmentStatus.ACTIVE) {
-                updated.returns = updated.currentValue - updated.investedAmount;
-                updated.returnsPercentage = (updated.returns / updated.investedAmount) * 100;
-              }
-              
-              return updated;
-            }
-            return inv;
-          })
+        // Mock mode - update in local data
+        const updated = this.investmentData().map(inv => 
+          inv.investment_id === investment_id 
+            ? { ...inv, ...data, updated_at: new Date().toISOString() } as InvestmentEntry
+            : inv
         );
-        console.log('✅ Updated investment:', id);
+        this.investmentData.set(updated);
+        console.log('✅ Updated investment (mock):', investment_id);
       }
     } catch (err) {
       console.error('❌ Error updating investment:', err);
@@ -236,15 +360,25 @@ export class InvestmentService {
     }
   }
 
-  // Delete investment
-  async deleteInvestment(id: string): Promise<void> {
+  // Delete investment (soft delete)
+  async deleteInvestment(investment_id: number): Promise<void> {
     this.loading.set(true);
     try {
       if (this.USE_DB) {
-        // TODO: Supabase soft delete
+        const { error } = await this.supabase.db
+          .from('investment')
+          .update({ is_deleted: true })
+          .eq('investment_id', investment_id);
+
+        if (error) throw error;
+
+        await this.loadInvestmentData();
+        console.log('✅ Deleted investment:', investment_id);
       } else {
-        this.investmentData.update(current => current.filter(inv => inv.id !== id));
-        console.log('✅ Deleted investment:', id);
+        // Mock mode - filter out the deleted entry
+        const updated = this.investmentData().filter(inv => inv.investment_id !== investment_id);
+        this.investmentData.set(updated);
+        console.log('✅ Deleted investment (mock):', investment_id);
       }
     } catch (err) {
       console.error('❌ Error deleting investment:', err);
@@ -258,148 +392,9 @@ export class InvestmentService {
   getInvestmentsSignal() {
     return this.investments;
   }
-}
 
-// Mock data for testing
-const MOCK_INVESTMENTS: InvestmentEntry[] = [
-  // Active Investments
-  {
-    id: '1',
-    type: InvestmentType.MUTUAL_FUND_SIP,
-    status: InvestmentStatus.ACTIVE,
-    name: 'HDFC Top 100 Fund',
-    startDate: '2024-01-15',
-    investedAmount: 120000,
-    currentValue: 135000,
-    returns: 15000,
-    returnsPercentage: 12.5,
-    frequency: 'Monthly',
-    units: 1250,
-    avgPrice: 96,
-    currentPrice: 108,
-    notes: 'Long-term wealth creation',
-    createdAt: '2024-01-15T10:00:00Z',
-    updatedAt: '2026-03-22T10:00:00Z'
-  },
-  {
-    id: '2',
-    type: InvestmentType.STOCKS,
-    status: InvestmentStatus.ACTIVE,
-    name: 'Infosys Ltd',
-    startDate: '2025-06-10',
-    investedAmount: 85000,
-    currentValue: 92000,
-    returns: 7000,
-    returnsPercentage: 8.24,
-    units: 50,
-    avgPrice: 1700,
-    currentPrice: 1840,
-    notes: 'IT sector growth stock',
-    createdAt: '2025-06-10T10:00:00Z',
-    updatedAt: '2026-03-22T10:00:00Z'
-  },
-  {
-    id: '3',
-    type: InvestmentType.PPF,
-    status: InvestmentStatus.ACTIVE,
-    name: 'PPF Account - SBI',
-    startDate: '2023-04-01',
-    investedAmount: 450000,
-    currentValue: 485000,
-    returns: 35000,
-    returnsPercentage: 7.78,
-    maturityDate: '2038-04-01',
-    maturityValue: 950000,
-    frequency: 'Yearly',
-    notes: 'Tax-free retirement savings',
-    createdAt: '2023-04-01T10:00:00Z',
-    updatedAt: '2026-03-22T10:00:00Z'
-  },
-  {
-    id: '4',
-    type: InvestmentType.NPS,
-    status: InvestmentStatus.ACTIVE,
-    name: 'NPS Tier-I',
-    startDate: '2024-07-01',
-    investedAmount: 180000,
-    currentValue: 195000,
-    returns: 15000,
-    returnsPercentage: 8.33,
-    frequency: 'Monthly',
-    notes: 'Retirement pension plan',
-    createdAt: '2024-07-01T10:00:00Z',
-    updatedAt: '2026-03-22T10:00:00Z'
-  },
-  {
-    id: '5',
-    type: InvestmentType.RD,
-    status: InvestmentStatus.ACTIVE,
-    name: 'Recurring Deposit - HDFC',
-    startDate: '2025-09-01',
-    investedAmount: 60000,
-    currentValue: 62500,
-    returns: 2500,
-    returnsPercentage: 4.17,
-    maturityDate: '2028-09-01',
-    maturityValue: 75000,
-    frequency: 'Monthly',
-    notes: 'Fixed income investment',
-    createdAt: '2025-09-01T10:00:00Z',
-    updatedAt: '2026-03-22T10:00:00Z'
-  },
-  {
-    id: '6',
-    type: InvestmentType.PF,
-    status: InvestmentStatus.ACTIVE,
-    name: 'Employee Provident Fund',
-    startDate: '2022-01-01',
-    investedAmount: 650000,
-    currentValue: 720000,
-    returns: 70000,
-    returnsPercentage: 10.77,
-    notes: 'Company PF with matching contribution',
-    createdAt: '2022-01-01T10:00:00Z',
-    updatedAt: '2026-03-22T10:00:00Z'
-  },
-  // Past Investments
-  {
-    id: '7',
-    type: InvestmentType.PHYSICAL_GOLD,
-    status: InvestmentStatus.PAST,
-    name: 'Gold - 50 grams',
-    startDate: '2020-05-15',
-    endDate: '2025-12-20',
-    investedAmount: 220000,
-    currentValue: 310000,
-    returns: 90000,
-    returnsPercentage: 40.91,
-    units: 50,
-    avgPrice: 4400,
-    notes: 'Sold at peak price',
-    createdAt: '2020-05-15T10:00:00Z',
-    updatedAt: '2025-12-20T10:00:00Z'
-  },
-  // To-do Investments
-  {
-    id: '8',
-    type: InvestmentType.LAND,
-    status: InvestmentStatus.TODO,
-    name: 'Agricultural Land - Planning',
-    startDate: '2026-06-01',
-    investedAmount: 0,
-    notes: 'Researching locations in Tamil Nadu',
-    createdAt: '2026-03-22T10:00:00Z',
-    updatedAt: '2026-03-22T10:00:00Z'
-  },
-  {
-    id: '9',
-    type: InvestmentType.HOUSE,
-    status: InvestmentStatus.TODO,
-    name: 'Residential Property - Future',
-    startDate: '2027-01-01',
-    investedAmount: 0,
-    notes: 'Saving for down payment',
-    createdAt: '2026-03-22T10:00:00Z',
-    updatedAt: '2026-03-22T10:00:00Z'
+  // Get loading signal
+  getLoadingSignal() {
+    return this.isLoading;
   }
-];
+}

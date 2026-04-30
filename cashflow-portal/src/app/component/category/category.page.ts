@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, computed, inject } from '@angular/core';
+import { Component, OnInit, signal, computed, inject, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { CategoryService, Category } from '../../services/category.service';
@@ -24,6 +24,9 @@ import {
 export class CategoryPage implements OnInit {
   private categoryService = inject(CategoryService);
   
+  // ViewChild for auto-focus
+  @ViewChild('categoryNameInput') categoryNameInput!: ElementRef<HTMLInputElement>;
+  
   // Reactive signals
   protected categories = this.categoryService.getCategoriesSignal();
   protected loading = this.categoryService.getLoadingSignal();
@@ -32,8 +35,10 @@ export class CategoryPage implements OnInit {
   // Sorting & Pagination
   protected sortColumn = signal<'category_name' | 'sub_category' | 'is_active' | 'created_at' | 'updated_at'>('category_name');
   protected sortDirection = signal<'asc' | 'desc'>('asc');
+  protected secondarySortColumn = signal<'sub_category' | null>(null);
+  protected secondarySortDirection = signal<'asc' | 'desc'>('asc');
   protected currentPage = signal<number>(1);
-  protected pageSize = signal<number>(10);
+  protected pageSize = signal<number>(25);
   protected readonly pageSizeOptions = PaginationHelper.PAGE_SIZE_OPTIONS;
   
   // Expose utilities to template
@@ -99,18 +104,63 @@ export class CategoryPage implements OnInit {
     
     return allCategories.filter(cat => 
       cat.category_name.toLowerCase().includes(searchQuery) ||
-      cat.sub_category?.toLowerCase().includes(searchQuery)
+      cat.sub_category?.toLowerCase().includes(searchQuery) ||
+      cat.notes?.toLowerCase().includes(searchQuery)
     );
   });
 
-  // Computed sorted categories using SortingHelper
+  // Computed sorted categories using SortingHelper with multi-level sorting
   protected sorted = computed(() => {
     const cats = this.filtered();
     const col = this.sortColumn();
     const dir = this.sortDirection();
+    const secondaryCol = this.secondarySortColumn();
+    const secondaryDir = this.secondarySortDirection();
     
-    return SortingHelper.sort(cats, col, dir);
+    // Primary sort
+    let sorted = SortingHelper.sort(cats, col, dir);
+    
+    // Apply secondary sort if enabled (only for category_name primary sort)
+    if (col === 'category_name' && secondaryCol === 'sub_category') {
+      sorted = this.applySecondarySort(sorted, secondaryDir);
+    }
+    
+    // Move inactive categories to the end
+    const activeCategories = sorted.filter(cat => cat.is_active);
+    const inactiveCategories = sorted.filter(cat => !cat.is_active);
+    
+    return [...activeCategories, ...inactiveCategories];
   });
+
+  /**
+   * Apply secondary sorting on subcategory while maintaining category grouping
+   */
+  private applySecondarySort(categories: Category[], direction: 'asc' | 'desc'): Category[] {
+    // Group by category name
+    const grouped = new Map<string, Category[]>();
+    
+    categories.forEach(cat => {
+      const key = cat.category_name;
+      if (!grouped.has(key)) {
+        grouped.set(key, []);
+      }
+      grouped.get(key)!.push(cat);
+    });
+    
+    // Sort each group by sub_category
+    const result: Category[] = [];
+    grouped.forEach(group => {
+      const sorted = group.sort((a, b) => {
+        const aVal = (a.sub_category || '').toLowerCase();
+        const bVal = (b.sub_category || '').toLowerCase();
+        const comparison = aVal.localeCompare(bVal);
+        return direction === 'asc' ? comparison : -comparison;
+      });
+      result.push(...sorted);
+    });
+    
+    return result;
+  }
 
   // Computed total items
   protected totalItems = computed(() => this.sorted().length);
@@ -154,18 +204,61 @@ export class CategoryPage implements OnInit {
   }
 
   protected sortBy(column: 'category_name' | 'sub_category' | 'is_active' | 'created_at' | 'updated_at'): void {
-    if (this.sortColumn() === column) {
-      // Toggle direction if same column
-      this.sortDirection.set(SortingHelper.toggleDirection(this.sortDirection()));
-    } else {
-      // New column, default to ascending
-      this.sortColumn.set(column);
-      this.sortDirection.set('asc');
+    const currentPrimary = this.sortColumn();
+    const currentSecondary = this.secondarySortColumn();
+    
+    // If clicking on sub_category and category_name is already primary sort
+    if (column === 'sub_category' && currentPrimary === 'category_name') {
+      if (currentSecondary === 'sub_category') {
+        // Toggle secondary sort direction
+        this.secondarySortDirection.set(SortingHelper.toggleDirection(this.secondarySortDirection()));
+      } else {
+        // Enable secondary sort
+        this.secondarySortColumn.set('sub_category');
+        this.secondarySortDirection.set('asc');
+      }
     }
+    // If clicking on category_name
+    else if (column === 'category_name') {
+      if (currentPrimary === 'category_name') {
+        // Toggle primary sort direction
+        this.sortDirection.set(SortingHelper.toggleDirection(this.sortDirection()));
+      } else {
+        // Set as new primary sort, reset secondary
+        this.sortColumn.set('category_name');
+        this.sortDirection.set('asc');
+        this.secondarySortColumn.set(null);
+      }
+    }
+    // Any other column
+    else {
+      if (this.sortColumn() === column) {
+        // Toggle direction if same column
+        this.sortDirection.set(SortingHelper.toggleDirection(this.sortDirection()));
+      } else {
+        // New column, default to ascending, clear secondary sort
+        this.sortColumn.set(column);
+        this.sortDirection.set('asc');
+        this.secondarySortColumn.set(null);
+      }
+    }
+    
     this.currentPage.set(1); // Reset to first page on sort
   }
 
   protected getSortIcon(column: 'category_name' | 'sub_category' | 'is_active' | 'created_at' | 'updated_at'): string {
+    const isPrimary = this.sortColumn() === column;
+    const isSecondary = this.secondarySortColumn() === column;
+    
+    if (isPrimary) {
+      return SortingHelper.getSortIcon(column, this.sortColumn(), this.sortDirection());
+    }
+    
+    if (isSecondary && column === 'sub_category') {
+      // Show secondary sort indicator (smaller/different style)
+      return this.secondarySortDirection() === 'asc' ? '▲²' : '▼²';
+    }
+    
     return SortingHelper.getSortIcon(column, this.sortColumn(), this.sortDirection());
   }
 
@@ -309,6 +402,21 @@ export class CategoryPage implements OnInit {
     this.newSubCategoryIcon.set('');
     this.newNotes.set('');
     this.showAddModal.set(true);
+    
+    // Auto-focus on category name input
+    setTimeout(() => {
+      this.categoryNameInput?.nativeElement?.focus();
+    }, 100);
+  }
+
+  protected duplicateCategory(category: Category): void {
+    // Pre-fill the add modal with the selected category's data
+    this.newCategoryName.set(category.category_name);
+    this.newSubCategoryName.set(category.sub_category || '');
+    this.newCategoryIcon.set(category.category_icon || '');
+    this.newSubCategoryIcon.set(category.subcategory_icon || '');
+    this.newNotes.set(category.notes || '');
+    this.showAddModal.set(true);
   }
 
   protected closeAddModal(): void {
@@ -318,6 +426,24 @@ export class CategoryPage implements OnInit {
     this.newCategoryIcon.set('');
     this.newSubCategoryIcon.set('');
     this.newNotes.set('');
+  }
+
+  protected onAddModalKeyDown(event: KeyboardEvent): void {
+    // Handle Enter key to submit form
+    if (event.key === 'Enter' && !event.shiftKey) {
+      // Allow Shift+Enter in textarea for new lines
+      const target = event.target as HTMLElement;
+      if (target.tagName !== 'TEXTAREA') {
+        event.preventDefault();
+        this.addCategory();
+      }
+    }
+    
+    // Handle Escape key to close modal
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      this.closeAddModal();
+    }
   }
 
   protected async addCategory(): Promise<void> {

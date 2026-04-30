@@ -24,13 +24,13 @@ type RecentTransaction = {
 };
 
 @Component({
-  selector: 'app-home',
+  selector: 'app-dashboard',
   standalone: true,
   imports: [CommonModule, RouterLink, MatTooltipModule],
-  templateUrl: './home.page.html',
-  styleUrls: ['./home.page.scss']
+  templateUrl: './dashboard.page.html',
+  styleUrls: ['./dashboard.page.scss']
 })
-export class HomePage implements OnInit {
+export class DashboardPage implements OnInit {
   private connectionTest = inject(ConnectionTestService);
   
   // Set loading to false immediately since data is pre-initialized
@@ -42,6 +42,20 @@ export class HomePage implements OnInit {
   // Test connection state
   protected showTestPopup = signal<boolean>(false);
   protected testResult = signal<{ success: boolean; message: string; } | null>(null);
+
+  // Current date - formatted dynamically
+  protected currentDate: string;
+
+  constructor() {
+    // Format current date as "Month Day, Year" (e.g., "March 31, 2026")
+    const now = new Date();
+    const options: Intl.DateTimeFormatOptions = { 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    };
+    this.currentDate = now.toLocaleDateString('en-US', options);
+  }
 
   // Dashboard widgets - Pre-initialized for instant display
   widgets: Widget[] = [
