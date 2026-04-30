@@ -105,13 +105,13 @@ export class TaxService {
     };
   }
 
-  // Add a new tax entry
+  // Add a new tax entry (upsert based on year and month, also restores soft-deleted records)
   async addTaxEntry(data: TaxFormData): Promise<void> {
     this.loading.set(true);
     try {
       const { error } = await this.supabase.db
         .from('tax')
-        .insert([data]);
+        .upsert([{ ...data, is_deleted: false }], { onConflict: 'year,month' });
 
       if (error) throw error;
 
