@@ -29,6 +29,9 @@
     margin-bottom: 28px;
     gap: 16px;
     flex-wrap: wrap;
+    overflow: visible;
+    position: relative;
+    z-index: 100;
 
     @media (max-width: 640px) {
       flex-direction: column;
@@ -64,6 +67,8 @@
       display: flex;
       align-items: center;
       gap: 12px;
+      overflow: visible;
+      position: relative;
 
       .current-date {
         display: inline-flex;
@@ -113,7 +118,126 @@
           transform: scale(1.05);
         }
       }
+
+      .refresh-btn {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: transparent;
+        border: none;
+        font-size: 20px;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+
+        &:hover:not(:disabled) {
+          transform: scale(1.2);
+          filter: drop-shadow(0 4px 12px rgba(59, 130, 246, 0.4));
+        }
+
+        &:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+        }
+
+        .spinning {
+          animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+
+        &[data-tooltip]::after {
+          content: attr(data-tooltip);
+          position: absolute;
+          top: 50%;
+          right: 100%;
+          transform: translateY(-50%);
+          margin-right: 10px;
+          background: linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%);
+          color: #ffffff;
+          padding: 8px 14px;
+          border-radius: 8px;
+          font-size: 13px;
+          font-weight: 500;
+          white-space: nowrap;
+          opacity: 0;
+          visibility: hidden;
+          transition: opacity 0.15s ease, visibility 0.15s ease;
+          z-index: 99999;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+          pointer-events: none;
+        }
+
+        &[data-tooltip]:hover::after {
+          opacity: 1;
+          visibility: visible;
+        }
+      }
+
+      .test-connection-icon {
+        position: relative;
+
+        &[data-tooltip]::after {
+          content: attr(data-tooltip);
+          position: absolute;
+          top: 50%;
+          right: 100%;
+          transform: translateY(-50%);
+          margin-right: 10px;
+          background: linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%);
+          color: #ffffff;
+          padding: 8px 14px;
+          border-radius: 8px;
+          font-size: 13px;
+          font-weight: 500;
+          white-space: nowrap;
+          opacity: 0;
+          visibility: hidden;
+          transition: opacity 0.15s ease, visibility 0.15s ease;
+          z-index: 99999;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+          pointer-events: none;
+        }
+
+        &[data-tooltip]:hover::after {
+          opacity: 1;
+          visibility: visible;
+        }
+      }
     }
+  }
+
+  // No Data State
+  .no-data {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 32px 16px;
+    color: #9ca3af;
+
+    .no-data-icon {
+      font-size: 40px;
+      margin-bottom: 8px;
+    }
+
+    p {
+      margin: 0;
+      font-size: 14px;
+      text-align: center;
+    }
+  }
+
+  // Category icon in budget list
+  .category-icon {
+    margin-right: 8px;
+    font-size: 16px;
   }
 
   // Widgets Grid

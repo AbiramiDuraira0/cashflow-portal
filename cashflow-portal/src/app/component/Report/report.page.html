@@ -1,0 +1,68 @@
+<section class="report-page">
+  <header class="page-header">
+    <div class="header-content">
+      <div class="title-section">
+        <h1>📊 Financial Reports</h1>
+        <p class="subtitle">Comprehensive analytics and insights</p>
+      </div>
+      <div class="header-actions">
+        <div class="download-dropdown">
+          <button class="btn-download" (click)="toggleDownloadMenu()">
+            <span>📥</span> Download <span>▼</span>
+          </button>
+          @if (showDownloadMenu()) {
+            <div class="dropdown-menu">
+              <button (click)="downloadReport('csv')">📝 Download CSV</button>
+              <button (click)="printReport()">🖨️ Print Report</button>
+            </div>
+          }
+        </div>
+        <button class="btn-refresh" (click)="refreshData()" [disabled]="isLoading()" data-tooltip="Refresh Data">
+          <span [class.spinning]="isLoading()">🔄</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div class="year-filter">
+    @for (year of availableYears(); track year) {
+      <button [class.active]="selectedYear() === year" (click)="selectYear(year)">{{ year }}</button>
+    }
+  </div>
+
+  @if (isLoading()) {
+    <div class="loading"><div class="spinner"></div><p>Loading data...</p></div>
+  } @else {
+    <div class="overview-grid">
+      <div class="card income"><div class="icon">💰</div><div class="content"><p class="label">Total Income</p><h2>{{ formatCurrency(financialOverview().totalIncome) }}</h2></div></div>
+      <div class="card expense"><div class="icon">💸</div><div class="content"><p class="label">Total Expenses</p><h2>{{ formatCurrency(financialOverview().totalExpense) }}</h2></div></div>
+      <div class="card balance"><div class="icon">💵</div><div class="content"><p class="label">Net Balance</p><h2>{{ formatCurrency(financialOverview().totalBalance) }}</h2></div></div>
+      <div class="card investment"><div class="icon">📈</div><div class="content"><p class="label">Investments</p><h2>{{ formatCurrency(financialOverview().totalInvestments) }}</h2><p class="sub">+{{ formatCurrency(financialOverview().totalInvestmentReturns) }} returns</p></div></div>
+      <div class="card debt"><div class="icon">🏦</div><div class="content"><p class="label">Outstanding Debts</p><h2>{{ formatCurrency(financialOverview().totalDebts) }}</h2></div></div>
+      <div class="card tax"><div class="icon">🧾</div><div class="content"><p class="label">Tax Paid</p><h2>{{ formatCurrency(financialOverview().totalTaxPaid) }}</h2></div></div>
+    </div>
+
+    <div class="chart-section">
+      <h3>📈 Monthly Trends - {{ selectedYear() }}</h3>
+      <div class="chart-legend">
+        <span class="income"><span class="dot"></span> Income</span>
+        <span class="expense"><span class="dot"></span> Expense</span>
+      </div>
+      <div class="bar-chart">
+        @for (data of chartData(); track data.label) {
+          <div class="bar-group">
+            <div class="bars">
+              <div class="bar income" [style.height.%]="getChartBarHeight(data.income)" [title]="formatCurrency(data.income)">
+                <span class="value">{{ data.income === 0 ? '₹0 K' : formatCompactCurrency(data.income) }}</span>
+              </div>
+              <div class="bar expense" [style.height.%]="getChartBarHeight(data.expense)" [title]="formatCurrency(data.expense)">
+                <span class="value">{{ data.expense === 0 ? '₹0 K' : formatCompactCurrency(data.expense) }}</span>
+              </div>
+            </div>
+            <span class="label">{{ data.label }}</span>
+          </div>
+        }
+      </div>
+    </div>
+  }
+</section>

@@ -6,10 +6,16 @@
     <div class="header-actions">
       <span class="current-date">{{ currentDate }}</span>
       <button 
+        class="refresh-btn" 
+        (click)="refreshData()"
+        [disabled]="loading()"
+        data-tooltip="Refresh Data">
+        <span [class.spinning]="loading()">🔄</span>
+      </button>
+      <button 
         class="test-connection-icon" 
         (click)="testConnection()"
-        [matTooltip]="'Test Database Connection'"
-        matTooltipPosition="below">
+        data-tooltip="Test Database Connection">
         🔌
       </button>
     </div>
@@ -24,13 +30,13 @@
   } @else {
     <!-- Widgets Grid -->
     <div class="widget-grid">
-      @for (widget of widgets; track widget.id) {
+      @for (widget of widgets(); track widget.id) {
         <article class="widget" [routerLink]="widget.route" [style.--widget-color]="widget.color">
           <div class="widget-header">
             <div class="widget-icon" [style.background]="widget.color">
               {{ widget.icon }}
             </div>
-            @if (widget.trend !== undefined) {
+            @if (widget.trend !== undefined && widget.trend !== 0) {
               <div class="trend" [class.positive]="widget.trend > 0" [class.negative]="widget.trend < 0">
                 <span class="trend-icon">{{ widget.trend > 0 ? '↑' : '↓' }}</span>
                 <span class="trend-value">{{ widget.trend > 0 ? '+' : '' }}{{ widget.trend }}%</span>
@@ -57,50 +63,66 @@
           <a routerLink="/report" class="view-all">View all →</a>
         </div>
         <div class="transactions-list">
-          @for (txn of recentTransactions; track txn.id) {
-            <div class="transaction-item">
-              <div class="transaction-icon" [class.income]="txn.type === 'income'" [class.expense]="txn.type === 'expense'">
-                {{ txn.type === 'income' ? '↓' : '↑' }}
-              </div>
-              <div class="transaction-info">
-                <div class="transaction-category">{{ txn.category }}</div>
-                <div class="transaction-date">{{ formatDate(txn.date) }}</div>
-              </div>
-              <div class="transaction-amount" [class.income]="txn.type === 'income'" [class.expense]="txn.type === 'expense'">
-                {{ txn.type === 'income' ? '+' : '' }}₹{{ txn.amount.toLocaleString('en-IN') }}
-              </div>
+          @if (recentTransactions().length === 0) {
+            <div class="no-data">
+              <span class="no-data-icon">📭</span>
+              <p>No recent transactions</p>
             </div>
+          } @else {
+            @for (txn of recentTransactions(); track txn.id) {
+              <div class="transaction-item">
+                <div class="transaction-icon" [class.income]="txn.type === 'income'" [class.expense]="txn.type === 'expense'">
+                  {{ txn.categoryIcon || (txn.type === 'income' ? '↓' : '↑') }}
+                </div>
+                <div class="transaction-info">
+                  <div class="transaction-category">{{ txn.category }}</div>
+                  <div class="transaction-date">{{ formatDate(txn.date) }}</div>
+                </div>
+                <div class="transaction-amount" [class.income]="txn.type === 'income'" [class.expense]="txn.type === 'expense'">
+                  {{ txn.type === 'income' ? '+' : '' }}{{ formatCurrency(txn.amount) }}
+                </div>
+              </div>
+            }
           }
         </div>
       </div>
 
-      <!-- Budget Overview -->
+      <!-- Expense Breakdown by Category -->
       <div class="card">
         <div class="card-header">
-          <h2 class="card-title">Budget Overview</h2>
-          <a routerLink="/category" class="view-all">Manage →</a>
+          <h2 class="card-title">{{ currentMonth }} Expenses</h2>
+          <a routerLink="/expense" class="view-all">Details →</a>
         </div>
         <div class="budget-list">
-          @for (category of budgetCategories; track category.name) {
-            <div class="budget-item">
-              <div class="budget-header">
-                <span class="budget-name">{{ category.name }}</span>
-                <span class="budget-amounts">
-                  ₹{{ category.spent.toLocaleString('en-IN') }} / ₹{{ category.budget.toLocaleString('en-IN') }}
-                </span>
-              </div>
-              <div class="progress-bar">
-                <div 
-                  class="progress-fill" 
-                  [style.width.%]="getPercentage(category.spent, category.budget)"
-                  [style.background]="category.color"
-                  [class.over-budget]="getPercentage(category.spent, category.budget) >= 100">
+          @if (expenseCategoryBreakdown().length === 0) {
+            <div class="no-data">
+              <span class="no-data-icon">📭</span>
+              <p>No expenses this month</p>
+            </div>
+          } @else {
+            @for (category of expenseCategoryBreakdown(); track category.name) {
+              <div class="budget-item">
+                <div class="budget-header">
+                  <span class="budget-name">
+                    <span class="category-icon">{{ category.icon }}</span>
+                    {{ category.name }}
+                  </span>
+                  <span class="budget-amounts">
+                    {{ formatCurrency(category.spent) }}
+                  </span>
+                </div>
+                <div class="progress-bar">
+                  <div 
+                    class="progress-fill" 
+                    [style.width.%]="category.percentage"
+                    [style.background]="category.color">
+                  </div>
+                </div>
+                <div class="budget-percentage">
+                  {{ category.percentage }}% of total
                 </div>
               </div>
-              <div class="budget-percentage" [class.warn]="getPercentage(category.spent, category.budget) >= 80">
-                {{ getPercentage(category.spent, category.budget) }}% used
-              </div>
-            </div>
+            }
           }
         </div>
       </div>
