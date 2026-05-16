@@ -7,9 +7,14 @@
         <h1>📈 Investment Portfolio</h1>
         <p class="subtitle">Track and manage your wealth-building journey</p>
       </div>
-      <button class="btn-primary" (click)="openAddModal()">
-        Add Investment
-      </button>
+      <div class="header-actions">
+        <button class="btn-refresh" (click)="refreshData()" [disabled]="loading()" title="Refresh Data">
+          <span class="icon" [class.spinning]="loading()">🔄</span>
+        </button>
+        <button class="btn-primary" (click)="openAddModal()">
+          Add Investment
+        </button>
+      </div>
     </div>
   </header>
 

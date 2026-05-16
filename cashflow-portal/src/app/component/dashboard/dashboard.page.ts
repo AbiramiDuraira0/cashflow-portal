@@ -323,6 +323,93 @@ export class DashboardPage implements OnInit {
   });
 
   // ============================================
+  // Computed Values - Spending by Parent Category
+  // ============================================
+  protected categorySpendingData = computed(() => {
+    const expenses = this.expenseData().filter(e => !e.isDeleted);
+    
+    // Group by parent category (categoryName)
+    const categoryMap = new Map<string, { 
+      total: number; 
+      icon: string; 
+      color: string;
+    }>();
+    
+    // Define colors for categories
+    const categoryColors: Record<string, string> = {
+      'Abi': '#ec4899',      // Pink
+      'BB': '#3b82f6',       // Blue
+      'CC': '#f59e0b',       // Amber
+      'Home': '#22c55e',     // Green
+      'Investment': '#8b5cf6', // Purple
+      'Medical': '#ef4444',  // Red
+      'Misc': '#6b7280',     // Gray
+      'Monthly Needs': '#06b6d4', // Cyan
+      'Savings': '#10b981',  // Emerald
+      'Wifi': '#6366f1',     // Indigo
+    };
+    
+    expenses.forEach(expense => {
+      const categoryName = expense.categoryName;
+      const existing = categoryMap.get(categoryName);
+      
+      if (existing) {
+        existing.total += expense.amount;
+      } else {
+        categoryMap.set(categoryName, {
+          total: expense.amount,
+          icon: expense.categoryIcon || '📁',
+          color: categoryColors[categoryName] || '#6b7280'
+        });
+      }
+    });
+    
+    // Convert to array and sort by total (descending)
+    return Array.from(categoryMap.entries())
+      .map(([name, data]) => ({
+        name,
+        total: data.total,
+        icon: data.icon,
+        color: data.color
+      }))
+      .sort((a, b) => b.total - a.total);
+  });
+
+  // Get total spending for percentage calculation
+  protected totalCategorySpending = computed(() => {
+    return this.categorySpendingData().reduce((sum, cat) => sum + cat.total, 0);
+  });
+
+  // Get spending data with percentage for charts
+  protected categorySpendingWithPercentage = computed(() => {
+    const total = this.totalCategorySpending();
+    return this.categorySpendingData().map(cat => ({
+      ...cat,
+      percentage: total > 0 ? Math.round((cat.total / total) * 100) : 0
+    }));
+  });
+
+  // Helper method to calculate stroke offset for pie chart segments
+  protected getStrokeOffset(index: number): number {
+    const categories = this.categorySpendingWithPercentage();
+    let offset = 0;
+    for (let i = 0; i < index; i++) {
+      offset += categories[i].percentage * 5.024; // 502.4 / 100
+    }
+    return -offset + 125.6; // Start from top (90 degrees = 125.6)
+  }
+
+  // Helper method to get opacity based on percentage for heatmap
+  protected getOpacity(percentage: number): string {
+    // Scale opacity from 40% to 100% based on percentage
+    const minOpacity = 0.4;
+    const maxOpacity = 1;
+    const opacity = minOpacity + (percentage / 100) * (maxOpacity - minOpacity);
+    const hex = Math.round(opacity * 255).toString(16).padStart(2, '0');
+    return hex;
+  }
+
+  // ============================================
   // Computed Values - Widgets
   // ============================================
   protected widgets = computed<Widget[]>(() => {

@@ -6,10 +6,15 @@
         <h1>💰 Income Tracker</h1>
         <p class="subtitle">Track your monthly income</p>
       </div>
-      <button class="btn-add" (click)="openAddForm()">
-        <span class="icon">+</span>
-        Add Income
-      </button>
+      <div class="header-actions">
+        <button class="btn-refresh" (click)="refreshData()" [disabled]="isLoading()" title="Refresh Data">
+          <span class="icon" [class.spinning]="isLoading()">🔄</span>
+        </button>
+        <button class="btn-add" (click)="openAddForm()">
+          <span class="icon">+</span>
+          Add Income
+        </button>
+      </div>
     </div>
   </header>
 

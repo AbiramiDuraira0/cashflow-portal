@@ -8,6 +8,9 @@
         <p class="subtitle">Track loans and debts</p>
       </div>
       <div class="header-actions">
+        <button class="btn-refresh" (click)="refreshData()" [disabled]="loading()" title="Refresh Data">
+          <span class="icon" [class.spinning]="loading()">🔄</span>
+        </button>
         <button class="btn-secondary emi-calc-btn" (click)="openEMICalculator()">
           <span class="btn-icon">🧮</span>
           <span class="btn-text">EMI Calculator</span>

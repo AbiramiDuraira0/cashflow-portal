@@ -274,6 +274,11 @@ export class DebtsPage implements OnInit {
     this.loadPersonalLoanCSVSummary();
   }
 
+  // Refresh data
+  protected async refreshData(): Promise<void> {
+    await this.debtService.loadDebtData();
+  }
+
   // Load CSV summary for Personal Loan - Top Up
   protected async loadPersonalLoanCSVSummary(): Promise<void> {
     try {

@@ -305,6 +305,10 @@ export class IncomePage implements OnInit {
     }
   }
 
+  protected async refreshData(): Promise<void> {
+    await this.loadIncomeData();
+  }
+
   protected openAddForm(): void {
     this.showAddForm.set(true);
     this.editingEntry.set(null);

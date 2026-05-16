@@ -6,10 +6,15 @@
         <h1>🧾 Tax Management</h1>
         <p class="subtitle">Track your monthly tax payments</p>
       </div>
-      <button class="btn-add" (click)="openAddModal()">
-        <span class="icon">+</span>
-        Add Tax Entry
-      </button>
+      <div class="header-actions">
+        <button class="btn-refresh" (click)="refreshData()" [disabled]="loading()" title="Refresh Data">
+          <span class="icon" [class.spinning]="loading()">🔄</span>
+        </button>
+        <button class="btn-add" (click)="openAddModal()">
+          <span class="icon">+</span>
+          Add Tax Entry
+        </button>
+      </div>
     </div>
   </header>
 

@@ -7,13 +7,22 @@
         <p class="subtitle">Track your important financial milestones</p>
       </div>
       <div class="header-actions">
-        <button class="btn-refresh" (click)="refreshData()" [disabled]="isLoading()">
-          <span class="icon">🔄</span>
+        <button class="btn-refresh" (click)="refreshData()" [disabled]="isLoading()" title="Refresh Data">
+          <span class="icon" [class.spinning]="isLoading()">🔄</span>
         </button>
-        <button class="btn-add" (click)="openAddForm()">
-          <span class="icon">+</span>
-          Add Entry
+        <!-- Desktop View: Full text button -->
+        <button class="btn-add desktop-only" (click)="openAddForm()">
+          <span class="text">Add Entry</span>
         </button>
+        <!-- Mobile View: Icon only button -->
+        <button class="btn-add mobile-only" (click)="openAddForm()">
+          <span class="text">+</span>
+        </button>
+        <!-- Entries Count Badge -->
+        <div class="entries-count-badge">
+          <span class="count">{{ entriesCount() }}</span>
+          <span class="label">{{ entriesCount() === 1 ? 'Entry' : 'Entries' }}</span>
+        </div>
       </div>
     </div>
   </header>
@@ -63,9 +72,42 @@
         <table class="entries-table">
           <thead>
             <tr>
-              <th class="col-date">Date</th>
-              <th class="col-amount">Amount (INR)</th>
-              <th class="col-notes">Notes</th>
+              <th class="col-date sortable" (click)="sortBy('date')">
+                <span class="header-content">
+                  Date
+                  <span class="sort-icon" [class.active]="sortColumn() === 'date'">
+                    @if (sortColumn() === 'date') {
+                      {{ sortDirection() === 'asc' ? '↑' : '↓' }}
+                    } @else {
+                      ↕
+                    }
+                  </span>
+                </span>
+              </th>
+              <th class="col-amount sortable" (click)="sortBy('amount')">
+                <span class="header-content">
+                  Amount (INR)
+                  <span class="sort-icon" [class.active]="sortColumn() === 'amount'">
+                    @if (sortColumn() === 'amount') {
+                      {{ sortDirection() === 'asc' ? '↑' : '↓' }}
+                    } @else {
+                      ↕
+                    }
+                  </span>
+                </span>
+              </th>
+              <th class="col-notes sortable" (click)="sortBy('notes')">
+                <span class="header-content">
+                  Notes
+                  <span class="sort-icon" [class.active]="sortColumn() === 'notes'">
+                    @if (sortColumn() === 'notes') {
+                      {{ sortDirection() === 'asc' ? '↑' : '↓' }}
+                    } @else {
+                      ↕
+                    }
+                  </span>
+                </span>
+              </th>
               <th class="col-actions">Actions</th>
             </tr>
           </thead>
@@ -87,8 +129,24 @@
                 </td>
                 <td class="col-actions">
                   <div class="action-buttons">
-                    <button class="btn-icon edit" (click)="editEntry(entry)" title="Edit">✏️</button>
-                    <button class="btn-icon delete" (click)="confirmDelete(entry)" title="Delete">🗑️</button>
+                    <button 
+                      class="action-btn edit" 
+                      (click)="editEntry(entry)" 
+                      [attr.data-tooltip]="'Edit Entry'">
+                      <span class="icon">✏️</span>
+                    </button>
+                    <button 
+                      class="action-btn duplicate" 
+                      (click)="duplicateEntry(entry)" 
+                      [attr.data-tooltip]="'Duplicate Entry'">
+                      <span class="icon">📋</span>
+                    </button>
+                    <button 
+                      class="action-btn delete" 
+                      (click)="confirmDelete(entry)" 
+                      [attr.data-tooltip]="'Delete Entry'">
+                      <span class="icon">🗑️</span>
+                    </button>
                   </div>
                 </td>
               </tr>
@@ -189,6 +247,50 @@
           <button class="btn-cancel" (click)="cancelDelete()">Cancel</button>
           <button class="btn-delete" (click)="deleteEntry()" [disabled]="isLoading()">
             {{ isLoading() ? 'Deleting...' : 'Delete' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Success Popup Modal -->
+  @if (showSuccessPopup()) {
+    <div class="modal-overlay" (click)="closeSuccessPopup()">
+      <div class="modal-content success-modal" (click)="$event.stopPropagation()">
+        <div class="modal-header success">
+          <h2>{{ savedEntry()?.isEdit ? '✅ Entry Updated!' : '🎉 Entry Added!' }}</h2>
+          <button class="btn-close" (click)="closeSuccessPopup()">×</button>
+        </div>
+        <div class="modal-body">
+          <div class="success-icon-container">
+            <span class="success-checkmark">✓</span>
+          </div>
+          <p class="success-message">
+            {{ savedEntry()?.isEdit ? 'Your entry has been updated successfully!' : 'Your new entry has been recorded successfully!' }}
+          </p>
+          @if (savedEntry()) {
+            <div class="success-details">
+              <div class="detail-row">
+                <span class="detail-label">📅 Date:</span>
+                <span class="detail-value">{{ formatDate(savedEntry()!.date) }}</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">💰 Amount:</span>
+                <span class="detail-value amount">{{ formatCurrency(savedEntry()!.amount) }}</span>
+              </div>
+              @if (savedEntry()!.notes) {
+                <div class="detail-row">
+                  <span class="detail-label">📝 Notes:</span>
+                  <span class="detail-value">{{ savedEntry()!.notes }}</span>
+                </div>
+              }
+            </div>
+          }
+        </div>
+        <div class="modal-footer success-footer">
+          <button class="btn-success-ok" (click)="closeSuccessPopup()">
+            <span class="icon">👍</span>
+            <span class="text">Got it!</span>
           </button>
         </div>
       </div>

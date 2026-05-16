@@ -353,6 +353,10 @@ export class ExpensePage implements OnInit {
     }
   }
 
+  protected async refreshData(): Promise<void> {
+    await this.loadData();
+  }
+
   // ============================================
   // Year & Month Selection
   // ============================================

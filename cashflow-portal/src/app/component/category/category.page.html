@@ -10,6 +10,11 @@
         <input type="text" placeholder="Search" [value]="query()" (input)="onSearchChange($any($event.target).value)" />
       </label>
       
+      <!-- Refresh Button -->
+      <button class="btn-refresh" (click)="refreshData()" [disabled]="loading()" title="Refresh Data">
+        <span class="icon" [class.spinning]="loading()">🔄</span>
+      </button>
+      
       <!-- Desktop View: Full text button -->
       <button class="add-btn desktop-only" (click)="openAddModal()">
         <span class="icon">➕</span>

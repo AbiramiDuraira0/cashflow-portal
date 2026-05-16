@@ -20,6 +20,10 @@
             class="search-input" />
         </div>
         
+        <button class="btn-refresh" (click)="refreshData()" [disabled]="isLoading()" title="Refresh Data">
+          <span class="icon" [class.spinning]="isLoading()">🔄</span>
+        </button>
+        
         <button class="btn-add" (click)="openAddExpenseModal()">
           <span class="icon">+</span>
           Add Expense

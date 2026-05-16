@@ -17,8 +17,10 @@ export class LifelinePage implements OnInit {
   protected lifelineEntries = this.lifelineService.getEntriesSignal();
   protected showAddForm = signal(false);
   protected showDeleteConfirm = signal(false);
+  protected showSuccessPopup = signal(false);
   protected editingEntry = signal<LifelineEntry | null>(null);
   protected deletingEntry = signal<LifelineEntry | null>(null);
+  protected savedEntry = signal<{ date: string; amount: number; notes?: string; isEdit: boolean } | null>(null);
   protected isLoading = signal(false);
   
   // Toast notification state
@@ -31,6 +33,10 @@ export class LifelinePage implements OnInit {
   protected amount = signal<number>(0);
   protected notes = signal<string>('');
 
+  // Sorting state
+  protected sortColumn = signal<'date' | 'amount' | 'notes'>('date');
+  protected sortDirection = signal<'asc' | 'desc'>('asc'); // Default: oldest first
+
   // Computed values
   protected totalAmount = computed(() => {
     return this.lifelineEntries().reduce((sum, entry) => sum + entry.amount, 0);
@@ -41,10 +47,42 @@ export class LifelinePage implements OnInit {
   });
 
   protected sortedEntries = computed(() => {
-    return [...this.lifelineEntries()].sort((a, b) => 
-      new Date(b.date).getTime() - new Date(a.date).getTime()
-    );
+    const entries = [...this.lifelineEntries()];
+    const column = this.sortColumn();
+    const direction = this.sortDirection();
+
+    return entries.sort((a, b) => {
+      let comparison = 0;
+
+      switch (column) {
+        case 'date':
+          comparison = new Date(a.date).getTime() - new Date(b.date).getTime();
+          break;
+        case 'amount':
+          comparison = a.amount - b.amount;
+          break;
+        case 'notes':
+          const notesA = (a.notes || '').toLowerCase();
+          const notesB = (b.notes || '').toLowerCase();
+          comparison = notesA.localeCompare(notesB);
+          break;
+      }
+
+      return direction === 'asc' ? comparison : -comparison;
+    });
   });
+
+  // Sort method
+  sortBy(column: 'date' | 'amount' | 'notes'): void {
+    if (this.sortColumn() === column) {
+      // Toggle direction if same column
+      this.sortDirection.set(this.sortDirection() === 'asc' ? 'desc' : 'asc');
+    } else {
+      // New column, set default direction
+      this.sortColumn.set(column);
+      this.sortDirection.set('asc');
+    }
+  }
 
   ngOnInit(): void {
     this.loadData();
@@ -88,6 +126,17 @@ export class LifelinePage implements OnInit {
     this.amount.set(entry.amount);
     this.notes.set(entry.notes || '');
     this.showAddForm.set(true);
+  }
+
+  // Duplicate Entry Method
+  duplicateEntry(entry: LifelineEntry): void {
+    // Pre-fill form with existing entry data but as a new entry
+    this.editingEntry.set(null); // Not editing, creating new
+    this.entryDate.set(entry.date); // Use original entry's date
+    this.amount.set(entry.amount);
+    this.notes.set(entry.notes ? `(Copy) ${entry.notes}` : '(Copy)');
+    this.showAddForm.set(true);
+    this.showToastMessage('Entry duplicated - modify and save', 'info');
   }
 
   // Delete Methods
@@ -144,7 +193,8 @@ export class LifelinePage implements OnInit {
           amount,
           notes: notes || undefined
         });
-        this.showToastMessage('Entry updated successfully', 'success');
+        // Store saved entry details for success popup
+        this.savedEntry.set({ date, amount, notes: notes || undefined, isEdit: true });
       } else {
         // Add new entry
         await this.lifelineService.addEntry({
@@ -152,14 +202,23 @@ export class LifelinePage implements OnInit {
           amount,
           notes: notes || undefined
         });
-        this.showToastMessage('Entry added successfully', 'success');
+        // Store saved entry details for success popup
+        this.savedEntry.set({ date, amount, notes: notes || undefined, isEdit: false });
       }
       this.closeAddForm();
+      // Show success popup
+      this.showSuccessPopup.set(true);
     } catch (error) {
       this.showToastMessage(editing ? 'Failed to update entry' : 'Failed to add entry', 'error');
     } finally {
       this.isLoading.set(false);
     }
+  }
+
+  // Close Success Popup
+  closeSuccessPopup(): void {
+    this.showSuccessPopup.set(false);
+    this.savedEntry.set(null);
   }
 
   // Utility Methods

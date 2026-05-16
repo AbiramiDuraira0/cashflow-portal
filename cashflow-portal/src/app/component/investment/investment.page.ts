@@ -1,4 +1,4 @@
-import { Component, signal, computed, OnInit } from '@angular/core';
+import { Component, signal, computed, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { 
@@ -26,7 +26,10 @@ interface YearEntry {
 })
 export class InvestmentPage implements OnInit {
   // Inject service
-  constructor(private investmentService: InvestmentService) {}
+  private investmentService = inject(InvestmentService);
+
+  // Loading state from service
+  protected loading = this.investmentService.getLoadingSignal();
 
   // Enums for template
   protected readonly InvestmentType = InvestmentType;
@@ -197,6 +200,11 @@ export class InvestmentPage implements OnInit {
 
   ngOnInit(): void {
     console.log('📊 Investment Page Initialized');
+  }
+
+  // Refresh data
+  protected async refreshData(): Promise<void> {
+    await this.investmentService.loadInvestmentData();
   }
 
   // Open add modal
