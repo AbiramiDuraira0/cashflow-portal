@@ -24,13 +24,13 @@
 
   <!-- Summary Cards -->
   <div class="summary-cards">
-    <!-- Total Amount Card -->
-    <div class="summary-card total">
+    <!-- Total Amount Card (Clickable) -->
+    <div class="summary-card total clickable" (click)="openSummaryPopup()" data-tooltip="Click to view summary">
       <div class="card-icon">💰</div>
       <div class="card-content">
         <p class="card-label">Total Amount</p>
         <h2 class="card-value">{{ formatCurrency(totalAmount()) }}</h2>
-        <p class="card-subtitle">Sum of all entries</p>
+        <p class="card-subtitle">Click to view details →</p>
       </div>
     </div>
 
@@ -107,7 +107,7 @@
             </tr>
           </thead>
           <tbody>
-            @for (entry of sortedEntries(); track entry.id) {
+            @for (entry of paginatedEntries(); track entry.id) {
               <tr class="entry-row">
                 <td class="col-date">
                   <span class="date-badge">📅 {{ formatDate(entry.date) }}</span>
@@ -158,14 +158,58 @@
             </tr>
           </tfoot>
         </table>
+
+        <!-- Pagination Controls -->
+        <div class="pagination-container">
+          <div class="pagination-info">
+            {{ paginationInfo() }}
+          </div>
+          
+          <div class="page-size-selector">
+            <label for="pageSize">Records per page:</label>
+            <select id="pageSize" [(ngModel)]="pageSize" (ngModelChange)="onPageSizeChange()">
+              @for (size of pageSizeOptions; track size) {
+                <option [value]="size">{{ size }}</option>
+              }
+            </select>
+          </div>
+          
+          <div class="pagination-controls">
+            <button 
+              class="page-btn" 
+              (click)="prevPage()" 
+              [disabled]="currentPage() === 1"
+              [attr.data-tooltip]="'Previous Page'">
+              ◀
+            </button>
+            
+            @for (pageNum of getPageNumbers(); track pageNum) {
+              <button 
+                class="page-btn" 
+                [class.active]="pageNum === currentPage()"
+                (click)="goToPage(pageNum)"
+                [disabled]="pageNum === currentPage()">
+                {{ pageNum }}
+              </button>
+            }
+            
+            <button 
+              class="page-btn" 
+              (click)="nextPage()" 
+              [disabled]="currentPage() === totalPages()"
+              [attr.data-tooltip]="'Next Page'">
+              ▶
+            </button>
+          </div>
+        </div>
       </div>
     }
   </div>
 
   <!-- Add/Edit Modal -->
   @if (showAddForm()) {
-    <div class="modal-overlay" (click)="closeAddForm()">
-      <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-overlay">
+      <div class="modal-content" (click)="$event.stopPropagation()" (keydown)="onKeyDown($event)">
         <div class="modal-header">
           <h2>{{ editingEntry() ? '✏️ Edit Entry' : '➕ Add New Entry' }}</h2>
           <button class="btn-close" (click)="closeAddForm()">×</button>
@@ -179,7 +223,6 @@
                 id="entryDate" 
                 [value]="entryDate()"
                 (input)="entryDate.set($any($event.target).value)"
-                (keydown.enter)="$event.preventDefault()"
                 class="form-input"
                 required>
             </div>
@@ -192,7 +235,6 @@
                   id="amount" 
                   [value]="amount()"
                   (input)="amount.set(+$any($event.target).value)"
-                  (keydown.enter)="$event.preventDefault()"
                   class="form-input amount-input"
                   min="0"
                   step="1"
@@ -291,6 +333,87 @@
             <span class="icon">👍</span>
             <span class="text">Got it!</span>
           </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Summary Popup Modal -->
+  @if (showSummaryPopup()) {
+    <div class="modal-overlay">
+      <div class="modal-content summary-modal" (click)="$event.stopPropagation()">
+        <div class="modal-header summary-header">
+          <h2>📊 Lifeline Summary</h2>
+        </div>
+        <div class="modal-body summary-body">
+          <!-- Overall Statistics -->
+          <div class="summary-section">
+            <h3 class="section-title">📈 Overall Statistics</h3>
+            <div class="stats-grid">
+              <div class="stat-item">
+                <span class="stat-label">Total Amount</span>
+                <span class="stat-value highlight">{{ formatCurrency(summaryStats().totalAmount) }}</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">Date Range</span>
+                <span class="stat-value date-range">
+                  @if (summaryStats().firstEntry) {
+                    {{ formatDate(summaryStats().firstEntry!) }} - {{ formatDate(summaryStats().lastEntry!) }}
+                  } @else {
+                    No entries
+                  }
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Yearly Breakdown -->
+          <div class="summary-section">
+            <h3 class="section-title">📅 Year-wise Breakdown</h3>
+            @if (yearlyConsolidation().length > 0) {
+              <div class="yearly-table-wrapper">
+                <table class="yearly-table">
+                  <thead>
+                    <tr>
+                      <th>Year</th>
+                      <th>Entries</th>
+                      <th>Total Amount</th>
+                      <th>% of Total</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (yearData of yearlyConsolidation(); track yearData.year) {
+                      <tr>
+                        <td class="year-cell">
+                          <span class="year-badge">{{ yearData.year }}</span>
+                        </td>
+                        <td class="count-cell">{{ yearData.count }}</td>
+                        <td class="amount-cell">{{ formatCurrency(yearData.total) }}</td>
+                        <td class="percent-cell">
+                          <span class="percent-badge">
+                            {{ ((yearData.total / summaryStats().totalAmount) * 100).toFixed(1) }}%
+                          </span>
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                  <tfoot>
+                    <tr class="total-row">
+                      <td><strong>Total</strong></td>
+                      <td><strong>{{ summaryStats().totalEntries }}</strong></td>
+                      <td><strong>{{ formatCurrency(summaryStats().totalAmount) }}</strong></td>
+                      <td><strong>100%</strong></td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            } @else {
+              <p class="no-data">No entries to display</p>
+            }
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-close-modal" (click)="closeSummaryPopup()">Close</button>
         </div>
       </div>
     </div>

@@ -2,6 +2,7 @@ import { Component, signal, computed, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { LifelineService, LifelineEntry } from '../../services/lifeline.service';
+import { PaginationHelper } from '../../shared';
 
 @Component({
   selector: 'app-lifeline',
@@ -28,6 +29,9 @@ export class LifelinePage implements OnInit {
   protected toastMessage = signal('');
   protected toastType = signal<'success' | 'error' | 'info'>('success');
   
+  // Summary popup state
+  protected showSummaryPopup = signal(false);
+  
   // Form fields
   protected entryDate = signal<string>('');
   protected amount = signal<number>(0);
@@ -36,6 +40,11 @@ export class LifelinePage implements OnInit {
   // Sorting state
   protected sortColumn = signal<'date' | 'amount' | 'notes'>('date');
   protected sortDirection = signal<'asc' | 'desc'>('asc'); // Default: oldest first
+
+  // Pagination state
+  protected currentPage = signal<number>(1);
+  protected pageSize = signal<number>(10);
+  protected readonly pageSizeOptions = PaginationHelper.PAGE_SIZE_OPTIONS;
 
   // Computed values
   protected totalAmount = computed(() => {
@@ -72,6 +81,107 @@ export class LifelinePage implements OnInit {
     });
   });
 
+  // Pagination computed properties
+  protected paginationResult = computed(() => {
+    return PaginationHelper.paginate(
+      this.sortedEntries(),
+      this.currentPage(),
+      this.pageSize()
+    );
+  });
+
+  protected paginatedEntries = computed(() => this.paginationResult().items);
+  protected totalPages = computed(() => this.paginationResult().totalPages);
+  protected paginationInfo = computed(() => 
+    PaginationHelper.getPaginationInfo(this.paginationResult())
+  );
+
+  // Summary consolidated data - grouped by year
+  protected yearlyConsolidation = computed(() => {
+    const entries = this.lifelineEntries();
+    const yearMap = new Map<number, { count: number; total: number }>();
+    
+    entries.forEach(entry => {
+      const year = new Date(entry.date).getFullYear();
+      const existing = yearMap.get(year) || { count: 0, total: 0 };
+      yearMap.set(year, {
+        count: existing.count + 1,
+        total: existing.total + entry.amount
+      });
+    });
+    
+    // Convert to array and sort by year descending
+    return Array.from(yearMap.entries())
+      .map(([year, data]) => ({ year, ...data }))
+      .sort((a, b) => b.year - a.year);
+  });
+
+  // Summary statistics
+  protected summaryStats = computed(() => {
+    const entries = this.lifelineEntries();
+    if (entries.length === 0) {
+      return {
+        totalAmount: 0,
+        totalEntries: 0,
+        averageAmount: 0,
+        minAmount: 0,
+        maxAmount: 0,
+        firstEntry: null as string | null,
+        lastEntry: null as string | null
+      };
+    }
+    
+    const amounts = entries.map(e => e.amount);
+    const dates = entries.map(e => new Date(e.date).getTime());
+    
+    return {
+      totalAmount: amounts.reduce((sum, amt) => sum + amt, 0),
+      totalEntries: entries.length,
+      averageAmount: amounts.reduce((sum, amt) => sum + amt, 0) / entries.length,
+      minAmount: Math.min(...amounts),
+      maxAmount: Math.max(...amounts),
+      firstEntry: new Date(Math.min(...dates)).toISOString().split('T')[0],
+      lastEntry: new Date(Math.max(...dates)).toISOString().split('T')[0]
+    };
+  });
+
+  // Get page numbers for pagination controls
+  getPageNumbers(): number[] {
+    return PaginationHelper.getPageNumbers(this.currentPage(), this.totalPages());
+  }
+
+  // Pagination methods
+  goToPage(page: number): void {
+    if (page >= 1 && page <= this.totalPages()) {
+      this.currentPage.set(page);
+    }
+  }
+
+  nextPage(): void {
+    if (this.currentPage() < this.totalPages()) {
+      this.currentPage.set(this.currentPage() + 1);
+    }
+  }
+
+  prevPage(): void {
+    if (this.currentPage() > 1) {
+      this.currentPage.set(this.currentPage() - 1);
+    }
+  }
+
+  onPageSizeChange(): void {
+    this.currentPage.set(1); // Reset to first page when changing page size
+  }
+
+  // Summary popup methods
+  openSummaryPopup(): void {
+    this.showSummaryPopup.set(true);
+  }
+
+  closeSummaryPopup(): void {
+    this.showSummaryPopup.set(false);
+  }
+
   // Sort method
   sortBy(column: 'date' | 'amount' | 'notes'): void {
     if (this.sortColumn() === column) {
@@ -82,6 +192,7 @@ export class LifelinePage implements OnInit {
       this.sortColumn.set(column);
       this.sortDirection.set('asc');
     }
+    this.currentPage.set(1); // Reset to first page when sorting
   }
 
   ngOnInit(): void {
@@ -110,6 +221,29 @@ export class LifelinePage implements OnInit {
     this.showAddForm.set(false);
     this.resetForm();
     this.editingEntry.set(null);
+  }
+
+  /**
+   * Handle keyboard events in modal
+   * - Enter key → save (except in textarea)
+   * - Escape key → close modal
+   */
+  onKeyDown(event: KeyboardEvent): void {
+    // Handle Escape key to close modal
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      this.closeAddForm();
+      return;
+    }
+    
+    // Handle Enter key to save (skip if in textarea for multi-line notes)
+    const target = event.target as HTMLElement;
+    const isTextarea = target.tagName.toLowerCase() === 'textarea';
+    
+    if (event.key === 'Enter' && !event.shiftKey && !isTextarea) {
+      event.preventDefault();
+      this.saveEntry();
+    }
   }
 
   resetForm(): void {
