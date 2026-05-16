@@ -329,12 +329,7 @@ export class ExpensePage implements OnInit {
     console.log('⏳ Is loading:', this.isLoading());
     this.loadData();
     
-    // Initialize expanded categories (expand all by default)
-    setTimeout(() => {
-      if (this.groupByCategory()) {
-        this.expandAllCategories();
-      }
-    }, 100);
+    // Default to grouped and collapsed - no expansion needed
   }
 
   private async loadData(): Promise<void> {
@@ -382,10 +377,9 @@ export class ExpensePage implements OnInit {
 
   protected toggleGroupByCategory(): void {
     this.groupByCategory.update(v => !v);
-    // If enabling grouping, expand all categories by default
+    // When toggling grouped view, keep categories collapsed by default
     if (this.groupByCategory()) {
-      const allCategories = new Set(this.groupedExpenses().map(g => g.categoryName));
-      this.expandedCategories.set(allCategories);
+      this.expandedCategories.set(new Set());
     }
   }
 

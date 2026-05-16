@@ -191,12 +191,27 @@ export class IncomePage implements OnInit {
     return totals;
   });
 
-  // New: Year-wise totals as array for table display
+  // Sorting state for Total Earnings table
+  protected sortColumn = signal<'year' | 'amount'>('year');
+  protected sortDirection = signal<'asc' | 'desc'>('asc'); // Default ascending (2021 to 2026)
+
+  // New: Year-wise totals as array for table display with sorting
   protected yearWiseTotalsArray = computed(() => {
     const totals = this.yearWiseTotals();
+    const column = this.sortColumn();
+    const direction = this.sortDirection();
+    
     const result = Array.from(totals.entries())
       .map(([year, amount]) => ({ year, amount }))
-      .sort((a, b) => b.year - a.year); // Sort by year descending
+      .sort((a, b) => {
+        let comparison = 0;
+        if (column === 'year') {
+          comparison = a.year - b.year;
+        } else {
+          comparison = a.amount - b.amount;
+        }
+        return direction === 'asc' ? comparison : -comparison;
+      });
     return result;
   });
 
@@ -305,6 +320,26 @@ export class IncomePage implements OnInit {
     this.showTotalEarningsModal.set(false);
   }
 
+  // Sort table by column
+  protected sortTable(column: 'year' | 'amount'): void {
+    if (this.sortColumn() === column) {
+      // Toggle direction if same column
+      this.sortDirection.set(this.sortDirection() === 'asc' ? 'desc' : 'asc');
+    } else {
+      // New column, set ascending as default
+      this.sortColumn.set(column);
+      this.sortDirection.set('asc');
+    }
+  }
+
+  // Get sort icon for column header
+  protected getSortIcon(column: 'year' | 'amount'): string {
+    if (this.sortColumn() !== column) {
+      return '⇅'; // Neutral sort icon
+    }
+    return this.sortDirection() === 'asc' ? '↑' : '↓';
+  }
+
   protected openYearlyBreakdownModal(): void {
     this.showYearlyBreakdownModal.set(true);
   }
@@ -327,6 +362,16 @@ export class IncomePage implements OnInit {
     this.resetForm();
     this.selectedYearForm.set(year); // Set year AFTER resetForm to preserve it
     this.isYearLocked.set(true); // Year IS locked for year-specific button
+  }
+
+  // Open add form with specific month and year pre-populated
+  protected openAddFormForMonth(month: string, year: number): void {
+    this.showAddForm.set(true);
+    this.editingEntry.set(null);
+    this.resetForm();
+    this.selectedMonth.set(month); // Pre-populate month
+    this.selectedYearForm.set(year); // Pre-populate year
+    this.isYearLocked.set(true); // Lock year since it's tied to current view
   }
 
   protected closeAddForm(): void {

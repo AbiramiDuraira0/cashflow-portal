@@ -79,13 +79,13 @@
       <!-- First Row: January to June -->
       <div class="month-row">
         @for (monthData of monthlyEntriesGrid().firstRow; track monthData.month) {
-          <div class="month-card" [class.has-entry]="monthData.hasEntry">
+          <div class="month-card" [class.has-entry]="monthData.hasEntry" [class.clickable]="!monthData.hasEntry" (click)="!monthData.hasEntry && openAddFormForMonth(monthData.month, selectedYear())">
             <div class="month-header">
               <span class="month-name">{{ monthData.month }}</span>
               @if (monthData.hasEntry) {
                 <div class="month-actions">
-                  <button class="btn-icon-small" (click)="editIncome(monthData.entry!)" title="Edit">✏️</button>
-                  <button class="btn-icon-small delete" (click)="deleteIncome(monthData.entry!)" title="Delete">🗑️</button>
+                  <button class="btn-icon-small" (click)="editIncome(monthData.entry!); $event.stopPropagation()" title="Edit">✏️</button>
+                  <button class="btn-icon-small delete" (click)="deleteIncome(monthData.entry!); $event.stopPropagation()" title="Delete">🗑️</button>
                 </div>
               }
             </div>
@@ -107,8 +107,8 @@
               </div>
             } @else {
               <div class="month-empty">
-                <span class="empty-icon">📝</span>
-                <span class="empty-text">No data</span>
+                <span class="empty-icon">➕</span>
+                <span class="empty-text">Click to add</span>
               </div>
             }
           </div>
@@ -118,13 +118,13 @@
       <!-- Second Row: July to December -->
       <div class="month-row">
         @for (monthData of monthlyEntriesGrid().secondRow; track monthData.month) {
-          <div class="month-card" [class.has-entry]="monthData.hasEntry">
+          <div class="month-card" [class.has-entry]="monthData.hasEntry" [class.clickable]="!monthData.hasEntry" (click)="!monthData.hasEntry && openAddFormForMonth(monthData.month, selectedYear())">
             <div class="month-header">
               <span class="month-name">{{ monthData.month }}</span>
               @if (monthData.hasEntry) {
                 <div class="month-actions">
-                  <button class="btn-icon-small" (click)="editIncome(monthData.entry!)" title="Edit">✏️</button>
-                  <button class="btn-icon-small delete" (click)="deleteIncome(monthData.entry!)" title="Delete">🗑️</button>
+                  <button class="btn-icon-small" (click)="editIncome(monthData.entry!); $event.stopPropagation()" title="Edit">✏️</button>
+                  <button class="btn-icon-small delete" (click)="deleteIncome(monthData.entry!); $event.stopPropagation()" title="Delete">🗑️</button>
                 </div>
               }
             </div>
@@ -146,8 +146,8 @@
               </div>
             } @else {
               <div class="month-empty">
-                <span class="empty-icon">📝</span>
-                <span class="empty-text">No data</span>
+                <span class="empty-icon">➕</span>
+                <span class="empty-text">Click to add</span>
               </div>
             }
           </div>
@@ -300,8 +300,12 @@
           <table class="earnings-table">
             <thead>
               <tr>
-                <th class="year-header">Year</th>
-                <th class="amount-header">Total Amount (₹)</th>
+                <th class="year-header sortable" (click)="sortTable('year')">
+                  Year <span class="sort-icon">{{ getSortIcon('year') }}</span>
+                </th>
+                <th class="amount-header sortable" (click)="sortTable('amount')">
+                  Total Amount (₹) <span class="sort-icon">{{ getSortIcon('amount') }}</span>
+                </th>
               </tr>
             </thead>
             <tbody>

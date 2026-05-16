@@ -152,16 +152,6 @@
           </button>
         }
       </div>
-
-      <!-- Toggle Button for Expense vs Income -->
-      @if (monthlyIncome() > 0) {
-        <button 
-          class="toggle-chart-btn" 
-          (click)="toggleExpenseVsIncome()"
-          [title]="showExpenseVsIncome() ? 'Hide Expense vs Income' : 'Show Expense vs Income'">
-          {{ showExpenseVsIncome() ? '📊 Hide Chart' : '📊 Show Chart' }}
-        </button>
-      }
     </div>
   </div>
 
