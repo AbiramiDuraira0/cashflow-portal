@@ -12,7 +12,7 @@ export interface OtpConfig {
 export class OtpService {
   private currentOtp: string | null = null;
   private otpExpiry: number | null = null;
-  private readonly OTP_VALIDITY_MINUTES = 5;
+  private readonly OTP_VALIDITY_MINUTES = 3;
   
   // EmailJS configuration from environment
   private readonly EMAILJS_SERVICE_ID = environment.otpConfig.emailJsServiceId;
@@ -64,11 +64,28 @@ export class OtpService {
   }
 
   /**
-   * Send OTP via Email using EmailJS
+   * Send OTP via Email using EmailJS (generates new OTP)
    */
   async sendOtpViaEmail(config: OtpConfig): Promise<{ success: boolean; message: string }> {
     const otp = this.generateOtp();
-    
+    return this.sendEmailWithOtp(config, otp);
+  }
+
+  /**
+   * Send email with existing OTP (doesn't generate new one)
+   */
+  async sendOtpViaEmailAsync(config: OtpConfig): Promise<{ success: boolean; message: string }> {
+    const otp = this.currentOtp;
+    if (!otp) {
+      return { success: false, message: 'No OTP generated' };
+    }
+    return this.sendEmailWithOtp(config, otp);
+  }
+
+  /**
+   * Internal method to send email
+   */
+  private async sendEmailWithOtp(config: OtpConfig, otp: string): Promise<{ success: boolean; message: string }> {
     try {
       // Check if EmailJS is loaded
       if (!(window as any).emailjs) {
@@ -84,7 +101,10 @@ export class OtpService {
       const templateParams = {
         to_email: config.email,
         to_name: config.userName,
+        // Variables matching your EmailJS template
+        passcode: otp,
         otp_code: otp,
+        time: new Date(Date.now() + this.OTP_VALIDITY_MINUTES * 60 * 1000).toLocaleTimeString(),
         validity_minutes: this.OTP_VALIDITY_MINUTES
       };
 
@@ -146,10 +166,18 @@ export class OtpService {
     
     const script = document.createElement('script');
     script.src = 'https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js';
-    script.async = true;
+    script.async = false; // Load synchronously for faster availability
     script.onload = () => {
       (window as any).emailjs.init(this.EMAILJS_PUBLIC_KEY);
+      console.log('EmailJS loaded successfully');
     };
     document.head.appendChild(script);
+  }
+
+  /**
+   * Check if EmailJS is ready
+   */
+  isEmailJSReady(): boolean {
+    return !!(window as any).emailjs;
   }
 }

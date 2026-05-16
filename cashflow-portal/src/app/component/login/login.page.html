@@ -19,8 +19,7 @@
         @if (currentStep === 'passcode') {
           <p class="login-subtitle">Enter your passcode to continue</p>
         } @else {
-          <p class="login-subtitle">Enter the 4-digit OTP sent to your email</p>
-          <p class="email-hint">{{ getMaskedEmail() }}</p>
+          <p class="login-subtitle">Enter OTP</p>
         }
       </div>
 
@@ -84,66 +83,43 @@
         </form>
       }
 
-      <!-- Step 2: OTP Verification -->
+      <!-- Step 2: OTP Verification - Minimal Design -->
       @if (currentStep === 'otp') {
         <div class="otp-form">
-          <div class="form-group">
-            <label class="form-label otp-label">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="label-icon">
-                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
-              </svg>
-              Enter OTP
-            </label>
-            
-            <!-- OTP Input boxes -->
-            <div class="otp-inputs" (paste)="onOtpPaste($event)">
-              @for (digit of otpDigits; track $index) {
-                <input 
-                  type="text"
-                  inputmode="numeric"
-                  pattern="[0-9]*"
-                  maxlength="1"
-                  [id]="'otp-' + $index"
-                  [value]="digit"
-                  (input)="onOtpDigitInput($index, $event)"
-                  (keydown)="onOtpKeyDown($index, $event)"
-                  class="otp-input"
-                  [class.error]="showOtpError"
-                  [class.filled]="digit !== ''"
-                  autocomplete="off"
-                />
-              }
-            </div>
-
-            <!-- Timer -->
-            @if (remainingTime > 0) {
-              <div class="otp-timer">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="timer-icon">
-                  <circle cx="12" cy="12" r="10"></circle>
-                  <polyline points="12 6 12 12 16 14"></polyline>
-                </svg>
-                <span>OTP expires in {{ getFormattedTime() }}</span>
-              </div>
-            } @else {
-              <div class="otp-expired">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="expired-icon">
-                  <circle cx="12" cy="12" r="10"></circle>
-                  <line x1="12" y1="8" x2="12" y2="12"></line>
-                  <line x1="12" y1="16" x2="12.01" y2="16"></line>
-                </svg>
-                <span>OTP expired</span>
-              </div>
+          <!-- OTP Input boxes -->
+          <div class="otp-inputs" (paste)="onOtpPaste($event)">
+            @for (digit of otpDigits; track $index) {
+              <input 
+                type="text"
+                inputmode="numeric"
+                pattern="[0-9]*"
+                maxlength="1"
+                [id]="'otp-' + $index"
+                [value]="digit"
+                (input)="onOtpDigitInput($index, $event)"
+                (keydown)="onOtpKeyDown($index, $event)"
+                class="otp-input"
+                [class.error]="showOtpError"
+                [class.filled]="digit !== ''"
+                autocomplete="off"
+              />
             }
+          </div>
 
-            <!-- OTP Error message -->
-            <div class="error-message" *ngIf="showOtpError">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="error-icon">
-                <circle cx="12" cy="12" r="10"></circle>
-                <line x1="15" y1="9" x2="9" y2="15"></line>
-                <line x1="9" y1="9" x2="15" y2="15"></line>
-              </svg>
-              {{ otpErrorMessage }}
-            </div>
+          <!-- Timer - compact -->
+          <div class="otp-status">
+            @if (remainingTime > 0) {
+              <span class="timer">{{ getFormattedTime() }}</span>
+            } @else {
+              <span class="expired">Expired</span>
+            }
+            <span class="separator">•</span>
+            <span class="email-hint">{{ getMaskedEmail() }}</span>
+          </div>
+
+          <!-- OTP Error message -->
+          <div class="error-message" *ngIf="showOtpError">
+            {{ otpErrorMessage }}
           </div>
 
           <!-- Verify Button -->
@@ -155,41 +131,24 @@
           >
             @if (isVerifyingOtp) {
               <span class="spinner"></span>
-              <span class="button-text">Verifying...</span>
             } @else {
-              <span class="button-text">Verify OTP</span>
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="button-icon">
-                <polyline points="20 6 9 17 4 12"></polyline>
-              </svg>
+              Verify
             }
           </button>
 
-          <!-- Action links -->
-          <div class="otp-actions">
+          <!-- Action links - inline -->
+          <div class="otp-actions-inline">
             <button 
               type="button" 
-              class="link-button" 
+              class="text-link" 
               (click)="resendOtp()"
-              [disabled]="isSendingOtp || remainingTime > 240"
+              [disabled]="isSendingOtp || remainingTime > 0"
             >
-              @if (isSendingOtp) {
-                <span class="spinner-small"></span>
-                Sending...
-              } @else {
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="link-icon">
-                  <polyline points="23 4 23 10 17 10"></polyline>
-                  <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
-                </svg>
-                Resend OTP
-              }
+              Resend
             </button>
-            
-            <button type="button" class="link-button secondary" (click)="goBackToPasscode()">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="link-icon">
-                <line x1="19" y1="12" x2="5" y2="12"></line>
-                <polyline points="12 19 5 12 12 5"></polyline>
-              </svg>
-              Back to Passcode
+            <span class="separator">•</span>
+            <button type="button" class="text-link" (click)="goBackToPasscode()">
+              Back
             </button>
           </div>
         </div>

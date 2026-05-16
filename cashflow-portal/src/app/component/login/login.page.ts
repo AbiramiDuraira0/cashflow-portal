@@ -1,4 +1,4 @@
-import { Component, OnDestroy } from '@angular/core';
+import { Component, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -31,8 +31,9 @@ export class LoginPage implements OnDestroy {
   isSendingOtp: boolean = false;
   isVerifyingOtp: boolean = false;
   otpSent: boolean = false;
-  remainingTime: number = 0;
-  private timerInterval: any;
+  remainingTime: number = 180;
+  private timerInterval: any = null;
+  private otpExpiryTime: number = 0;
 
   // 2FA configuration
   is2FAEnabled: boolean = false;
@@ -40,7 +41,8 @@ export class LoginPage implements OnDestroy {
 
   constructor(
     private router: Router,
-    private otpService: OtpService
+    private otpService: OtpService,
+    private cdr: ChangeDetectorRef
   ) {
     this.is2FAEnabled = this.otpService.is2FARequired();
     this.recipientEmail = environment.otpConfig.recipientEmail;
@@ -66,28 +68,24 @@ export class LoginPage implements OnDestroy {
   }
 
   async sendOtp() {
-    this.isSendingOtp = true;
-    this.showOtpError = false;
+    // Generate OTP first (this sets the expiry time)
+    this.otpService.generateOtp();
+    
+    // Show OTP screen IMMEDIATELY - don't wait for email
+    this.currentStep = 'otp';
+    this.otpSent = true;
+    this.isLoading = false;
+    this.isSendingOtp = false;
+    this.startTimer();
 
+    // Send email in background (uses the already generated OTP)
     try {
-      const result = await this.otpService.sendOtpViaEmail({
+      await this.otpService.sendOtpViaEmailAsync({
         email: environment.otpConfig.recipientEmail,
         userName: environment.otpConfig.recipientName
       });
-
-      if (result.success) {
-        this.otpSent = true;
-        this.currentStep = 'otp';
-        this.startTimer();
-      } else {
-        this.showPasscodeError(result.message);
-      }
     } catch (error) {
       console.error('Failed to send OTP:', error);
-      this.showPasscodeError('Failed to send OTP. Please try again.');
-    } finally {
-      this.isSendingOtp = false;
-      this.isLoading = false;
     }
   }
 
@@ -111,10 +109,7 @@ export class LoginPage implements OnDestroy {
       }
     }
 
-    // Auto-submit when all digits are entered
-    if (this.otpDigits.every(d => d !== '')) {
-      this.verifyOtp();
-    }
+    // Don't auto-submit - user must click Verify button
 
     this.showOtpError = false;
   }
@@ -142,10 +137,7 @@ export class LoginPage implements OnDestroy {
       }
     }
 
-    // Auto-submit if 4 digits pasted
-    if (digits.length === 4) {
-      this.verifyOtp();
-    }
+    // Don't auto-submit on paste - user must click Verify button
   }
 
   verifyOtp() {
@@ -227,26 +219,52 @@ export class LoginPage implements OnDestroy {
   }
 
   private clearOtpInputs() {
+    // Reset array
     this.otpDigits = ['', '', '', ''];
     this.otp = '';
     
-    // Clear and focus first input
+    // Clear ALL input elements and focus first
     setTimeout(() => {
+      for (let i = 0; i < 4; i++) {
+        const input = document.getElementById(`otp-${i}`) as HTMLInputElement;
+        if (input) {
+          input.value = '';
+        }
+      }
+      // Focus first input
       const firstInput = document.getElementById('otp-0') as HTMLInputElement;
       if (firstInput) {
-        firstInput.value = '';
         firstInput.focus();
       }
-    }, 100);
+    }, 50);
   }
 
   private startTimer() {
-    this.remainingTime = this.otpService.getRemainingTime();
+    // Clear any existing timer first
+    if (this.timerInterval) {
+      clearInterval(this.timerInterval);
+      this.timerInterval = null;
+    }
     
-    this.timerInterval = setInterval(() => {
-      this.remainingTime = this.otpService.getRemainingTime();
-      if (this.remainingTime <= 0) {
-        this.clearTimer();
+    // Set expiry time to 3 minutes from now
+    this.otpExpiryTime = Date.now() + (3 * 60 * 1000);
+    this.remainingTime = 180;
+    
+    // Force initial UI update
+    this.cdr.detectChanges();
+    
+    // Store reference to this for closure
+    const self = this;
+    
+    // Start interval with change detection
+    this.timerInterval = window.setInterval(function() {
+      const now = Date.now();
+      const remaining = Math.max(0, Math.ceil((self.otpExpiryTime - now) / 1000));
+      self.remainingTime = remaining;
+      self.cdr.detectChanges(); // Force UI update
+      
+      if (remaining <= 0) {
+        self.clearTimer();
       }
     }, 1000);
   }
