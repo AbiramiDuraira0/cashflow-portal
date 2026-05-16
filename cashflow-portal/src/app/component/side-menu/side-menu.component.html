@@ -134,6 +134,16 @@
           <span class="menu-text" *ngIf="!isMenuCollapsed()">Report</span>
         </a>
       </li>
+      <li class="menu-item">
+        <a [routerLink]="['/lifeline']" routerLinkActive="active" 
+           class="menu-link" 
+           [attr.data-tooltip]="isMenuCollapsed() ? 'Lifeline' : null"
+           (click)="onMenuItemClick()" 
+           (mousedown)="$event.preventDefault()">
+          <span class="menu-icon-emoji">💙</span>
+          <span class="menu-text" *ngIf="!isMenuCollapsed()">Lifeline</span>
+        </a>
+      </li>
       <li class="menu-item menu-divider"></li>
       <li class="menu-item">
         <a class="menu-link logout-link" 

@@ -76,6 +76,13 @@ export class DashboardPage implements OnInit {
   protected showTestPopup = signal<boolean>(false);
   protected testResult = signal<{ success: boolean; message: string; } | null>(null);
 
+  // Calendar state
+  protected showCalendar = signal<boolean>(false);
+  protected showYearDropdown = signal<boolean>(false);
+  protected showMonthDropdown = signal<boolean>(false);
+  protected calendarDate = signal<Date>(new Date());
+  protected selectedDate = signal<Date>(new Date());
+
   // Current date info
   protected currentDate: string;
   protected currentMonth: string;
@@ -90,6 +97,91 @@ export class DashboardPage implements OnInit {
   protected investmentData = signal<InvestmentEntry[]>([]);
   protected categoryData = signal<Category[]>([]);
   protected taxData = signal<TaxEntry[]>([]);
+
+  // Calendar computed values
+  protected calendarMonthYear = computed(() => {
+    const date = this.calendarDate();
+    return `${this.months[date.getMonth()]} ${date.getFullYear()}`;
+  });
+
+  protected calendarMonth = computed(() => {
+    return this.calendarDate().getMonth();
+  });
+
+  protected calendarYear = computed(() => {
+    return this.calendarDate().getFullYear();
+  });
+
+  protected calendarYearOptions = computed(() => {
+    const currentYear = new Date().getFullYear();
+    const years: number[] = [];
+    // Show 50 years in the past and 10 years in the future
+    for (let year = currentYear - 50; year <= currentYear + 10; year++) {
+      years.push(year);
+    }
+    return years;
+  });
+
+  protected calendarDays = computed(() => {
+    const date = this.calendarDate();
+    const today = new Date();
+    const selected = this.selectedDate();
+    
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    
+    // First day of the month
+    const firstDay = new Date(year, month, 1);
+    const startingDay = firstDay.getDay();
+    
+    // Last day of the month
+    const lastDay = new Date(year, month + 1, 0);
+    const totalDays = lastDay.getDate();
+    
+    // Previous month's last days
+    const prevMonthLastDay = new Date(year, month, 0).getDate();
+    
+    const days: { date: number; isCurrentMonth: boolean; isToday: boolean; isSelected: boolean }[] = [];
+    
+    // Previous month days
+    for (let i = startingDay - 1; i >= 0; i--) {
+      days.push({
+        date: prevMonthLastDay - i,
+        isCurrentMonth: false,
+        isToday: false,
+        isSelected: false
+      });
+    }
+    
+    // Current month days
+    for (let i = 1; i <= totalDays; i++) {
+      const isToday = today.getDate() === i && 
+                      today.getMonth() === month && 
+                      today.getFullYear() === year;
+      const isSelected = selected.getDate() === i && 
+                         selected.getMonth() === month && 
+                         selected.getFullYear() === year;
+      days.push({
+        date: i,
+        isCurrentMonth: true,
+        isToday,
+        isSelected
+      });
+    }
+    
+    // Next month days to complete the grid (6 rows x 7 days = 42)
+    const remainingDays = 42 - days.length;
+    for (let i = 1; i <= remainingDays; i++) {
+      days.push({
+        date: i,
+        isCurrentMonth: false,
+        isToday: false,
+        isSelected: false
+      });
+    }
+    
+    return days;
+  });
 
   constructor() {
     // Format current date
@@ -107,6 +199,104 @@ export class DashboardPage implements OnInit {
     const prevMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
     this.previousMonth = this.months[prevMonthDate.getMonth()];
     this.previousYear = prevMonthDate.getFullYear();
+  }
+
+  // ============================================
+  // Calendar Methods
+  // ============================================
+  toggleCalendar(): void {
+    const isOpening = !this.showCalendar();
+    
+    // Reset to current date every time calendar is opened
+    if (isOpening) {
+      const today = new Date();
+      this.calendarDate.set(today);
+      this.selectedDate.set(today);
+      this.showMonthDropdown.set(false);
+      this.showYearDropdown.set(false);
+    }
+    
+    this.showCalendar.update(v => !v);
+  }
+
+  previousCalendarMonth(): void {
+    this.calendarDate.update(date => {
+      return new Date(date.getFullYear(), date.getMonth() - 1, 1);
+    });
+  }
+
+  nextCalendarMonth(): void {
+    this.calendarDate.update(date => {
+      return new Date(date.getFullYear(), date.getMonth() + 1, 1);
+    });
+  }
+
+  onMonthSelect(event: Event): void {
+    const select = event.target as HTMLSelectElement;
+    const month = parseInt(select.value, 10);
+    this.calendarDate.update(date => {
+      return new Date(date.getFullYear(), month, 1);
+    });
+  }
+
+  onYearSelect(event: Event): void {
+    const select = event.target as HTMLSelectElement;
+    const year = parseInt(select.value, 10);
+    this.calendarDate.update(date => {
+      return new Date(year, date.getMonth(), 1);
+    });
+  }
+
+  toggleYearDropdown(event: Event): void {
+    event.stopPropagation();
+    this.showMonthDropdown.set(false); // Close month dropdown
+    this.showYearDropdown.update(v => !v);
+    
+    // Scroll to current year when opening
+    if (this.showYearDropdown()) {
+      setTimeout(() => {
+        const selectedOption = document.querySelector('.cal-year-option.selected');
+        if (selectedOption) {
+          selectedOption.scrollIntoView({ block: 'center', behavior: 'auto' });
+        }
+      }, 10);
+    }
+  }
+
+  toggleMonthDropdown(event: Event): void {
+    event.stopPropagation();
+    this.showYearDropdown.set(false); // Close year dropdown
+    this.showMonthDropdown.update(v => !v);
+    
+    // Scroll to current month when opening
+    if (this.showMonthDropdown()) {
+      setTimeout(() => {
+        const selectedOption = document.querySelector('.cal-month-option.selected');
+        if (selectedOption) {
+          selectedOption.scrollIntoView({ block: 'center', behavior: 'auto' });
+        }
+      }, 10);
+    }
+  }
+
+  selectYear(year: number): void {
+    this.calendarDate.update(date => {
+      return new Date(year, date.getMonth(), 1);
+    });
+    this.showYearDropdown.set(false);
+  }
+
+  selectMonth(month: number): void {
+    this.calendarDate.update(date => {
+      return new Date(date.getFullYear(), month, 1);
+    });
+    this.showMonthDropdown.set(false);
+  }
+
+  goToToday(): void {
+    const today = new Date();
+    this.calendarDate.set(today);
+    this.selectedDate.set(today);
   }
 
   // ============================================
@@ -272,8 +462,6 @@ export class DashboardPage implements OnInit {
         id: '1',
         title: 'Total Income',
         value: this.formatCurrency(this.totalIncome()),
-        subtitle: 'All Time',
-        trend: this.incomeTrend(),
         icon: '💰',
         color: '#22c55e',
         route: '/income'
@@ -282,8 +470,6 @@ export class DashboardPage implements OnInit {
         id: '2',
         title: 'Total Expenses',
         value: this.formatCurrency(this.totalExpense()),
-        subtitle: 'All Time',
-        trend: this.expenseTrend() * -1, // Negative trend is good for expenses
         icon: '💸',
         color: '#ef4444',
         route: '/expense'
@@ -292,8 +478,6 @@ export class DashboardPage implements OnInit {
         id: '3',
         title: 'Balance',
         value: this.formatCurrency(this.totalBalance()),
-        subtitle: 'All Time',
-        trend: this.balanceTrend(),
         icon: '💵',
         color: '#3b82f6',
         route: '/report'
@@ -311,7 +495,6 @@ export class DashboardPage implements OnInit {
         id: '5',
         title: 'Active Debts',
         value: this.formatCurrency(this.totalOutstandingDebts()),
-        subtitle: `${this.activeDebtCount()} active loans`,
         icon: '🏦',
         color: '#f59e0b',
         route: '/debts'
@@ -320,7 +503,6 @@ export class DashboardPage implements OnInit {
         id: '6',
         title: 'Categories',
         value: this.activeCategoryCount(),
-        subtitle: 'Active categories',
         icon: '📁',
         color: '#06b6d4',
         route: '/category'
@@ -371,7 +553,52 @@ export class DashboardPage implements OnInit {
   });
 
   // ============================================
-  // Computed Values - Expense Category Breakdown
+  // Computed Values - All Time Category Spending (for visualization)
+  // ============================================
+  protected allTimeCategorySpending = computed<BudgetCategory[]>(() => {
+    const expenses = this.expenseData().filter(e => !e.isDeleted);
+    const totalExpense = expenses.reduce((sum, e) => sum + e.amount, 0);
+    const categoryMap = new Map<string, { icon: string; amount: number }>();
+
+    expenses.forEach(expense => {
+      const existing = categoryMap.get(expense.categoryName);
+      if (existing) {
+        existing.amount += expense.amount;
+      } else {
+        categoryMap.set(expense.categoryName, {
+          icon: expense.categoryIcon || '📁',
+          amount: expense.amount
+        });
+      }
+    });
+
+    return Array.from(categoryMap.entries())
+      .map(([name, data], index) => ({
+        name,
+        icon: data.icon,
+        spent: data.amount,
+        percentage: totalExpense > 0 ? Math.round((data.amount / totalExpense) * 100) : 0,
+        color: this.categoryColors[index % this.categoryColors.length]
+      }))
+      .sort((a, b) => b.spent - a.spent);
+  });
+
+  protected allTimeTotalExpense = computed(() => {
+    return this.expenseData()
+      .filter(e => !e.isDeleted)
+      .reduce((sum, e) => sum + e.amount, 0);
+  });
+
+  // ============================================
+  // Computed Values - Top Spending Categories (for insights)
+  // ============================================
+  protected topSpendingCategories = computed<BudgetCategory[]>(() => {
+    // Get top 5 spending categories sorted by amount
+    return this.allTimeCategorySpending().slice(0, 5);
+  });
+
+  // ============================================
+  // Computed Values - Expense Category Breakdown (kept for compatibility)
   // ============================================
   protected expenseCategoryBreakdown = computed<BudgetCategory[]>(() => {
     const expenses = this.expenseData()
@@ -506,6 +733,25 @@ export class DashboardPage implements OnInit {
     if (days < 7) return `${days} days ago`;
     
     return date.toLocaleDateString('en-IN', { month: 'short', day: 'numeric' });
+  }
+
+  // Donut Chart Helper Methods
+  getStrokeDasharray(percentage: number): string {
+    const circumference = 2 * Math.PI * 40; // radius = 40
+    const segmentLength = (percentage / 100) * circumference;
+    return `${segmentLength} ${circumference}`;
+  }
+
+  getStrokeDashoffset(index: number): number {
+    const circumference = 2 * Math.PI * 40;
+    let offset = 0;
+    const categories = this.allTimeCategorySpending();
+    
+    for (let i = 0; i < index; i++) {
+      offset += (categories[i].percentage / 100) * circumference;
+    }
+    
+    return -offset;
   }
 
   // ============================================

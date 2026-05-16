@@ -182,7 +182,7 @@
             <label for="pageSize">Show:</label>
             <select id="pageSize" [value]="pageSize()" (change)="pageSize.set(+$any($event.target).value); onPageSizeChange()">
               @for (size of pageSizeOptions; track size) {
-                <option [value]="size">{{ size }}</option>
+                <option [value]="size" [selected]="size === pageSize()">{{ size }}</option>
               }
             </select>
           </div>

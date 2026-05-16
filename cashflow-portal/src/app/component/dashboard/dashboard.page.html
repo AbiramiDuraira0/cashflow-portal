@@ -4,7 +4,10 @@
       <p class="subtitle">Welcome back! Here's your financial overview</p>
     </div>
     <div class="header-actions">
-      <span class="current-date">{{ currentDate }}</span>
+      <button class="current-date-btn" (click)="toggleCalendar()">
+        <span class="date-icon">📅</span>
+        <span class="date-text">{{ currentDate }}</span>
+      </button>
       <button 
         class="refresh-btn" 
         (click)="refreshData()"
@@ -18,111 +21,219 @@
         data-tooltip="Test Database Connection">
         🔌
       </button>
+      
+      <!-- Calendar Popup -->
+      @if (showCalendar()) {
+        <div class="calendar-popup" (click)="$event.stopPropagation()">
+          <div class="calendar-header">
+            <button class="cal-nav-btn" (click)="previousCalendarMonth()">◀</button>
+            <div class="cal-month-year-selectors">
+              <div class="cal-month-dropdown">
+                <button class="cal-month-btn" (click)="toggleMonthDropdown($event)">
+                  {{ months[calendarMonth()] }}
+                  <span class="dropdown-arrow">▼</span>
+                </button>
+                @if (showMonthDropdown()) {
+                  <div class="cal-month-options">
+                    @for (month of months; track $index) {
+                      <div 
+                        class="cal-month-option" 
+                        [class.selected]="$index === calendarMonth()"
+                        (click)="selectMonth($index)">
+                        {{ month }}
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+              <div class="cal-year-dropdown">
+                <button class="cal-year-btn" (click)="toggleYearDropdown($event)">
+                  {{ calendarYear() }}
+                  <span class="dropdown-arrow">▼</span>
+                </button>
+                @if (showYearDropdown()) {
+                  <div class="cal-year-options">
+                    @for (year of calendarYearOptions(); track year) {
+                      <div 
+                        class="cal-year-option" 
+                        [class.selected]="year === calendarYear()"
+                        (click)="selectYear(year)">
+                        {{ year }}
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+            </div>
+            <button class="cal-nav-btn" (click)="nextCalendarMonth()">▶</button>
+          </div>
+          <div class="calendar-weekdays">
+            <span>Sun</span>
+            <span>Mon</span>
+            <span>Tue</span>
+            <span>Wed</span>
+            <span>Thu</span>
+            <span>Fri</span>
+            <span>Sat</span>
+          </div>
+          <div class="calendar-days">
+            @for (day of calendarDays(); track $index) {
+              <span 
+                class="calendar-day"
+                [class.other-month]="!day.isCurrentMonth"
+                [class.today]="day.isToday"
+                [class.selected]="day.isSelected">
+                {{ day.date }}
+              </span>
+            }
+          </div>
+          <div class="calendar-footer">
+            <button class="cal-today-btn" (click)="goToToday()">Today</button>
+            <button class="cal-close-btn" (click)="toggleCalendar()">Close</button>
+          </div>
+        </div>
+      }
     </div>
   </header>
 
   @if (loading()) {
-    <div class="widget-grid" aria-hidden="true">
+    <div class="overview-grid" aria-hidden="true">
       @for (item of [1,2,3,4,5,6]; track item) {
-        <div class="widget skeleton"></div>
+        <div class="card skeleton"></div>
       }
     </div>
   } @else {
-    <!-- Widgets Grid -->
-    <div class="widget-grid">
+    <!-- Financial Overview Cards - Report Style -->
+    <div class="overview-grid">
       @for (widget of widgets(); track widget.id) {
-        <article class="widget" [routerLink]="widget.route" [style.--widget-color]="widget.color">
-          <div class="widget-header">
-            <div class="widget-icon" [style.background]="widget.color">
-              {{ widget.icon }}
-            </div>
-            @if (widget.trend !== undefined && widget.trend !== 0) {
-              <div class="trend" [class.positive]="widget.trend > 0" [class.negative]="widget.trend < 0">
-                <span class="trend-icon">{{ widget.trend > 0 ? '↑' : '↓' }}</span>
-                <span class="trend-value">{{ widget.trend > 0 ? '+' : '' }}{{ widget.trend }}%</span>
-              </div>
-            }
-          </div>
-          <div class="widget-content">
-            <h3 class="widget-title">{{ widget.title }}</h3>
-            <div class="widget-value">{{ widget.value }}</div>
+        <div class="card" [class]="widget.id" [routerLink]="widget.route">
+          <div class="icon">{{ widget.icon }}</div>
+          <div class="content">
+            <p class="label">{{ widget.title }}</p>
+            <h2>{{ widget.value }}</h2>
             @if (widget.subtitle) {
-              <p class="widget-subtitle">{{ widget.subtitle }}</p>
+              <p class="sub">{{ widget.subtitle }}</p>
+            }
+            @if (widget.trend !== undefined && widget.trend !== 0) {
+              <p class="trend" [class.positive]="widget.trend > 0" [class.negative]="widget.trend < 0">
+                {{ widget.trend > 0 ? '↑' : '↓' }} {{ widget.trend > 0 ? '+' : '' }}{{ widget.trend }}% vs last year
+              </p>
             }
           </div>
-        </article>
+        </div>
       }
     </div>
 
     <!-- Two Column Layout -->
     <div class="dashboard-grid">
-      <!-- Recent Transactions -->
-      <div class="card">
+      <!-- All Time Category Spending Visualization -->
+      <div class="card spending-chart-card">
         <div class="card-header">
-          <h2 class="card-title">Recent Transactions</h2>
-          <a routerLink="/report" class="view-all">View all →</a>
+          <h2 class="card-title">Spending by Category</h2>
+          <span class="card-subtitle">All Time</span>
         </div>
-        <div class="transactions-list">
-          @if (recentTransactions().length === 0) {
+        <div class="spending-visualization">
+          @if (allTimeCategorySpending().length === 0) {
             <div class="no-data">
-              <span class="no-data-icon">📭</span>
-              <p>No recent transactions</p>
+              <span class="no-data-icon">�</span>
+              <p>No expense data available</p>
             </div>
           } @else {
-            @for (txn of recentTransactions(); track txn.id) {
-              <div class="transaction-item">
-                <div class="transaction-icon" [class.income]="txn.type === 'income'" [class.expense]="txn.type === 'expense'">
-                  {{ txn.categoryIcon || (txn.type === 'income' ? '↓' : '↑') }}
-                </div>
-                <div class="transaction-info">
-                  <div class="transaction-category">{{ txn.category }}</div>
-                  <div class="transaction-date">{{ formatDate(txn.date) }}</div>
-                </div>
-                <div class="transaction-amount" [class.income]="txn.type === 'income'" [class.expense]="txn.type === 'expense'">
-                  {{ txn.type === 'income' ? '+' : '' }}{{ formatCurrency(txn.amount) }}
+            <!-- Donut Chart Visualization -->
+            <div class="chart-container">
+              <div class="donut-chart">
+                <svg viewBox="0 0 100 100" class="donut-svg">
+                  @for (category of allTimeCategorySpending(); track category.name; let i = $index) {
+                    <circle
+                      class="donut-segment"
+                      cx="50"
+                      cy="50"
+                      r="40"
+                      fill="transparent"
+                      [attr.stroke]="category.color"
+                      stroke-width="12"
+                      [attr.stroke-dasharray]="getStrokeDasharray(category.percentage)"
+                      [attr.stroke-dashoffset]="getStrokeDashoffset(i)"
+                      transform="rotate(-90 50 50)">
+                    </circle>
+                  }
+                </svg>
+                <div class="donut-center">
+                  <span class="donut-total">{{ formatCurrency(allTimeTotalExpense()) }}</span>
+                  <span class="donut-label">Total Spent</span>
                 </div>
               </div>
-            }
+            </div>
+            <!-- Category Legend -->
+            <div class="category-legend">
+              @for (category of allTimeCategorySpending(); track category.name) {
+                <div class="legend-item">
+                  <span class="legend-color" [style.background]="category.color"></span>
+                  <span class="legend-icon">{{ category.icon }}</span>
+                  <span class="legend-name">{{ category.name }}</span>
+                  <span class="legend-value">{{ formatCurrency(category.spent) }}</span>
+                  <span class="legend-percent">{{ category.percentage }}%</span>
+                </div>
+              }
+            </div>
           }
         </div>
       </div>
 
-      <!-- Expense Breakdown by Category -->
-      <div class="card">
+      <!-- Spending Insights - Categories to Watch -->
+      <div class="card spending-insights-card">
         <div class="card-header">
-          <h2 class="card-title">{{ currentMonth }} Expenses</h2>
-          <a routerLink="/expense" class="view-all">Details →</a>
+          <h2 class="card-title">💡 Spending Insights</h2>
+          <span class="card-subtitle">Categories to Watch</span>
         </div>
-        <div class="budget-list">
-          @if (expenseCategoryBreakdown().length === 0) {
+        <div class="insights-content">
+          @if (topSpendingCategories().length === 0) {
             <div class="no-data">
-              <span class="no-data-icon">📭</span>
-              <p>No expenses this month</p>
+              <span class="no-data-icon">�</span>
+              <p>No spending data available</p>
             </div>
           } @else {
-            @for (category of expenseCategoryBreakdown(); track category.name) {
-              <div class="budget-item">
-                <div class="budget-header">
-                  <span class="budget-name">
-                    <span class="category-icon">{{ category.icon }}</span>
-                    {{ category.name }}
-                  </span>
-                  <span class="budget-amounts">
-                    {{ formatCurrency(category.spent) }}
-                  </span>
-                </div>
-                <div class="progress-bar">
-                  <div 
-                    class="progress-fill" 
-                    [style.width.%]="category.percentage"
-                    [style.background]="category.color">
-                  </div>
-                </div>
-                <div class="budget-percentage">
-                  {{ category.percentage }}% of total
-                </div>
+            <!-- Top Spending Alert -->
+            <div class="insight-alert">
+              <span class="alert-icon">⚠️</span>
+              <div class="alert-content">
+                <span class="alert-title">Highest Spending</span>
+                <span class="alert-text">
+                  <strong>{{ topSpendingCategories()[0]?.icon }} {{ topSpendingCategories()[0]?.name }}</strong> 
+                  takes {{ topSpendingCategories()[0]?.percentage }}% of your expenses
+                </span>
               </div>
-            }
+            </div>
+
+            <!-- Category Stats -->
+            <div class="insight-stats">
+              @for (category of topSpendingCategories(); track category.name; let i = $index) {
+                <div class="stat-card" [class.top-spender]="i === 0">
+                  <div class="stat-rank">#{{ i + 1 }}</div>
+                  <div class="stat-icon">{{ category.icon }}</div>
+                  <div class="stat-details">
+                    <span class="stat-name">{{ category.name }}</span>
+                    <span class="stat-amount">{{ formatCurrency(category.spent) }}</span>
+                  </div>
+                  <div class="stat-bar-container">
+                    <div class="stat-bar" [style.width.%]="category.percentage" [style.background]="category.color"></div>
+                  </div>
+                  <div class="stat-percent">{{ category.percentage }}%</div>
+                </div>
+              }
+            </div>
+
+            <!-- Monthly Tip -->
+            <div class="insight-tip">
+              <span class="tip-icon">💡</span>
+              <span class="tip-text">
+                @if ((topSpendingCategories()[0]?.percentage ?? 0) > 30) {
+                  Consider reducing <strong>{{ topSpendingCategories()[0]?.name }}</strong> spending - it's over 30% of your total!
+                } @else {
+                  Your spending looks balanced. Keep monitoring your top categories.
+                }
+              </span>
+            </div>
           }
         </div>
       </div>
