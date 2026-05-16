@@ -1,0 +1,107 @@
+// ============================================
+// Shared Tooltip Styles
+// Reference: Side Menu tooltip styling
+// ============================================
+
+// Tooltip mixin for consistent styling across app
+@mixin tooltip-style {
+  background: linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%);
+  color: #ffffff;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  pointer-events: none;
+  z-index: 99999;
+}
+
+// Base tooltip for elements with data-tooltip attribute
+// Position: above the element (bottom tooltip arrow pointing down)
+[data-tooltip] {
+  position: relative;
+
+  &::before,
+  &::after {
+    position: absolute;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s ease, visibility 0.2s ease, transform 0.2s ease;
+    pointer-events: none;
+    z-index: 99999;
+  }
+
+  // Tooltip text
+  &::after {
+    content: attr(data-tooltip);
+    @include tooltip-style;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%) translateY(4px);
+  }
+
+  // Tooltip arrow
+  &::before {
+    content: '';
+    bottom: calc(100% + 2px);
+    left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-top-color: #2d5a87;
+  }
+
+  &:hover::before,
+  &:hover::after {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  &:hover::after {
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+// Action button tooltip - positioned above
+.action-btn[data-tooltip],
+.btn-refresh[data-tooltip],
+.btn-add[data-tooltip] {
+  position: relative;
+
+  &::before,
+  &::after {
+    position: absolute;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s ease, visibility 0.2s ease, transform 0.2s ease;
+    pointer-events: none;
+    z-index: 99999;
+  }
+
+  &::after {
+    content: attr(data-tooltip);
+    @include tooltip-style;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%) translateY(4px);
+  }
+
+  &::before {
+    content: '';
+    bottom: calc(100% + 2px);
+    left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-top-color: #2d5a87;
+  }
+
+  &:hover::before,
+  &:hover::after {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  &:hover::after {
+    transform: translateX(-50%) translateY(0);
+  }
+}

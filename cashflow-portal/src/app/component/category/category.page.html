@@ -11,7 +11,7 @@
       </label>
       
       <!-- Refresh Button -->
-      <button class="btn-refresh" (click)="refreshData()" [disabled]="loading()" title="Refresh Data">
+      <button class="btn-refresh" (click)="refreshData()" [disabled]="loading()" data-tooltip="Refresh Data">
         <span class="icon" [class.spinning]="loading()">🔄</span>
       </button>
       

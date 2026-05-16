@@ -7,7 +7,7 @@
         <p class="subtitle">Track your monthly tax payments</p>
       </div>
       <div class="header-actions">
-        <button class="btn-refresh" (click)="refreshData()" [disabled]="loading()" title="Refresh Data">
+        <button class="btn-refresh" (click)="refreshData()" [disabled]="loading()" data-tooltip="Refresh Data">
           <span class="icon" [class.spinning]="loading()">🔄</span>
         </button>
         <button class="btn-add" (click)="openAddModal()">
@@ -104,20 +104,20 @@
                 <button 
                   class="action-btn edit"
                   (click)="$event.stopPropagation(); openEditModal(monthData.entry!)"
-                  title="Edit">
+                  data-tooltip="Edit">
                   ✏️
                 </button>
                 <button 
                   class="action-btn delete"
                   (click)="$event.stopPropagation(); openDeleteModal(monthData.entry!)"
-                  title="Delete">
+                  data-tooltip="Delete">
                   🗑️
                 </button>
               } @else {
                 <button 
                   class="action-btn add"
                   (click)="$event.stopPropagation(); openAddModalForMonth(monthData.month)"
-                  title="Add">
+                  data-tooltip="Add">
                   ➕
                 </button>
               }

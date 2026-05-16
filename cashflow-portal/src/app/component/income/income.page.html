@@ -7,7 +7,7 @@
         <p class="subtitle">Track your monthly income</p>
       </div>
       <div class="header-actions">
-        <button class="btn-refresh" (click)="refreshData()" [disabled]="isLoading()" title="Refresh Data">
+        <button class="btn-refresh" (click)="refreshData()" [disabled]="isLoading()" data-tooltip="Refresh Data">
           <span class="icon" [class.spinning]="isLoading()">🔄</span>
         </button>
         <button class="btn-add" (click)="openAddForm()">
@@ -89,8 +89,8 @@
               <span class="month-name">{{ monthData.month }}</span>
               @if (monthData.hasEntry) {
                 <div class="month-actions">
-                  <button class="btn-icon-small" (click)="editIncome(monthData.entry!); $event.stopPropagation()" title="Edit">✏️</button>
-                  <button class="btn-icon-small delete" (click)="deleteIncome(monthData.entry!); $event.stopPropagation()" title="Delete">🗑️</button>
+                  <button class="btn-icon-small" (click)="editIncome(monthData.entry!); $event.stopPropagation()" data-tooltip="Edit">✏️</button>
+                  <button class="btn-icon-small delete" (click)="deleteIncome(monthData.entry!); $event.stopPropagation()" data-tooltip="Delete">🗑️</button>
                 </div>
               }
             </div>
@@ -128,8 +128,8 @@
               <span class="month-name">{{ monthData.month }}</span>
               @if (monthData.hasEntry) {
                 <div class="month-actions">
-                  <button class="btn-icon-small" (click)="editIncome(monthData.entry!); $event.stopPropagation()" title="Edit">✏️</button>
-                  <button class="btn-icon-small delete" (click)="deleteIncome(monthData.entry!); $event.stopPropagation()" title="Delete">🗑️</button>
+                  <button class="btn-icon-small" (click)="editIncome(monthData.entry!); $event.stopPropagation()" data-tooltip="Edit">✏️</button>
+                  <button class="btn-icon-small delete" (click)="deleteIncome(monthData.entry!); $event.stopPropagation()" data-tooltip="Delete">🗑️</button>
                 </div>
               }
             </div>
