@@ -14,56 +14,186 @@
           </svg>
         </div>
         <h1 class="login-title">Cashflow Portal</h1>
-        <p class="login-subtitle">Enter your passcode to continue</p>
+        
+        <!-- Dynamic subtitle based on step -->
+        @if (currentStep === 'passcode') {
+          <p class="login-subtitle">Enter your passcode to continue</p>
+        } @else {
+          <p class="login-subtitle">Enter the 4-digit OTP sent to your email</p>
+          <p class="email-hint">{{ getMaskedEmail() }}</p>
+        }
       </div>
 
-      <!-- Form section -->
-      <form class="login-form" (ngSubmit)="onSubmit()">
-        <div class="form-group">
-          <label for="passcode" class="form-label">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="label-icon">
-              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-              <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-            </svg>
-            Passcode
-          </label>
-          <input 
-            type="password" 
-            id="passcode" 
-            name="passcode"
-            [(ngModel)]="passcode"
-            (ngModelChange)="onPasscodeChange()"
-            class="form-input"
-            [class.error]="showError"
-            placeholder="Enter passcode"
-            autocomplete="off"
-            required
-          />
-          
-          <!-- Error message -->
-          <div class="error-message" *ngIf="showError">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="error-icon">
-              <circle cx="12" cy="12" r="10"></circle>
-              <line x1="15" y1="9" x2="9" y2="15"></line>
-              <line x1="9" y1="9" x2="15" y2="15"></line>
-            </svg>
-            Incorrect passcode. Please try again.
+      <!-- Step 1: Passcode Form -->
+      @if (currentStep === 'passcode') {
+        <form class="login-form" (ngSubmit)="onSubmit()">
+          <div class="form-group">
+            <label for="passcode" class="form-label">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="label-icon">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+              </svg>
+              Passcode
+            </label>
+            <input 
+              type="password" 
+              id="passcode" 
+              name="passcode"
+              [(ngModel)]="passcode"
+              (ngModelChange)="onPasscodeChange()"
+              class="form-input"
+              [class.error]="showError"
+              placeholder="Enter passcode"
+              autocomplete="off"
+              required
+            />
+            
+            <!-- Error message -->
+            <div class="error-message" *ngIf="showError">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="error-icon">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="15" y1="9" x2="9" y2="15"></line>
+                <line x1="9" y1="9" x2="15" y2="15"></line>
+              </svg>
+              {{ errorMessage }}
+            </div>
+          </div>
+
+          <button type="submit" class="submit-button" [disabled]="!passcode || isLoading || isSendingOtp">
+            @if (isLoading || isSendingOtp) {
+              <span class="spinner"></span>
+              <span class="button-text">{{ is2FAEnabled ? 'Sending OTP...' : 'Loading...' }}</span>
+            } @else {
+              <span class="button-text">{{ is2FAEnabled ? 'Continue' : 'Access Portal' }}</span>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="button-icon">
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+                <polyline points="12 5 19 12 12 19"></polyline>
+              </svg>
+            }
+          </button>
+
+          <!-- 2FA indicator -->
+          @if (is2FAEnabled) {
+            <div class="two-fa-badge">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shield-icon">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+              </svg>
+              <span>2FA Enabled</span>
+            </div>
+          }
+        </form>
+      }
+
+      <!-- Step 2: OTP Verification -->
+      @if (currentStep === 'otp') {
+        <div class="otp-form">
+          <div class="form-group">
+            <label class="form-label otp-label">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="label-icon">
+                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+              </svg>
+              Enter OTP
+            </label>
+            
+            <!-- OTP Input boxes -->
+            <div class="otp-inputs" (paste)="onOtpPaste($event)">
+              @for (digit of otpDigits; track $index) {
+                <input 
+                  type="text"
+                  inputmode="numeric"
+                  pattern="[0-9]*"
+                  maxlength="1"
+                  [id]="'otp-' + $index"
+                  [value]="digit"
+                  (input)="onOtpDigitInput($index, $event)"
+                  (keydown)="onOtpKeyDown($index, $event)"
+                  class="otp-input"
+                  [class.error]="showOtpError"
+                  [class.filled]="digit !== ''"
+                  autocomplete="off"
+                />
+              }
+            </div>
+
+            <!-- Timer -->
+            @if (remainingTime > 0) {
+              <div class="otp-timer">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="timer-icon">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+                <span>OTP expires in {{ getFormattedTime() }}</span>
+              </div>
+            } @else {
+              <div class="otp-expired">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="expired-icon">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="12" y1="8" x2="12" y2="12"></line>
+                  <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+                <span>OTP expired</span>
+              </div>
+            }
+
+            <!-- OTP Error message -->
+            <div class="error-message" *ngIf="showOtpError">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="error-icon">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="15" y1="9" x2="9" y2="15"></line>
+                <line x1="9" y1="9" x2="15" y2="15"></line>
+              </svg>
+              {{ otpErrorMessage }}
+            </div>
+          </div>
+
+          <!-- Verify Button -->
+          <button 
+            type="button" 
+            class="submit-button" 
+            [disabled]="isVerifyingOtp || !isOtpComplete()"
+            (click)="verifyOtp()"
+          >
+            @if (isVerifyingOtp) {
+              <span class="spinner"></span>
+              <span class="button-text">Verifying...</span>
+            } @else {
+              <span class="button-text">Verify OTP</span>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="button-icon">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+            }
+          </button>
+
+          <!-- Action links -->
+          <div class="otp-actions">
+            <button 
+              type="button" 
+              class="link-button" 
+              (click)="resendOtp()"
+              [disabled]="isSendingOtp || remainingTime > 240"
+            >
+              @if (isSendingOtp) {
+                <span class="spinner-small"></span>
+                Sending...
+              } @else {
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="link-icon">
+                  <polyline points="23 4 23 10 17 10"></polyline>
+                  <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                </svg>
+                Resend OTP
+              }
+            </button>
+            
+            <button type="button" class="link-button secondary" (click)="goBackToPasscode()">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="link-icon">
+                <line x1="19" y1="12" x2="5" y2="12"></line>
+                <polyline points="12 19 5 12 12 5"></polyline>
+              </svg>
+              Back to Passcode
+            </button>
           </div>
         </div>
-
-        <button type="submit" class="submit-button" [disabled]="!passcode || isLoading">
-          @if (isLoading) {
-            <span class="spinner"></span>
-            <span class="button-text">Loading...</span>
-          } @else {
-            <span class="button-text">Access Portal</span>
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="button-icon">
-              <line x1="5" y1="12" x2="19" y2="12"></line>
-              <polyline points="12 5 19 12 12 19"></polyline>
-            </svg>
-          }
-        </button>
-      </form>
+      }
 
       <!-- Decorative elements -->
       <div class="decorative-dots">
