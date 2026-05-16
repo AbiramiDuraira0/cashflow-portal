@@ -20,6 +20,10 @@
             class="search-input" />
         </div>
         
+        <button class="btn-refresh" (click)="refreshData()" [disabled]="isLoading()" data-tooltip="Refresh Data">
+          <span class="icon" [class.spinning]="isLoading()">🔄</span>
+        </button>
+        
         <button class="btn-add" (click)="openAddExpenseModal()">
           <span class="icon">+</span>
           Add Expense
@@ -81,7 +85,7 @@
             class="action-widget-btn"
             [class.active]="showExpenseVsIncome()"
             (click)="toggleExpenseVsIncome()"
-            title="Toggle expense vs income chart">
+            data-tooltip="Toggle expense vs income chart">
             <span class="btn-icon">📊</span>
             <span class="btn-label">Chart</span>
           </button>
@@ -91,7 +95,7 @@
             class="action-widget-btn"
             [class.active]="groupByCategory()"
             (click)="toggleGroupByCategory()"
-            title="Toggle grouped view">
+            data-tooltip="Toggle grouped view">
             <span class="btn-icon">{{ groupByCategory() ? '📑' : '📋' }}</span>
             <span class="btn-label">{{ groupByCategory() ? 'Grouped' : 'List' }}</span>
           </button>
@@ -103,7 +107,7 @@
               (click)="expandAllCategories()"
               [disabled]="areAllCategoriesExpanded()"
               [class.disabled]="areAllCategoriesExpanded()"
-              title="Expand all categories">
+              data-tooltip="Expand all categories">
               <span class="btn-icon">⬇️</span>
               <span class="btn-label">Expand</span>
             </button>
@@ -114,7 +118,7 @@
               (click)="collapseAllCategories()"
               [disabled]="areAllCategoriesCollapsed()"
               [class.disabled]="areAllCategoriesCollapsed()"
-              title="Collapse all categories">
+              data-tooltip="Collapse all categories">
               <span class="btn-icon">⬆️</span>
               <span class="btn-label">Collapse</span>
             </button>
@@ -152,16 +156,6 @@
           </button>
         }
       </div>
-
-      <!-- Toggle Button for Expense vs Income -->
-      @if (monthlyIncome() > 0) {
-        <button 
-          class="toggle-chart-btn" 
-          (click)="toggleExpenseVsIncome()"
-          [title]="showExpenseVsIncome() ? 'Hide Expense vs Income' : 'Show Expense vs Income'">
-          {{ showExpenseVsIncome() ? '📊 Hide Chart' : '📊 Show Chart' }}
-        </button>
-      }
     </div>
   </div>
 
@@ -303,9 +297,9 @@
                       </td>
                       <td class="col-actions">
                         <div class="action-buttons">
-                          <button class="btn-icon edit" (click)="openEditExpenseModal(entry)" title="Edit">✏️</button>
-                          <button class="btn-icon duplicate" (click)="duplicateExpense(entry)" title="Duplicate">📋</button>
-                          <button class="btn-icon delete" (click)="openDeleteConfirm(entry)" title="Delete">🗑️</button>
+                          <button class="btn-icon edit" (click)="openEditExpenseModal(entry)" data-tooltip="Edit">✏️</button>
+                          <button class="btn-icon duplicate" (click)="duplicateExpense(entry)" data-tooltip="Duplicate">📋</button>
+                          <button class="btn-icon delete" (click)="openDeleteConfirm(entry)" data-tooltip="Delete">🗑️</button>
                         </div>
                       </td>
                     </tr>
@@ -351,9 +345,9 @@
                   </td>
                   <td class="col-actions">
                     <div class="action-buttons">
-                      <button class="btn-icon edit" (click)="openEditExpenseModal(entry)" title="Edit">✏️</button>
-                      <button class="btn-icon duplicate" (click)="duplicateExpense(entry)" title="Duplicate">📋</button>
-                      <button class="btn-icon delete" (click)="openDeleteConfirm(entry)" title="Delete">🗑️</button>
+                      <button class="btn-icon edit" (click)="openEditExpenseModal(entry)" data-tooltip="Edit">✏️</button>
+                      <button class="btn-icon duplicate" (click)="duplicateExpense(entry)" data-tooltip="Duplicate">📋</button>
+                      <button class="btn-icon delete" (click)="openDeleteConfirm(entry)" data-tooltip="Delete">🗑️</button>
                     </div>
                   </td>
                 </tr>
@@ -424,7 +418,7 @@
   <!-- ============================== -->
   <!-- Floating Quick Add Button      -->
   <!-- ============================== -->
-  <button class="fab-add" (click)="openAddExpenseModal()" title="Quick Add Expense">
+  <button class="fab-add" (click)="openAddExpenseModal()" data-tooltip="Quick Add Expense">
     <span>+</span>
   </button>
 
@@ -469,7 +463,7 @@
                     <option [value]="name">{{ getCategoryIconForName(name) }} {{ name }}</option>
                   }
                 </select>
-                <button type="button" class="add-category-btn-small" (click)="navigateToCategories()" title="Add New Category">
+                <button type="button" class="add-category-btn-small" (click)="navigateToCategories()" data-tooltip="Add New Category">
                   ➕
                 </button>
               </div>

@@ -1,131 +1,230 @@
 <section class="dashboard">
   <header class="dashboard-header">
     <div class="welcome">
-      <p class="subtitle">Welcome back! Here's your financial overview</p>
+      <p class="subtitle">Here's your financial overview</p>
     </div>
     <div class="header-actions">
-      <span class="current-date">{{ currentDate }}</span>
+      <button class="current-date-btn" (click)="toggleCalendar()">
+        <span class="date-icon">📅</span>
+        <span class="date-text">{{ currentDate }}</span>
+      </button>
+      <button 
+        class="refresh-btn" 
+        (click)="refreshData()"
+        [disabled]="loading()"
+        data-tooltip="Refresh Data">
+        <span [class.spinning]="loading()">🔄</span>
+      </button>
       <button 
         class="test-connection-icon" 
         (click)="testConnection()"
-        [matTooltip]="'Test Database Connection'"
-        matTooltipPosition="below">
+        data-tooltip="Test Database Connection">
         🔌
       </button>
+      
+      <!-- Calendar Popup -->
+      @if (showCalendar()) {
+        <div class="calendar-popup" (click)="$event.stopPropagation()">
+          <div class="calendar-header">
+            <button class="cal-nav-btn" (click)="previousCalendarMonth()">◀</button>
+            <div class="cal-month-year-selectors">
+              <div class="cal-month-dropdown">
+                <button class="cal-month-btn" (click)="toggleMonthDropdown($event)">
+                  {{ months[calendarMonth()] }}
+                  <span class="dropdown-arrow">▼</span>
+                </button>
+                @if (showMonthDropdown()) {
+                  <div class="cal-month-options">
+                    @for (month of months; track $index) {
+                      <div 
+                        class="cal-month-option" 
+                        [class.selected]="$index === calendarMonth()"
+                        (click)="selectMonth($index)">
+                        {{ month }}
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+              <div class="cal-year-dropdown">
+                <button class="cal-year-btn" (click)="toggleYearDropdown($event)">
+                  {{ calendarYear() }}
+                  <span class="dropdown-arrow">▼</span>
+                </button>
+                @if (showYearDropdown()) {
+                  <div class="cal-year-options">
+                    @for (year of calendarYearOptions(); track year) {
+                      <div 
+                        class="cal-year-option" 
+                        [class.selected]="year === calendarYear()"
+                        (click)="selectYear(year)">
+                        {{ year }}
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+            </div>
+            <button class="cal-nav-btn" (click)="nextCalendarMonth()">▶</button>
+          </div>
+          <div class="calendar-weekdays">
+            <span>Sun</span>
+            <span>Mon</span>
+            <span>Tue</span>
+            <span>Wed</span>
+            <span>Thu</span>
+            <span>Fri</span>
+            <span>Sat</span>
+          </div>
+          <div class="calendar-days">
+            @for (day of calendarDays(); track $index) {
+              <span 
+                class="calendar-day"
+                [class.other-month]="!day.isCurrentMonth"
+                [class.today]="day.isToday"
+                [class.selected]="day.isSelected">
+                {{ day.date }}
+              </span>
+            }
+          </div>
+          <div class="calendar-footer">
+            <button class="cal-today-btn" (click)="goToToday()">Today</button>
+            <button class="cal-close-btn" (click)="toggleCalendar()">Close</button>
+          </div>
+        </div>
+      }
     </div>
   </header>
 
   @if (loading()) {
-    <div class="widget-grid" aria-hidden="true">
+    <div class="overview-grid" aria-hidden="true">
       @for (item of [1,2,3,4,5,6]; track item) {
-        <div class="widget skeleton"></div>
+        <div class="card skeleton"></div>
       }
     </div>
   } @else {
-    <!-- Widgets Grid -->
-    <div class="widget-grid">
-      @for (widget of widgets; track widget.id) {
-        <article class="widget" [routerLink]="widget.route" [style.--widget-color]="widget.color">
-          <div class="widget-header">
-            <div class="widget-icon" [style.background]="widget.color">
-              {{ widget.icon }}
-            </div>
-            @if (widget.trend !== undefined) {
-              <div class="trend" [class.positive]="widget.trend > 0" [class.negative]="widget.trend < 0">
-                <span class="trend-icon">{{ widget.trend > 0 ? '↑' : '↓' }}</span>
-                <span class="trend-value">{{ widget.trend > 0 ? '+' : '' }}{{ widget.trend }}%</span>
-              </div>
-            }
-          </div>
-          <div class="widget-content">
-            <h3 class="widget-title">{{ widget.title }}</h3>
-            <div class="widget-value">{{ widget.value }}</div>
+    <!-- Financial Overview Cards - Report Style -->
+    <div class="overview-grid">
+      @for (widget of widgets(); track widget.id) {
+        <div class="card" [class]="widget.id" [routerLink]="widget.route">
+          <div class="icon">{{ widget.icon }}</div>
+          <div class="content">
+            <p class="label">{{ widget.title }}</p>
+            <h2>{{ widget.value }}</h2>
             @if (widget.subtitle) {
-              <p class="widget-subtitle">{{ widget.subtitle }}</p>
+              <p class="sub">{{ widget.subtitle }}</p>
+            }
+            @if (widget.trend !== undefined && widget.trend !== 0) {
+              <p class="trend" [class.positive]="widget.trend > 0" [class.negative]="widget.trend < 0">
+                {{ widget.trend > 0 ? '↑' : '↓' }} {{ widget.trend > 0 ? '+' : '' }}{{ widget.trend }}% vs last year
+              </p>
             }
           </div>
-        </article>
+        </div>
       }
     </div>
 
-    <!-- Two Column Layout -->
-    <div class="dashboard-grid">
-      <!-- Recent Transactions -->
-      <div class="card">
-        <div class="card-header">
-          <h2 class="card-title">Recent Transactions</h2>
-          <a routerLink="/report" class="view-all">View all →</a>
-        </div>
-        <div class="transactions-list">
-          @for (txn of recentTransactions; track txn.id) {
-            <div class="transaction-item">
-              <div class="transaction-icon" [class.income]="txn.type === 'income'" [class.expense]="txn.type === 'expense'">
-                {{ txn.type === 'income' ? '↓' : '↑' }}
-              </div>
-              <div class="transaction-info">
-                <div class="transaction-category">{{ txn.category }}</div>
-                <div class="transaction-date">{{ formatDate(txn.date) }}</div>
-              </div>
-              <div class="transaction-amount" [class.income]="txn.type === 'income'" [class.expense]="txn.type === 'expense'">
-                {{ txn.type === 'income' ? '+' : '' }}₹{{ txn.amount.toLocaleString('en-IN') }}
+    <!-- Category Spending Analysis Section -->
+    <div class="category-spending-section">
+      <div class="section-header">
+        <h3 class="section-title">Spending by Category</h3>
+        <span class="total-badge">Total: {{ formatCurrency(totalCategorySpending()) }}</span>
+      </div>
+      
+      <div class="charts-grid">
+        <!-- Donut/Pie Chart -->
+        <div class="chart-card pie-chart-card">
+          <div class="chart-card-header">
+            <h4>🥧 Distribution</h4>
+          </div>
+          <div class="pie-chart-wrapper">
+            <div class="pie-chart">
+              <svg viewBox="0 0 200 200" class="pie-svg">
+                @for (category of categorySpendingWithPercentage(); track category.name; let i = $index) {
+                  <circle 
+                    class="pie-segment"
+                    r="80" 
+                    cx="100" 
+                    cy="100"
+                    [style.stroke]="category.color"
+                    [style.stroke-dasharray]="(category.percentage * 5.024) + ' 502.4'"
+                    [style.stroke-dashoffset]="getStrokeOffset(i)"
+                    [style.animation-delay]="(i * 0.1) + 's'">
+                  </circle>
+                }
+                <circle class="pie-center" r="50" cx="100" cy="100"></circle>
+              </svg>
+              <div class="pie-center-text">
+                <span class="pie-total">{{ categorySpendingWithPercentage().length }}</span>
+                <span class="pie-label">Categories</span>
               </div>
             </div>
-          }
+            <div class="pie-legend">
+              @for (category of categorySpendingWithPercentage().slice(0, 6); track category.name) {
+                <div class="legend-item">
+                  <span class="legend-color" [style.background]="category.color"></span>
+                  <span class="legend-icon">{{ category.icon }}</span>
+                  <span class="legend-name">{{ category.name }}</span>
+                  <span class="legend-percent">{{ category.percentage }}%</span>
+                </div>
+              }
+            </div>
+          </div>
         </div>
-      </div>
 
-      <!-- Budget Overview -->
-      <div class="card">
-        <div class="card-header">
-          <h2 class="card-title">Budget Overview</h2>
-          <a routerLink="/category" class="view-all">Manage →</a>
-        </div>
-        <div class="budget-list">
-          @for (category of budgetCategories; track category.name) {
-            <div class="budget-item">
-              <div class="budget-header">
-                <span class="budget-name">{{ category.name }}</span>
-                <span class="budget-amounts">
-                  ₹{{ category.spent.toLocaleString('en-IN') }} / ₹{{ category.budget.toLocaleString('en-IN') }}
-                </span>
-              </div>
-              <div class="progress-bar">
-                <div 
-                  class="progress-fill" 
-                  [style.width.%]="getPercentage(category.spent, category.budget)"
-                  [style.background]="category.color"
-                  [class.over-budget]="getPercentage(category.spent, category.budget) >= 100">
+        <!-- Horizontal Bar Chart -->
+        <div class="chart-card bar-chart-card">
+          <div class="chart-card-header">
+            <h4>📊 Comparison</h4>
+          </div>
+          <div class="bar-chart-wrapper">
+            @for (category of categorySpendingWithPercentage(); track category.name; let i = $index) {
+              <div class="bar-row" [style.animation-delay]="(i * 0.05) + 's'">
+                <div class="bar-info">
+                  <span class="bar-icon">{{ category.icon }}</span>
+                  <span class="bar-name">{{ category.name }}</span>
+                </div>
+                <div class="bar-track">
+                  <div class="bar-fill" 
+                       [style.width.%]="category.percentage" 
+                       [style.background]="'linear-gradient(90deg, ' + category.color + ' 0%, ' + category.color + 'cc 100%)'">
+                  </div>
+                </div>
+                <div class="bar-stats">
+                  <span class="bar-amount">{{ formatCurrency(category.total) }}</span>
+                  <span class="bar-percent">{{ category.percentage }}%</span>
                 </div>
               </div>
-              <div class="budget-percentage" [class.warn]="getPercentage(category.spent, category.budget) >= 80">
-                {{ getPercentage(category.spent, category.budget) }}% used
-              </div>
-            </div>
-          }
+            }
+          </div>
         </div>
-      </div>
-    </div>
 
-    <!-- Quick Actions -->
-    <div class="quick-actions">
-      <h2 class="section-title">Quick Actions</h2>
-      <div class="actions-grid">
-        <button class="action-btn" routerLink="/income">
-          <span class="action-icon">➕</span>
-          <span class="action-text">Add Income</span>
-        </button>
-        <button class="action-btn" routerLink="/expense">
-          <span class="action-icon">➖</span>
-          <span class="action-text">Add Expense</span>
-        </button>
-        <button class="action-btn" routerLink="/category">
-          <span class="action-icon">📁</span>
-          <span class="action-text">Manage Categories</span>
-        </button>
-        <button class="action-btn" routerLink="/report">
-          <span class="action-icon">📊</span>
-          <span class="action-text">View Reports</span>
-        </button>
+        <!-- Heatmap / Grid View -->
+        <div class="chart-card heatmap-card">
+          <div class="chart-card-header">
+            <h4>🔥 Heatmap</h4>
+          </div>
+          <div class="heatmap-wrapper">
+            <div class="heatmap-grid">
+              @for (category of categorySpendingWithPercentage(); track category.name) {
+                <div class="heatmap-cell" 
+                     [style.background]="'linear-gradient(135deg, ' + category.color + getOpacity(category.percentage) + ' 0%, ' + category.color + getOpacity(category.percentage * 0.7) + ' 100%)'"
+                     [style.box-shadow]="'0 4px 12px ' + category.color + '40'"
+                     [attr.title]="category.name + ': ' + formatCurrency(category.total)">
+                  <span class="cell-icon">{{ category.icon }}</span>
+                  <span class="cell-name">{{ category.name }}</span>
+                  <span class="cell-amount">{{ formatCurrency(category.total) }}</span>
+                  <span class="cell-percent">{{ category.percentage }}%</span>
+                </div>
+              }
+            </div>
+            <div class="heatmap-legend">
+              <span class="legend-label">Low</span>
+              <div class="legend-gradient"></div>
+              <span class="legend-label">High</span>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   }

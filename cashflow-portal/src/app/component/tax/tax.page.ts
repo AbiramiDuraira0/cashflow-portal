@@ -146,6 +146,11 @@ export class TaxPage implements OnInit {
     console.log('🧾 Tax Page Initialized');
   }
 
+  // Refresh data
+  protected async refreshData(): Promise<void> {
+    await this.taxService.loadTaxEntries();
+  }
+
   // Change selected year
   protected changeYear(year: number): void {
     this.selectedYear.set(year);

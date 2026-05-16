@@ -10,6 +10,11 @@
         <input type="text" placeholder="Search" [value]="query()" (input)="onSearchChange($any($event.target).value)" />
       </label>
       
+      <!-- Refresh Button -->
+      <button class="btn-refresh" (click)="refreshData()" [disabled]="loading()" data-tooltip="Refresh Data">
+        <span class="icon" [class.spinning]="loading()">🔄</span>
+      </button>
+      
       <!-- Desktop View: Full text button -->
       <button class="add-btn desktop-only" (click)="openAddModal()">
         <span class="icon">➕</span>
@@ -182,7 +187,7 @@
             <label for="pageSize">Show:</label>
             <select id="pageSize" [value]="pageSize()" (change)="pageSize.set(+$any($event.target).value); onPageSizeChange()">
               @for (size of pageSizeOptions; track size) {
-                <option [value]="size">{{ size }}</option>
+                <option [value]="size" [selected]="size === pageSize()">{{ size }}</option>
               }
             </select>
           </div>

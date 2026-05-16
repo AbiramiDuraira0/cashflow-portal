@@ -7,9 +7,14 @@
         <h1>📈 Investment Portfolio</h1>
         <p class="subtitle">Track and manage your wealth-building journey</p>
       </div>
-      <button class="btn-primary" (click)="openAddModal()">
-        Add Investment
-      </button>
+      <div class="header-actions">
+        <button class="btn-refresh" (click)="refreshData()" [disabled]="loading()" data-tooltip="Refresh Data">
+          <span class="icon" [class.spinning]="loading()">🔄</span>
+        </button>
+        <button class="btn-primary" (click)="openAddModal()">
+          Add Investment
+        </button>
+      </div>
     </div>
   </header>
 
@@ -128,13 +133,13 @@
 
           <!-- Card Actions -->
           <div class="card-actions">
-            <button class="action-btn view-btn-large" (click)="openYearlyDetailsModal(consolidated)" title="View Year-wise Details">
+            <button class="action-btn view-btn-large" (click)="openYearlyDetailsModal(consolidated)" data-tooltip="View Year-wise Details">
               View Details
             </button>
-            <button class="action-btn edit-btn" (click)="openEditModal(consolidated.years[consolidated.years.length - 1])" title="Edit Latest Year">
+            <button class="action-btn edit-btn" (click)="openEditModal(consolidated.years[consolidated.years.length - 1])" data-tooltip="Edit Latest Year">
               ✏️
             </button>
-            <button class="action-btn delete-btn" (click)="openDeleteModal(consolidated.years[consolidated.years.length - 1])" title="Delete Latest Year">
+            <button class="action-btn delete-btn" (click)="openDeleteModal(consolidated.years[consolidated.years.length - 1])" data-tooltip="Delete Latest Year">
               🗑️
             </button>
           </div>
@@ -187,7 +192,7 @@
                 <div class="table-container edit-table-container">
                   <div class="section-header">
                     <h4 class="section-title">📊 Edit Year-wise Data</h4>
-                    <button type="button" class="btn-add-year-small" (click)="addNewYearInEdit()" title="Add New Year">
+                    <button type="button" class="btn-add-year-small" (click)="addNewYearInEdit()" data-tooltip="Add New Year">
                       ➕ Add Year
                     </button>
                   </div>
@@ -232,7 +237,7 @@
                             <strong>{{ formatCurrency(entry.invested_amount + (entry.interest_earned || 0)) }}</strong>
                           </td>
                           <td class="actions-cell">
-                            <button type="button" class="table-action-btn delete-btn" (click)="removeYearEntry($index)" title="Remove Year">
+                            <button type="button" class="table-action-btn delete-btn" (click)="removeYearEntry($index)" data-tooltip="Remove Year">
                               🗑️
                             </button>
                           </td>
@@ -368,10 +373,10 @@
                         </div>
                       </div>
                       <div class="year-entry-actions">
-                        <button type="button" class="btn-icon edit" (click)="editYearEntry($index)" title="Edit">
+                        <button type="button" class="btn-icon edit" (click)="editYearEntry($index)" data-tooltip="Edit">
                           ✏️
                         </button>
-                        <button type="button" class="btn-icon delete" (click)="removeYearEntry($index)" title="Remove">
+                        <button type="button" class="btn-icon delete" (click)="removeYearEntry($index)" data-tooltip="Remove">
                           🗑️
                         </button>
                       </div>
@@ -966,6 +971,6 @@
   }
 
   <!-- Floating Action Button (Mobile) -->
-  <button class="fab-add" (click)="openAddModal()" title="Add Investment">
+  <button class="fab-add" (click)="openAddModal()" data-tooltip="Add Investment">
   </button>
 </section>

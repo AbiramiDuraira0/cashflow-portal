@@ -8,11 +8,14 @@
         <p class="subtitle">Track loans and debts</p>
       </div>
       <div class="header-actions">
+        <button class="btn-refresh" (click)="refreshData()" [disabled]="loading()" data-tooltip="Refresh Data">
+          <span class="icon" [class.spinning]="loading()">🔄</span>
+        </button>
         <button class="btn-secondary emi-calc-btn" (click)="openEMICalculator()">
           <span class="btn-icon">🧮</span>
           <span class="btn-text">EMI Calculator</span>
         </button>
-        <button class="btn-secondary sync-btn" (click)="syncAllDebts()" title="Recalculate all outstanding amounts">
+        <button class="btn-secondary sync-btn" (click)="syncAllDebts()" data-tooltip="Recalculate all outstanding amounts">
           <span class="btn-icon">🔃</span>
           <span class="btn-text">Sync All</span>
         </button>
@@ -26,7 +29,7 @@
   <!-- Summary Dashboard -->
   <div class="summary-dashboard">
     <!-- Total Debt Card -->
-    <div class="summary-card total-card clickable" (click)="openRepaymentScheduleFromWidget()" title="Click to view repayment schedule">
+    <div class="summary-card total-card clickable" (click)="openRepaymentScheduleFromWidget()" data-tooltip="Click to view repayment schedule">
       <div class="card-icon">&#128184;</div>
       <div class="card-content">
         <div class="card-label">Current Debts (Outstanding)</div>
@@ -36,7 +39,7 @@
     </div>
 
     <!-- Interest Paid Card -->
-    <div class="summary-card interest-card clickable" (click)="openInterestBreakdownModal()" title="Click to view interest breakdown">
+    <div class="summary-card interest-card clickable" (click)="openInterestBreakdownModal()" data-tooltip="Click to view interest breakdown">
       <div class="card-icon">&#128200;</div>
       <div class="card-content">
         <div class="card-label">Total Interest Paid</div>
@@ -46,7 +49,7 @@
     </div>
 
     <!-- Total Count Card -->
-    <div class="summary-card count-card clickable" (click)="openConsolidatedModal()" title="Click to view consolidated summary">
+    <div class="summary-card count-card clickable" (click)="openConsolidatedModal()" data-tooltip="Click to view consolidated summary">
       <div class="card-icon">&#128203;</div>
       <div class="card-content">
         <div class="card-label">Total Loans</div>
@@ -126,22 +129,22 @@
             <!-- Card Actions -->
             <div class="card-actions">
               @if (debt.isDeleted) {
-                <button class="action-btn reactivate-btn" (click)="reactivateDebt(debt)" title="Reactivate">
+                <button class="action-btn reactivate-btn" (click)="reactivateDebt(debt)" data-tooltip="Reactivate">
                   ♻️
                 </button>
               } @else {
                 @if (debt.loanName === 'Personal Loan - Top Up') {
-                  <button class="action-btn schedule-btn" (click)="openRepaymentScheduleModal(debt)" title="Repayment Schedule">
+                  <button class="action-btn schedule-btn" (click)="openRepaymentScheduleModal(debt)" data-tooltip="Repayment Schedule">
                     📅
                   </button>
                 }
-                <button class="action-btn view-btn" (click)="openDetailsModal(debt)" title="View Details">
+                <button class="action-btn view-btn" (click)="openDetailsModal(debt)" data-tooltip="View Details">
                   👁️
                 </button>
-                <button class="action-btn edit-btn" (click)="openEditModal(debt)" title="Edit Loan">
+                <button class="action-btn edit-btn" (click)="openEditModal(debt)" data-tooltip="Edit Loan">
                   ✏️
                 </button>
-                <button class="action-btn delete-btn" (click)="openDeleteModal(debt)" title="Delete Loan">
+                <button class="action-btn delete-btn" (click)="openDeleteModal(debt)" data-tooltip="Delete Loan">
                   🗑️
                 </button>
               }
@@ -895,7 +898,7 @@
   }
 
   <!-- Floating Action Button (Mobile) -->
-  <button class="fab-add" (click)="openAddModal()" title="Add Loan">
+  <button class="fab-add" (click)="openAddModal()" data-tooltip="Add Loan">
     <span class="fab-icon">➕</span>
   </button>
 </section>

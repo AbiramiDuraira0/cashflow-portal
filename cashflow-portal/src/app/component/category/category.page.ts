@@ -194,6 +194,10 @@ export class CategoryPage implements OnInit {
     }
   }
 
+  protected async refreshData(): Promise<void> {
+    await this.loadCategories();
+  }
+
   protected onSearchChange(value: string): void {
     this.query.set(value);
     this.currentPage.set(1); // Reset to first page on search

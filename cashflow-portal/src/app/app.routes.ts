@@ -8,6 +8,7 @@ import { InvestmentPage } from './component/investment/investment.page';
 import { DebtsPage } from './component/debts/debts.page';
 import { ReportPage } from './component/Report/report.page';
 import { TaxPage } from './component/tax/tax.page';
+import { LifelinePage } from './component/lifeline/lifeline.page';
 import { authGuard } from './guards/auth.guard';
 
 export const routes: Routes = [
@@ -58,6 +59,11 @@ export const routes: Routes = [
 	{
 		path: 'tax',
 		component: TaxPage,
+		canActivate: [authGuard]
+	},
+	{
+		path: 'lifeline',
+		component: LifelinePage,
 		canActivate: [authGuard]
 	},
 	{
