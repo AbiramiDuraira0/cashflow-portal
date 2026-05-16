@@ -13,14 +13,12 @@ export const environment = {
   // 2FA Configuration - ENABLED for production
   // OTP verification required for all logins in deployed environment
   enable2FA: true,
-  // Email configuration for OTP delivery
+  // Email configuration for OTP delivery -EmailJS
   otpConfig: {
     recipientEmail: 'abiramigomathy99@gmail.com', // Email to receive OTP
     recipientName: 'Abirami',
-    // EmailJS configuration (free service - https://www.emailjs.com/)
-    // Sign up and get your credentials from EmailJS dashboard
-    emailJsServiceId: 'service_cashflow',
-    emailJsTemplateId: 'template_otp',
-    emailJsPublicKey: 'YOUR_EMAILJS_PUBLIC_KEY' // Replace with your actual EmailJS public key
+    emailJsServiceId: 'service_u3m9btm',
+    emailJsTemplateId: 'template_xxu2g8r',
+    emailJsPublicKey: 'aFLX1jetnaml-g_Jd' // Your EmailJS public key
   }
 };
