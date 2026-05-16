@@ -30,39 +30,299 @@
     }
   </div>
 
+  <!-- Report View Tabs -->
+  <div class="view-tabs">
+    @for (view of reportViews; track view.key) {
+      <button [class.active]="selectedView() === view.key" (click)="selectView(view.key)">
+        <span class="tab-icon">{{ view.icon }}</span>
+        <span class="tab-label">{{ view.label }}</span>
+      </button>
+    }
+  </div>
+
   @if (isLoading()) {
     <div class="loading"><div class="spinner"></div><p>Loading data...</p></div>
   } @else {
-    <div class="overview-grid">
-      <div class="card income"><div class="icon">💰</div><div class="content"><p class="label">Total Income</p><h2>{{ formatCurrency(financialOverview().totalIncome) }}</h2></div></div>
-      <div class="card expense"><div class="icon">💸</div><div class="content"><p class="label">Total Expenses</p><h2>{{ formatCurrency(financialOverview().totalExpense) }}</h2></div></div>
-      <div class="card balance"><div class="icon">💵</div><div class="content"><p class="label">Net Balance</p><h2>{{ formatCurrency(financialOverview().totalBalance) }}</h2></div></div>
-      <div class="card investment"><div class="icon">📈</div><div class="content"><p class="label">Investments</p><h2>{{ formatCurrency(financialOverview().totalInvestments) }}</h2><p class="sub">+{{ formatCurrency(financialOverview().totalInvestmentReturns) }} returns</p></div></div>
-      <div class="card debt"><div class="icon">🏦</div><div class="content"><p class="label">Outstanding Debts</p><h2>{{ formatCurrency(financialOverview().totalDebts) }}</h2></div></div>
-      <div class="card tax"><div class="icon">🧾</div><div class="content"><p class="label">Tax Paid</p><h2>{{ formatCurrency(financialOverview().totalTaxPaid) }}</h2></div></div>
-    </div>
+    <!-- Overview View -->
+    @if (selectedView() === 'overview') {
+      <div class="overview-grid">
+        <div class="card income"><div class="icon">💰</div><div class="content"><p class="label">Total Income</p><h2>{{ formatCurrency(financialOverview().totalIncome) }}</h2></div></div>
+        <div class="card expense"><div class="icon">💸</div><div class="content"><p class="label">Total Expenses</p><h2>{{ formatCurrency(financialOverview().totalExpense) }}</h2></div></div>
+        <div class="card balance"><div class="icon">💵</div><div class="content"><p class="label">Net Balance</p><h2>{{ formatCurrency(financialOverview().totalBalance) }}</h2></div></div>
+        <div class="card investment"><div class="icon">📈</div><div class="content"><p class="label">Investments</p><h2>{{ formatCurrency(financialOverview().totalInvestments) }}</h2><p class="sub">+{{ formatCurrency(financialOverview().totalInvestmentReturns) }} returns</p></div></div>
+        <div class="card debt"><div class="icon">🏦</div><div class="content"><p class="label">Outstanding Debts</p><h2>{{ formatCurrency(financialOverview().totalDebts) }}</h2></div></div>
+        <div class="card tax"><div class="icon">🧾</div><div class="content"><p class="label">Tax Paid</p><h2>{{ formatCurrency(financialOverview().totalTaxPaid) }}</h2></div></div>
+      </div>
 
-    <div class="chart-section">
-      <h3>📈 Monthly Trends - {{ selectedYear() }}</h3>
-      <div class="chart-legend">
-        <span class="income"><span class="dot"></span> Income</span>
-        <span class="expense"><span class="dot"></span> Expense</span>
-      </div>
-      <div class="bar-chart">
-        @for (data of chartData(); track data.label) {
-          <div class="bar-group">
-            <div class="bars">
-              <div class="bar income" [style.height.%]="getChartBarHeight(data.income)" [title]="formatCurrency(data.income)">
-                <span class="value">{{ data.income === 0 ? '₹0 K' : formatCompactCurrency(data.income) }}</span>
+      <div class="chart-section">
+        <h3>📈 Monthly Trends - {{ selectedYear() }}</h3>
+        <div class="chart-legend">
+          <span class="income"><span class="dot"></span> Income</span>
+          <span class="expense"><span class="dot"></span> Expense</span>
+        </div>
+        <div class="bar-chart">
+          @for (data of chartData(); track data.label) {
+            <div class="bar-group">
+              <div class="bars">
+                <div class="bar income" [style.height.%]="getChartBarHeight(data.income)" [title]="formatCurrency(data.income)">
+                  <span class="value">{{ data.income === 0 ? '₹0 K' : formatCompactCurrency(data.income) }}</span>
+                </div>
+                <div class="bar expense" [style.height.%]="getChartBarHeight(data.expense)" [title]="formatCurrency(data.expense)">
+                  <span class="value">{{ data.expense === 0 ? '₹0 K' : formatCompactCurrency(data.expense) }}</span>
+                </div>
               </div>
-              <div class="bar expense" [style.height.%]="getChartBarHeight(data.expense)" [title]="formatCurrency(data.expense)">
-                <span class="value">{{ data.expense === 0 ? '₹0 K' : formatCompactCurrency(data.expense) }}</span>
-              </div>
+              <span class="label">{{ data.label }}</span>
             </div>
-            <span class="label">{{ data.label }}</span>
-          </div>
-        }
+          }
+        </div>
       </div>
-    </div>
+    }
+
+    <!-- Income Analysis View -->
+    @if (selectedView() === 'income') {
+      <div class="analytics-section">
+        <h3>💰 Income Analysis - {{ selectedYear() }}</h3>
+        <div class="stats-grid">
+          <div class="stat-card primary">
+            <div class="stat-icon">💵</div>
+            <div class="stat-content">
+              <p class="stat-label">Total Income</p>
+              <h2 class="stat-value">{{ formatCurrency(incomeAnalytics().totalIncome) }}</h2>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">📅</div>
+            <div class="stat-content">
+              <p class="stat-label">Avg Monthly</p>
+              <h2 class="stat-value">{{ formatCurrency(incomeAnalytics().avgMonthly) }}</h2>
+            </div>
+          </div>
+          <div class="stat-card success">
+            <div class="stat-icon">📈</div>
+            <div class="stat-content">
+              <p class="stat-label">Highest Month</p>
+              <h2 class="stat-value">{{ incomeAnalytics().highestMonth.month }}</h2>
+              <p class="stat-sub">{{ formatCurrency(incomeAnalytics().highestMonth.amount) }}</p>
+            </div>
+          </div>
+          <div class="stat-card warning">
+            <div class="stat-icon">📉</div>
+            <div class="stat-content">
+              <p class="stat-label">Lowest Month</p>
+              <h2 class="stat-value">{{ incomeAnalytics().lowestMonth.month }}</h2>
+              <p class="stat-sub">{{ formatCurrency(incomeAnalytics().lowestMonth.amount) }}</p>
+            </div>
+          </div>
+        </div>
+        <div class="breakdown-section">
+          <h4>📊 Income by Source</h4>
+          <div class="breakdown-list">
+            @for (source of incomeAnalytics().bySource | keyvalue; track source.key) {
+              <div class="breakdown-item">
+                <span class="breakdown-label">{{ source.key }}</span>
+                <span class="breakdown-value">{{ formatCurrency(source.value) }}</span>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- Expense Analysis View -->
+    @if (selectedView() === 'expense') {
+      <div class="analytics-section">
+        <h3>💸 Expense Analysis - {{ selectedYear() }}</h3>
+        <div class="stats-grid">
+          <div class="stat-card danger">
+            <div class="stat-icon">💸</div>
+            <div class="stat-content">
+              <p class="stat-label">Total Expenses</p>
+              <h2 class="stat-value">{{ formatCurrency(expenseAnalytics().totalExpense) }}</h2>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">📅</div>
+            <div class="stat-content">
+              <p class="stat-label">Avg Monthly</p>
+              <h2 class="stat-value">{{ formatCurrency(expenseAnalytics().avgMonthly) }}</h2>
+            </div>
+          </div>
+          <div class="stat-card warning">
+            <div class="stat-icon">🔥</div>
+            <div class="stat-content">
+              <p class="stat-label">Highest Spending Month</p>
+              <h2 class="stat-value">{{ expenseAnalytics().highestMonth.month }}</h2>
+              <p class="stat-sub">{{ formatCurrency(expenseAnalytics().highestMonth.amount) }}</p>
+            </div>
+          </div>
+        </div>
+        <div class="breakdown-section">
+          <h4>📊 Top Spending Categories</h4>
+          <div class="breakdown-list">
+            @for (cat of expenseAnalytics().topCategories; track cat[0]) {
+              <div class="breakdown-item">
+                <span class="breakdown-label">{{ cat[0] }}</span>
+                <span class="breakdown-value expense">{{ formatCurrency(cat[1]) }}</span>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- Investment Analysis View -->
+    @if (selectedView() === 'investment') {
+      <div class="analytics-section">
+        <h3>📈 Investment Portfolio</h3>
+        <div class="stats-grid">
+          <div class="stat-card primary">
+            <div class="stat-icon">💰</div>
+            <div class="stat-content">
+              <p class="stat-label">Total Invested</p>
+              <h2 class="stat-value">{{ formatCurrency(investmentAnalytics().totalInvested) }}</h2>
+            </div>
+          </div>
+          <div class="stat-card success">
+            <div class="stat-icon">📈</div>
+            <div class="stat-content">
+              <p class="stat-label">Total Returns</p>
+              <h2 class="stat-value">{{ formatCurrency(investmentAnalytics().totalReturns) }}</h2>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">✅</div>
+            <div class="stat-content">
+              <p class="stat-label">Active Investments</p>
+              <h2 class="stat-value">{{ investmentAnalytics().activeCount }}</h2>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">📦</div>
+            <div class="stat-content">
+              <p class="stat-label">Past Investments</p>
+              <h2 class="stat-value">{{ investmentAnalytics().pastCount }}</h2>
+              <p class="stat-sub">{{ formatCurrency(investmentAnalytics().totalPastValue) }}</p>
+            </div>
+          </div>
+        </div>
+        <div class="breakdown-section">
+          <h4>📊 Investment by Type</h4>
+          <div class="breakdown-list">
+            @for (type of investmentAnalytics().byType | keyvalue; track type.key) {
+              <div class="breakdown-item">
+                <span class="breakdown-label">{{ type.key }}</span>
+                <span class="breakdown-value">{{ formatCurrency(type.value) }}</span>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- Debt Analysis View -->
+    @if (selectedView() === 'debt') {
+      <div class="analytics-section">
+        <h3>🏦 Debt Overview</h3>
+        <div class="stats-grid">
+          <div class="stat-card danger">
+            <div class="stat-icon">💳</div>
+            <div class="stat-content">
+              <p class="stat-label">Outstanding Amount</p>
+              <h2 class="stat-value">{{ formatCurrency(debtAnalytics().totalOutstanding) }}</h2>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">💵</div>
+            <div class="stat-content">
+              <p class="stat-label">Total Principal</p>
+              <h2 class="stat-value">{{ formatCurrency(debtAnalytics().totalPrincipal) }}</h2>
+            </div>
+          </div>
+          <div class="stat-card success">
+            <div class="stat-icon">✅</div>
+            <div class="stat-content">
+              <p class="stat-label">Amount Paid</p>
+              <h2 class="stat-value">{{ formatCurrency(debtAnalytics().totalPaid) }}</h2>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">📊</div>
+            <div class="stat-content">
+              <p class="stat-label">Avg Interest Rate</p>
+              <h2 class="stat-value">{{ debtAnalytics().avgInterestRate | number:'1.1-1' }}%</h2>
+            </div>
+          </div>
+        </div>
+        <div class="debt-status">
+          <div class="status-item open">
+            <span class="status-count">{{ debtAnalytics().openCount }}</span>
+            <span class="status-label">Open Debts</span>
+          </div>
+          <div class="status-item closed">
+            <span class="status-count">{{ debtAnalytics().closedCount }}</span>
+            <span class="status-label">Closed Debts</span>
+          </div>
+        </div>
+        <div class="breakdown-section">
+          <h4>📊 Outstanding by Lender</h4>
+          <div class="breakdown-list">
+            @for (lender of debtAnalytics().byLender | keyvalue; track lender.key) {
+              <div class="breakdown-item">
+                <span class="breakdown-label">{{ lender.key }}</span>
+                <span class="breakdown-value expense">{{ formatCurrency(lender.value) }}</span>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- Tax Analysis View -->
+    @if (selectedView() === 'tax') {
+      <div class="analytics-section">
+        <h3>🧾 Tax Summary - {{ selectedYear() }}</h3>
+        <div class="stats-grid">
+          <div class="stat-card primary">
+            <div class="stat-icon">🧾</div>
+            <div class="stat-content">
+              <p class="stat-label">Tax Paid</p>
+              <h2 class="stat-value">{{ formatCurrency(taxAnalytics().totalTaxPaid) }}</h2>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">💰</div>
+            <div class="stat-content">
+              <p class="stat-label">Taxable Income</p>
+              <h2 class="stat-value">{{ formatCurrency(taxAnalytics().totalTaxableIncome) }}</h2>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">📊</div>
+            <div class="stat-content">
+              <p class="stat-label">Effective Tax Rate</p>
+              <h2 class="stat-value">{{ taxAnalytics().effectiveRate | number:'1.1-1' }}%</h2>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">📅</div>
+            <div class="stat-content">
+              <p class="stat-label">Years with Data</p>
+              <h2 class="stat-value">{{ taxAnalytics().yearCount }}</h2>
+            </div>
+          </div>
+        </div>
+        <div class="breakdown-section">
+          <h4>📊 Tax Paid by Year</h4>
+          <div class="breakdown-list">
+            @for (yearTax of taxAnalytics().byYear | keyvalue; track yearTax.key) {
+              <div class="breakdown-item">
+                <span class="breakdown-label">{{ yearTax.key }}</span>
+                <span class="breakdown-value">{{ formatCurrency(yearTax.value) }}</span>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+    }
   }
 </section>
