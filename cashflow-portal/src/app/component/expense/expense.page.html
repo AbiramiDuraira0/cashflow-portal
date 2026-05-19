@@ -147,7 +147,7 @@
 
       <!-- Month Buttons -->
       <div class="month-tabs">
-        @for (month of months; track month) {
+        @for (month of availableMonths(); track month) {
           <button
             class="month-tab"
             [class.active]="selectedMonth() === month"

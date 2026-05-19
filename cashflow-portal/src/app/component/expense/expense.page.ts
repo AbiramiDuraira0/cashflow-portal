@@ -61,6 +61,7 @@ export class ExpensePage implements OnInit {
 
   // Form state
   protected editingEntry = signal<ExpenseEntry | null>(null);
+  protected editingEntryId = signal<number | null>(null); // Store ID separately for safety
   protected deletingEntry = signal<ExpenseEntry | null>(null);
 
   // Form fields (signal-based, same pattern as IncomePage)
@@ -77,6 +78,9 @@ export class ExpensePage implements OnInit {
   // Recently added animation tracking
   protected recentlyAddedIds = signal<Set<number>>(new Set());
 
+  // Flag to prevent duplicate submissions
+  private isSaving = signal(false);
+
   // ============================================
   // Computed Values
   // ============================================
@@ -88,6 +92,16 @@ export class ExpensePage implements OnInit {
       years.push(year);
     }
     return years.reverse();
+  });
+
+  /** Available months based on selected year (2021 starts from August) */
+  protected availableMonths = computed(() => {
+    const year = this.selectedYear();
+    if (year === 2021) {
+      // For 2021, only show August to December
+      return this.months.slice(7); // Index 7 = August
+    }
+    return this.months;
   });
 
   /** Active (non-deleted) expenses for the selected month/year */
@@ -363,6 +377,15 @@ export class ExpensePage implements OnInit {
 
   protected changeYear(year: number): void {
     this.selectedYear.set(year);
+    // If changing to 2021 and current month is Jan-Jul, reset to August
+    if (year === 2021) {
+      const currentMonth = this.selectedMonth();
+      const monthIndex = this.months.indexOf(currentMonth);
+      if (monthIndex < 7) { // Jan(0) to Jul(6) are not available for 2021
+        this.selectedMonth.set('August');
+      }
+    }
+    this.currentPage.set(1); // Reset to first page when changing year
   }
 
   protected changeMonth(month: string): void {
@@ -504,6 +527,7 @@ export class ExpensePage implements OnInit {
 
   protected openAddExpenseModal(): void {
     this.editingEntry.set(null);
+    this.editingEntryId.set(null); // Clear editing ID
     this.resetForm();
     this.showExpenseModal.set(true);
     // Autofocus amount after modal renders
@@ -511,7 +535,9 @@ export class ExpensePage implements OnInit {
   }
 
   protected openEditExpenseModal(entry: ExpenseEntry): void {
-    this.editingEntry.set(entry);
+    // Store a deep copy of the entry to prevent reference issues
+    this.editingEntry.set({ ...entry });
+    this.editingEntryId.set(entry.id); // Store ID separately for safety
     this.formAmount.set(entry.amount);
     this.formNotes.set(entry.notes || '');
 
@@ -523,12 +549,14 @@ export class ExpensePage implements OnInit {
     );
     this.formCategoryId.set(matchingCat?.category_id || 0);
 
+    console.log('📝 Edit modal opened for ID:', entry.id, 'Entry:', entry);
     this.showExpenseModal.set(true);
     setTimeout(() => this.amountInputRef?.nativeElement?.focus(), 150);
   }
 
   protected duplicateExpense(entry: ExpenseEntry): void {
     this.editingEntry.set(null); // Clear editing state - this will be a new entry
+    this.editingEntryId.set(null); // Clear editing ID - this is a new entry, not an update
     this.formAmount.set(entry.amount);
     this.formNotes.set(entry.notes || '');
     this.formCategoryName.set(entry.categoryName);
@@ -538,6 +566,7 @@ export class ExpensePage implements OnInit {
     );
     this.formCategoryId.set(matchingCat?.category_id || 0);
 
+    console.log('📋 Duplicate modal opened - creating NEW entry (editingId: null)');
     this.showExpenseModal.set(true);
     setTimeout(() => this.amountInputRef?.nativeElement?.focus(), 150);
   }
@@ -545,6 +574,7 @@ export class ExpensePage implements OnInit {
   protected closeExpenseModal(): void {
     this.showExpenseModal.set(false);
     this.editingEntry.set(null);
+    this.editingEntryId.set(null); // Clear editing ID
     this.resetForm();
   }
 
@@ -584,6 +614,17 @@ export class ExpensePage implements OnInit {
   // ============================================
 
   protected async saveExpense(): Promise<void> {
+    // Prevent duplicate submissions
+    if (this.isSaving()) {
+      console.warn('Save already in progress, ignoring duplicate request');
+      return;
+    }
+
+    // Capture editing ID at the start from the dedicated signal
+    const editingId = this.editingEntryId();
+    
+    console.log('💾 Save initiated - Editing ID:', editingId);
+
     // Validation
     if (this.formAmount() <= 0 || !this.formCategoryName()) {
       this.showToastNotification('Please fill all required fields', 'error');
@@ -604,8 +645,9 @@ export class ExpensePage implements OnInit {
       return;
     }
 
+    // Set saving flag to prevent duplicate submissions
+    this.isSaving.set(true);
     this.isLoading.set(true);
-    const editing = this.editingEntry();
 
     try {
       const formData: ExpenseFormData = {
@@ -616,10 +658,15 @@ export class ExpensePage implements OnInit {
         notes: this.formNotes() || undefined
       };
 
-      if (editing) {
-        await this.expenseService.updateExpense(editing.id, formData);
+      // Use the captured editingId for the check
+      if (editingId && editingId > 0) {
+        // Update existing entry
+        console.log('✏️ Updating expense ID:', editingId, 'with data:', formData);
+        await this.expenseService.updateExpense(editingId, formData);
         this.showToastNotification('Expense updated successfully!', 'success');
       } else {
+        // Add new entry
+        console.log('➕ Adding new expense with data:', formData);
         const added = await this.expenseService.addExpense(formData);
         // Track for animation
         const ids = new Set(this.recentlyAddedIds());
@@ -638,6 +685,7 @@ export class ExpensePage implements OnInit {
       console.error('Error saving expense:', error);
       this.showToastNotification('Failed to save expense. Please try again.', 'error');
     } finally {
+      this.isSaving.set(false);
       this.isLoading.set(false);
     }
   }

@@ -737,8 +737,8 @@
   .card {
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 12px;
+    gap: 12px;
+    padding: 16px;
     background: white;
     border: 1px solid #e5e7eb;
     border-radius: 12px;
@@ -746,23 +746,23 @@
     cursor: pointer;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     // Fixed dimensions for consistent layout
-    min-height: 85px;
-    height: 85px;
+    min-height: 105px;
+    height: 105px;
 
     @media (max-width: 1200px) {
-      padding: 10px;
-      gap: 8px;
-      min-height: 80px;
-      height: 80px;
+      padding: 14px;
+      gap: 10px;
+      min-height: 100px;
+      height: 100px;
     }
 
     @media (max-width: 768px) {
-      padding: 8px;
+      padding: 12px;
       flex-direction: column;
       text-align: center;
-      gap: 4px;
-      min-height: 90px;
-      height: 90px;
+      gap: 6px;
+      min-height: 105px;
+      height: 105px;
     }
 
     &:hover {
@@ -771,15 +771,15 @@
     }
 
     .icon {
-      font-size: 24px;
+      font-size: 32px;
       flex-shrink: 0;
 
       @media (max-width: 1200px) {
-        font-size: 22px;
+        font-size: 28px;
       }
 
       @media (max-width: 768px) {
-        font-size: 20px;
+        font-size: 24px;
       }
     }
 
@@ -790,26 +790,27 @@
     }
 
     .label {
-      margin: 0 0 2px;
-      color: #6b7280;
-      font-size: 11px;
-      font-weight: 500;
+      margin: 0 0 6px;
+      color: #374151;
+      font-size: 17px;
+      font-weight: 600;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+      letter-spacing: 0.2px;
 
       @media (max-width: 1200px) {
-        font-size: 10px;
+        font-size: 15px;
       }
 
       @media (max-width: 768px) {
-        font-size: 9px;
+        font-size: 13px;
       }
     }
 
     h2 {
       margin: 0;
-      font-size: 16px;
+      font-size: 22px;
       font-weight: 700;
       color: #1f2937;
       white-space: nowrap;
@@ -817,31 +818,31 @@
       text-overflow: ellipsis;
 
       @media (max-width: 1200px) {
-        font-size: 14px;
+        font-size: 20px;
       }
 
       @media (max-width: 768px) {
-        font-size: 12px;
+        font-size: 15px;
       }
     }
 
     .sub {
-      margin: 2px 0 0;
+      margin: 4px 0 0;
       color: #22c55e;
-      font-size: 10px;
+      font-size: 13px;
       font-weight: 500;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
 
       @media (max-width: 768px) {
-        font-size: 9px;
+        font-size: 11px;
       }
     }
 
     .trend {
       margin: 2px 0 0;
-      font-size: 9px;
+      font-size: 11px;
       font-weight: 600;
       white-space: nowrap;
 
