@@ -2,6 +2,7 @@ import { Injectable, signal, inject } from '@angular/core';
 import { SupabaseService } from './supabase.service';
 import { CategoryService, Category } from './category.service';
 import { IncomeService } from './income.service';
+import { ExpenseAuditService } from './expense-audit.service';
 
 // ============================================
 // Database Expense Entry Type (matches DB schema)
@@ -189,6 +190,7 @@ export class ExpenseService {
   private supabase = inject(SupabaseService);
   private categoryService = inject(CategoryService);
   private incomeService = inject(IncomeService);
+  private auditService = inject(ExpenseAuditService);
 
   // Reactive state (same pattern as IncomeService)
   private expenseData = signal<ExpenseEntry[]>([]);
@@ -378,13 +380,14 @@ export class ExpenseService {
     this.loading.set(true);
     this.error.set(null);
 
+    const tableName = this.getTableNameForYear(data.year);
+
     try {
       // Lookup category details from CategoryService
       const category = this.categoryService.getCategoryById(data.categoryId);
 
       if (this.USE_DB) {
         // Determine which table to insert into based on year
-        const tableName = this.getTableNameForYear(data.year);
 
         const newEntry = {
           month: data.month,
@@ -401,6 +404,19 @@ export class ExpenseService {
 
         console.log(`➕ Adding new expense entry to ${tableName}:`, newEntry);
 
+        // 🔍 AUDIT: Log INSERT request
+        await this.auditService.logOperation(
+          'INSERT',
+          tableName,
+          null, // No ID yet
+          data.year,
+          data.month,
+          { formData: data, dbEntry: newEntry },
+          null,
+          null,
+          'SUCCESS'
+        );
+
         const { data: dbData, error } = await this.supabase.db
           .from(tableName)
           .insert([newEntry])
@@ -408,6 +424,19 @@ export class ExpenseService {
           .single();
 
         if (error) {
+          // 🔍 AUDIT: Log INSERT error
+          await this.auditService.logOperation(
+            'INSERT',
+            tableName,
+            null,
+            data.year,
+            data.month,
+            { formData: data, dbEntry: newEntry },
+            null,
+            null,
+            'ERROR',
+            error.message
+          );
           console.error('❌ Database error:', error.message);
           throw error;
         }
@@ -415,6 +444,19 @@ export class ExpenseService {
         const addedEntry = this.transformDbToApp(dbData);
         this.expenseData.set([...this.expenseData(), addedEntry]);
         console.log(`✅ Expense entry added to ${tableName}. Total:`, this.expenseData().length);
+
+        // 🔍 AUDIT: Log successful INSERT with response
+        await this.auditService.logOperation(
+          'INSERT',
+          tableName,
+          addedEntry.id,
+          data.year,
+          data.month,
+          { formData: data, dbEntry: newEntry },
+          dbData,
+          null,
+          'SUCCESS'
+        );
 
         return addedEntry;
       } else {
@@ -474,10 +516,26 @@ export class ExpenseService {
         const oldTableName = this.getTableNameForYear(existingEntry.year);
         const newTableName = this.getTableNameForYear(data.year);
 
+        // 🔍 AUDIT: Log the BEFORE state
+        const beforeState = { ...existingEntry };
+
         // Check if year has changed (requires moving between tables)
         if (existingEntry.year !== data.year) {
           console.log(`🔄 Year changed: ${existingEntry.year} → ${data.year}`);
           console.log(`🔄 Moving record from ${oldTableName} to ${newTableName}`);
+
+          // 🔍 AUDIT: Log YEAR_MOVE operation
+          await this.auditService.logOperation(
+            'YEAR_MOVE',
+            `${oldTableName} → ${newTableName}`,
+            id,
+            existingEntry.year,
+            existingEntry.month,
+            { formData: data, oldYear: existingEntry.year, newYear: data.year },
+            null,
+            beforeState,
+            'SUCCESS'
+          );
 
           // Step 1: Delete from old table (hard delete since we're moving)
           const { error: deleteError } = await this.supabase.db
@@ -486,6 +544,19 @@ export class ExpenseService {
             .eq('expense_id', id);
 
           if (deleteError) {
+            // 🔍 AUDIT: Log DELETE error during year move
+            await this.auditService.logOperation(
+              'DELETE',
+              oldTableName,
+              id,
+              existingEntry.year,
+              existingEntry.month,
+              { reason: 'YEAR_MOVE', formData: data },
+              null,
+              beforeState,
+              'ERROR',
+              deleteError.message
+            );
             console.error('❌ Delete error:', deleteError.message);
             throw new Error(`Failed to delete from ${oldTableName}: ${deleteError.message}`);
           }
@@ -513,6 +584,19 @@ export class ExpenseService {
             .single();
 
           if (insertError) {
+            // 🔍 AUDIT: Log INSERT error during year move
+            await this.auditService.logOperation(
+              'INSERT',
+              newTableName,
+              null,
+              data.year,
+              data.month,
+              { reason: 'YEAR_MOVE', formData: data, dbEntry: newEntry },
+              null,
+              beforeState,
+              'ERROR',
+              insertError.message
+            );
             console.error('❌ Insert error:', insertError.message);
             throw new Error(`Failed to insert into ${newTableName}: ${insertError.message}`);
           }
@@ -520,6 +604,19 @@ export class ExpenseService {
           console.log(`✅ Inserted into ${newTableName} with new ID:`, insertedData.expense_id);
 
           const updatedEntry = this.transformDbToApp(insertedData);
+
+          // 🔍 AUDIT: Log successful YEAR_MOVE
+          await this.auditService.logOperation(
+            'YEAR_MOVE',
+            `${oldTableName} → ${newTableName}`,
+            updatedEntry.id,
+            data.year,
+            data.month,
+            { formData: data, oldId: id, newId: updatedEntry.id },
+            insertedData,
+            beforeState,
+            'SUCCESS'
+          );
 
           // Update local state (replace old entry with new one)
           const currentEntries = this.expenseData();
@@ -548,6 +645,19 @@ export class ExpenseService {
 
           console.log(`✏️ Updating expense entry in ${oldTableName}:`, id, dbUpdates);
 
+          // 🔍 AUDIT: Log UPDATE request
+          await this.auditService.logOperation(
+            'UPDATE',
+            oldTableName,
+            id,
+            data.year,
+            data.month,
+            { formData: data, dbUpdates: dbUpdates },
+            null,
+            beforeState,
+            'SUCCESS'
+          );
+
           const { data: dbData, error } = await this.supabase.db
             .from(oldTableName)
             .update(dbUpdates)
@@ -557,6 +667,19 @@ export class ExpenseService {
             .single();
 
           if (error) {
+            // 🔍 AUDIT: Log UPDATE error
+            await this.auditService.logOperation(
+              'UPDATE',
+              oldTableName,
+              id,
+              data.year,
+              data.month,
+              { formData: data, dbUpdates: dbUpdates },
+              null,
+              beforeState,
+              'ERROR',
+              error.message
+            );
             console.error('❌ Database error:', error.message);
             throw error;
           }
@@ -566,6 +689,19 @@ export class ExpenseService {
           }
 
           const updatedEntry = this.transformDbToApp(dbData);
+
+          // 🔍 AUDIT: Log successful UPDATE
+          await this.auditService.logOperation(
+            'UPDATE',
+            oldTableName,
+            id,
+            data.year,
+            data.month,
+            { formData: data, dbUpdates: dbUpdates },
+            dbData,
+            beforeState,
+            'SUCCESS'
+          );
 
           // Update local state
           const currentEntries = this.expenseData();
@@ -636,10 +772,26 @@ export class ExpenseService {
           throw new Error('Expense entry not found');
         }
 
+        // 🔍 AUDIT: Log the BEFORE state
+        const beforeState = { ...existingEntry };
+
         // Use the table based on the entry's year
         const tableName = this.getTableNameForYear(existingEntry.year);
 
         console.log(`🗑️ Soft deleting expense entry from ${tableName}:`, id);
+
+        // 🔍 AUDIT: Log SOFT_DELETE request
+        await this.auditService.logOperation(
+          'SOFT_DELETE',
+          tableName,
+          id,
+          existingEntry.year,
+          existingEntry.month,
+          { action: 'soft_delete', expense_id: id },
+          null,
+          beforeState,
+          'SUCCESS'
+        );
 
         const { error } = await this.supabase.db
           .from(tableName)
@@ -647,6 +799,19 @@ export class ExpenseService {
           .eq('expense_id', id);
 
         if (error) {
+          // 🔍 AUDIT: Log SOFT_DELETE error
+          await this.auditService.logOperation(
+            'SOFT_DELETE',
+            tableName,
+            id,
+            existingEntry.year,
+            existingEntry.month,
+            { action: 'soft_delete', expense_id: id },
+            null,
+            beforeState,
+            'ERROR',
+            error.message
+          );
           console.error('❌ Database error:', error.message);
           throw error;
         }
@@ -654,6 +819,19 @@ export class ExpenseService {
         // Remove from local state
         const filtered = this.expenseData().filter(e => e.id !== id);
         this.expenseData.set(filtered);
+
+        // 🔍 AUDIT: Log successful SOFT_DELETE
+        await this.auditService.logOperation(
+          'SOFT_DELETE',
+          tableName,
+          id,
+          existingEntry.year,
+          existingEntry.month,
+          { action: 'soft_delete', expense_id: id },
+          { is_delete: true },
+          beforeState,
+          'SUCCESS'
+        );
 
         console.log(`✅ Expense entry soft deleted from ${tableName}. Remaining:`, filtered.length);
       } else {
