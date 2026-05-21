@@ -127,7 +127,7 @@
     <!-- Category Spending Analysis Section -->
     <div class="category-spending-section">
       <div class="section-header">
-        <h3 class="section-title">Spending by Category</h3>
+        <h3 class="section-title">Spending Breakdown</h3>
         <span class="total-badge">Total: {{ formatCurrency(totalCategorySpending()) }}</span>
       </div>
       
@@ -172,30 +172,27 @@
           </div>
         </div>
 
-        <!-- Horizontal Bar Chart -->
+        <!-- Vertical Bar Chart -->
         <div class="chart-card bar-chart-card">
           <div class="chart-card-header">
-            <h4>📊 Comparison</h4>
+            <h4>📊 Bar Chart</h4>
           </div>
-          <div class="bar-chart-wrapper">
-            @for (category of categorySpendingWithPercentage(); track category.name; let i = $index) {
-              <div class="bar-row" [style.animation-delay]="(i * 0.05) + 's'">
-                <div class="bar-info">
-                  <span class="bar-icon">{{ category.icon }}</span>
-                  <span class="bar-name">{{ category.name }}</span>
-                </div>
-                <div class="bar-track">
-                  <div class="bar-fill" 
-                       [style.width.%]="category.percentage" 
-                       [style.background]="'linear-gradient(90deg, ' + category.color + ' 0%, ' + category.color + 'cc 100%)'">
+          <div class="vertical-bar-chart">
+            <div class="bar-chart-container">
+              @for (category of categorySpendingWithPercentage(); track category.name; let i = $index) {
+                <div class="bar-column" [style.animation-delay]="(i * 0.1) + 's'">
+                  <div class="bar-value">{{ category.percentage }}%</div>
+                  <div class="bar-wrapper">
+                    <div class="bar" 
+                         [style.height.%]="category.percentage"
+                         [style.background]="'linear-gradient(180deg, ' + category.color + ' 0%, ' + category.color + 'aa 100%)'">
+                    </div>
                   </div>
+                  <div class="bar-label">{{ category.icon }}</div>
+                  <div class="bar-category-name">{{ category.name }}</div>
                 </div>
-                <div class="bar-stats">
-                  <span class="bar-amount">{{ formatCurrency(category.total) }}</span>
-                  <span class="bar-percent">{{ category.percentage }}%</span>
-                </div>
-              </div>
-            }
+              }
+            </div>
           </div>
         </div>
 
@@ -211,17 +208,11 @@
                      [style.background]="'linear-gradient(135deg, ' + category.color + getOpacity(category.percentage) + ' 0%, ' + category.color + getOpacity(category.percentage * 0.7) + ' 100%)'"
                      [style.box-shadow]="'0 4px 12px ' + category.color + '40'"
                      [attr.title]="category.name + ': ' + formatCurrency(category.total)">
-                  <span class="cell-icon">{{ category.icon }}</span>
                   <span class="cell-name">{{ category.name }}</span>
                   <span class="cell-amount">{{ formatCurrency(category.total) }}</span>
                   <span class="cell-percent">{{ category.percentage }}%</span>
                 </div>
               }
-            </div>
-            <div class="heatmap-legend">
-              <span class="legend-label">Low</span>
-              <div class="legend-gradient"></div>
-              <span class="legend-label">High</span>
             </div>
           </div>
         </div>
