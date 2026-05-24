@@ -554,20 +554,20 @@ export class DashboardPage implements OnInit {
     const abiCategory = this.subcategoryStats().find(cat => cat.categoryName === 'Abi');
     if (!abiCategory) return [];
     
-    // Define colors for Abi subcategories (violet tones matching Abi's theme)
-    const subcategoryColors: Record<string, string> = {
-      'Diapers': '#c4b5fd',      // Lighter violet
-      'Medicine': '#a78bfa',     // Medium violet (Abi's main color)
-      'Milk Powder': '#8b5cf6',  // Richer violet
-      'Baby Food': '#7c3aed',    // Deep violet
-      'Clothing': '#6d28d9',     // Dark violet
-      'Toys': '#5b21b6',         // Darker violet
-      'Healthcare': '#4c1d95',   // Very dark violet
-      'Shopping': '#9333ea',     // Purple for shopping (online + regular)
-      'Subscriptions': '#ec4899', // Magenta for subscriptions
-      'Food': '#f472b6',         // Pink for food
-      'Uncategorized': '#ddd6fe', // Light lavender
-    };
+    // Define row-based colors for Abi subcategories (shades of purple - darker/more vibrant)
+    // Row 1 (highest spending): Darkest purple
+    // Gradual transition to lighter but still vibrant purples
+    const rowColors = [
+      '#5b21b6',  // Row 1 - Darkest purple
+      '#6d28d9',  // Row 2 - Dark purple
+      '#7c3aed',  // Row 3 - Medium dark purple
+      '#8b5cf6',  // Row 4 - Medium purple
+      '#a78bfa',  // Row 5 - Medium light purple
+      '#b197fc',  // Row 6+ - Light purple (still vibrant)
+    ];
+    
+    // Consolidated category names
+    const consolidatedCategories = new Set(['Shopping', 'Subscriptions', 'Food', 'Trips', 'Temple & God', 'Miscellaneous']);
     
     // Pattern to identify shopping subcategories (online shopping + regular shopping)
     const shoppingPattern = /^online\s*-?\s*|shopping/i;
@@ -578,6 +578,18 @@ export class DashboardPage implements OnInit {
     // Pattern to identify subscription services (Jio, Google, Netflix)
     const subscriptionPattern = /^(netflix|jio|google|youtube|prime|hotstar|spotify|subscription)/i;
     
+    // Pattern to identify trips
+    const tripsPattern = /trip/i;
+    
+    // Pattern to identify temple/god related
+    const templePattern = /^(god|temple|pooja|puja)/i;
+    
+    // Pattern to identify miscellaneous and relatives
+    const miscPattern = /^(miscellaneous|misc|relatives?)/i;
+    
+    // Pattern to identify contact lenz
+    const specsPattern = /^contact\s*lenz/i;
+    
     // Combine subcategories
     const combinedMap = new Map<string, { name: string; icon: string; total: number }>();
     let shoppingTotal = 0;
@@ -586,6 +598,12 @@ export class DashboardPage implements OnInit {
     let foodIcon = '🍽️';
     let subscriptionTotal = 0;
     let subscriptionIcon = '📺';
+    let tripsTotal = 0;
+    let tripsIcon = '✈️';
+    let templeTotal = 0;
+    let templeIcon = '🛕';
+    let miscTotal = 0;
+    let miscIcon = '📦';
     
     abiCategory.subcategories.forEach(sub => {
       const subNameLower = sub.name.toLowerCase();
@@ -608,6 +626,31 @@ export class DashboardPage implements OnInit {
         if (subscriptionIcon === '📺' && sub.icon !== '📎') {
           subscriptionIcon = sub.icon;
         }
+      } else if (tripsPattern.test(sub.name)) {
+        // Combine into Trips
+        tripsTotal += sub.total;
+        if (tripsIcon === '✈️' && sub.icon !== '📎') {
+          tripsIcon = sub.icon;
+        }
+      } else if (templePattern.test(sub.name)) {
+        // Combine into Temple & God
+        templeTotal += sub.total;
+        if (templeIcon === '🛕' && sub.icon !== '📎') {
+          templeIcon = sub.icon;
+        }
+      } else if (miscPattern.test(sub.name)) {
+        // Combine into Miscellaneous
+        miscTotal += sub.total;
+        if (miscIcon === '📦' && sub.icon !== '📎') {
+          miscIcon = sub.icon;
+        }
+      } else if (specsPattern.test(sub.name)) {
+        // Rename Contact Lenz to Specs & Lenz
+        combinedMap.set('Specs & Lenz', {
+          name: 'Specs & Lenz',
+          icon: sub.icon || '👓',
+          total: sub.total
+        });
       } else {
         // Keep as separate subcategory
         combinedMap.set(sub.name, {
@@ -645,19 +688,52 @@ export class DashboardPage implements OnInit {
       });
     }
     
+    // Add combined trips if there are any
+    if (tripsTotal > 0) {
+      combinedMap.set('Trips', {
+        name: 'Trips',
+        icon: tripsIcon,
+        total: tripsTotal
+      });
+    }
+    
+    // Add combined temple & god if there are any
+    if (templeTotal > 0) {
+      combinedMap.set('Temple & God', {
+        name: 'Temple & God',
+        icon: templeIcon,
+        total: templeTotal
+      });
+    }
+    
+    // Add combined miscellaneous if there are any
+    if (miscTotal > 0) {
+      combinedMap.set('Miscellaneous', {
+        name: 'Miscellaneous',
+        icon: miscIcon,
+        total: miscTotal
+      });
+    }
+    
     // Calculate percentages based on Abi total
     const abiTotal = abiCategory.categoryTotal;
-    const result = Array.from(combinedMap.values())
+    
+    // Sort by total first, then assign colors based on position
+    const sortedItems = Array.from(combinedMap.values())
       .map(sub => ({
         name: sub.name,
         icon: sub.icon,
         total: sub.total,
         percentage: abiTotal > 0 ? Math.round((sub.total / abiTotal) * 100) : 0,
-        color: subcategoryColors[sub.name] || '#a78bfa' // Default to Abi's color
+        isConsolidated: consolidatedCategories.has(sub.name)
       }))
       .sort((a, b) => b.total - a.total);
     
-    return result;
+    // Assign colors based on row position (index)
+    return sortedItems.map((item, index) => ({
+      ...item,
+      color: rowColors[Math.min(index, rowColors.length - 1)]
+    }));
   });
 
   // Get total Abi spending
@@ -671,18 +747,21 @@ export class DashboardPage implements OnInit {
     const bbCategory = this.subcategoryStats().find(cat => cat.categoryName === 'BB');
     if (!bbCategory) return [];
     
-    // Define colors for BB subcategories (blue tones matching BB's theme)
-    const subcategoryColors: Record<string, string> = {
-      'Emi': '#3b82f6',           // Blue
-      'Transport': '#60a5fa',     // Light blue
-      'Phone recharge': '#93c5fd', // Lighter blue
-      'Gifts': '#2563eb',         // Darker blue
-      'Kadan - debt': '#1d4ed8',  // Deep blue
-      'Shopping': '#0ea5e9',      // Cyan blue
-      'Food': '#06b6d4',          // Teal
-      'Subscriptions': '#0284c7', // Sky blue
-      'Uncategorized': '#bfdbfe', // Very light blue
-    };
+    // Define row-based colors for BB subcategories (shades of blue)
+    // Row 1 (highest spending): Dark blue
+    // Row 2: Light blue
+    // Row 3+: Lighter blue
+    const rowColors = [
+      '#1d4ed8',  // Row 1 - Dark blue
+      '#2563eb',  // Row 2 - Medium dark blue
+      '#3b82f6',  // Row 3 - Medium blue
+      '#60a5fa',  // Row 4 - Light blue
+      '#93c5fd',  // Row 5 - Lighter blue
+      '#dbeafe',  // Row 6+ - Lightest blue
+    ];
+    
+    // Consolidated category names
+    const consolidatedCategories = new Set(['EMI - Debts', 'Others', 'Shopping', 'Food', 'Subscriptions']);
     
     // Pattern to identify shopping subcategories
     const shoppingPattern = /^online\s*-?\s*|shopping/i;
@@ -693,6 +772,12 @@ export class DashboardPage implements OnInit {
     // Pattern to identify subscription services
     const subscriptionPattern = /^(netflix|jio|google|youtube|prime|hotstar|spotify|subscription)/i;
     
+    // Pattern to identify EMI/Debts (Emi, Kadan - debt, hault)
+    const emiDebtsPattern = /^(emi|kadan|hault)/i;
+    
+    // Pattern to identify Others (other, astrologer, transport, phone recharge)
+    const othersPattern = /^(other|astrologer|transport|phone\s*recharge)/i;
+    
     // Combine subcategories
     const combinedMap = new Map<string, { name: string; icon: string; total: number }>();
     let shoppingTotal = 0;
@@ -701,6 +786,10 @@ export class DashboardPage implements OnInit {
     let foodIcon = '🍽️';
     let subscriptionTotal = 0;
     let subscriptionIcon = '📺';
+    let emiDebtsTotal = 0;
+    let emiDebtsIcon = '💳';
+    let othersTotal = 0;
+    let othersIcon = '📦';
     
     bbCategory.subcategories.forEach(sub => {
       if (shoppingPattern.test(sub.name)) {
@@ -712,6 +801,12 @@ export class DashboardPage implements OnInit {
       } else if (subscriptionPattern.test(sub.name)) {
         subscriptionTotal += sub.total;
         if (subscriptionIcon === '📺' && sub.icon !== '📎') subscriptionIcon = sub.icon;
+      } else if (emiDebtsPattern.test(sub.name)) {
+        emiDebtsTotal += sub.total;
+        if (emiDebtsIcon === '💳' && sub.icon !== '📎') emiDebtsIcon = sub.icon;
+      } else if (othersPattern.test(sub.name)) {
+        othersTotal += sub.total;
+        if (othersIcon === '📦' && sub.icon !== '📎') othersIcon = sub.icon;
       } else {
         combinedMap.set(sub.name, {
           name: sub.name,
@@ -730,17 +825,31 @@ export class DashboardPage implements OnInit {
     if (subscriptionTotal > 0) {
       combinedMap.set('Subscriptions', { name: 'Subscriptions', icon: subscriptionIcon, total: subscriptionTotal });
     }
+    if (emiDebtsTotal > 0) {
+      combinedMap.set('EMI - Debts', { name: 'EMI - Debts', icon: emiDebtsIcon, total: emiDebtsTotal });
+    }
+    if (othersTotal > 0) {
+      combinedMap.set('Others', { name: 'Others', icon: othersIcon, total: othersTotal });
+    }
     
     const bbTotal = bbCategory.categoryTotal;
-    return Array.from(combinedMap.values())
+    
+    // Sort by total first, then assign colors based on position
+    const sortedItems = Array.from(combinedMap.values())
       .map(sub => ({
         name: sub.name,
         icon: sub.icon,
         total: sub.total,
         percentage: bbTotal > 0 ? Math.round((sub.total / bbTotal) * 100) : 0,
-        color: subcategoryColors[sub.name] || '#60a5fa'
+        isConsolidated: consolidatedCategories.has(sub.name)
       }))
       .sort((a, b) => b.total - a.total);
+    
+    // Assign colors based on row position (index)
+    return sortedItems.map((item, index) => ({
+      ...item,
+      color: rowColors[Math.min(index, rowColors.length - 1)]
+    }));
   });
 
   // Get total BB spending
@@ -754,54 +863,55 @@ export class DashboardPage implements OnInit {
     const homeCategory = this.subcategoryStats().find(cat => cat.categoryName === 'Home');
     if (!homeCategory) return [];
     
-    // Define colors for Home subcategories (yellow/amber tones matching Home's theme)
-    const subcategoryColors: Record<string, string> = {
-      'Provisions': '#fef08a',      // Pale yellow (Home's main color)
-      'Household Items': '#fde047', // Bright yellow
-      'Groceries': '#facc15',       // Golden yellow
-      'Food': '#f59e0b',            // Amber
-      'Shopping': '#d97706',        // Dark amber
-      'Appa': '#eab308',            // Yellow
-      'Amma': '#ca8a04',            // Dark yellow
-      'Dhanush': '#a3e635',         // Lime
-      'Rajeswari': '#84cc16',       // Light green
-      'Subscriptions': '#fb923c',   // Orange
-      'Uncategorized': '#fef9c3',   // Very light yellow
-    };
+    // Define row-based colors for Home subcategories (shades of yellow)
+    // Row 1 (highest spending): Dark yellow
+    // Row 2: Light yellow  
+    // Row 3+: Lighter yellow
+    const rowColors = [
+      '#ca8a04',  // Row 1 - Dark yellow
+      '#eab308',  // Row 2 - Light yellow
+      '#facc15',  // Row 3 - Lighter yellow
+      '#fde047',  // Row 4 - Even lighter
+      '#fef08a',  // Row 5 - Very light
+      '#fef9c3',  // Row 6+ - Lightest
+    ];
     
-    // Pattern to identify shopping/online subcategories
-    const shoppingPattern = /^online\s*-?\s*|shopping/i;
+    // Consolidated category names
+    const consolidatedCategories = new Set(['Groceries', 'Furniture', 'Subscriptions', 'Others']);
     
-    // Pattern to identify food-related subcategories
-    const foodPattern = /^food\s*|snacks?$/i;
+    // Pattern to identify groceries/provisions subcategories (consolidated)
+    const groceriesPattern = /groceries?|provisions?|instamart|blinkit/i;
     
-    // Pattern to identify groceries subcategories
-    const groceriesPattern = /groceries?|instamart|blinkit/i;
+    // Pattern for "Others" - shopping, decor, recharge, food
+    const othersPattern = /^(online\s*-?\s*|shopping|decor|recharge|food\s*|snacks?$)/i;
+    
+    // Pattern for "Furniture" - sofa cupboard, AC, dress plast
+    const furniturePattern = /^(sofa\s*cupboard|ac|dress\s*plast)/i;
     
     // Pattern to identify subscription services
     const subscriptionPattern = /^(netflix|jio|google|youtube|prime|hotstar|spotify|subscription)/i;
     
     // Combine subcategories
     const combinedMap = new Map<string, { name: string; icon: string; total: number }>();
-    let shoppingTotal = 0;
-    let shoppingIcon = '🛒';
-    let foodTotal = 0;
-    let foodIcon = '🍽️';
     let groceriesTotal = 0;
     let groceriesIcon = '🛒';
+    let othersTotal = 0;
+    let othersIcon = '📦';
+    let furnitureTotal = 0;
+    let furnitureIcon = '🪑';
     let subscriptionTotal = 0;
     let subscriptionIcon = '📺';
     
     homeCategory.subcategories.forEach(sub => {
-      if (shoppingPattern.test(sub.name)) {
-        shoppingTotal += sub.total;
-        if (shoppingIcon === '🛒' && sub.icon !== '📎') shoppingIcon = sub.icon;
-      } else if (groceriesPattern.test(sub.name)) {
+      if (groceriesPattern.test(sub.name)) {
         groceriesTotal += sub.total;
         if (groceriesIcon === '🛒' && sub.icon !== '📎') groceriesIcon = sub.icon;
-      } else if (foodPattern.test(sub.name)) {
-        foodTotal += sub.total;
-        if (foodIcon === '🍽️' && sub.icon !== '📎') foodIcon = sub.icon;
+      } else if (furniturePattern.test(sub.name)) {
+        furnitureTotal += sub.total;
+        if (furnitureIcon === '🪑' && sub.icon !== '📎') furnitureIcon = sub.icon;
+      } else if (othersPattern.test(sub.name)) {
+        othersTotal += sub.total;
+        if (othersIcon === '📦' && sub.icon !== '📎') othersIcon = sub.icon;
       } else if (subscriptionPattern.test(sub.name)) {
         subscriptionTotal += sub.total;
         if (subscriptionIcon === '📺' && sub.icon !== '📎') subscriptionIcon = sub.icon;
@@ -814,29 +924,37 @@ export class DashboardPage implements OnInit {
       }
     });
     
-    if (shoppingTotal > 0) {
-      combinedMap.set('Shopping', { name: 'Shopping', icon: shoppingIcon, total: shoppingTotal });
-    }
     if (groceriesTotal > 0) {
       combinedMap.set('Groceries', { name: 'Groceries', icon: groceriesIcon, total: groceriesTotal });
     }
-    if (foodTotal > 0) {
-      combinedMap.set('Food', { name: 'Food', icon: foodIcon, total: foodTotal });
+    if (furnitureTotal > 0) {
+      combinedMap.set('Furniture', { name: 'Furniture', icon: furnitureIcon, total: furnitureTotal });
+    }
+    if (othersTotal > 0) {
+      combinedMap.set('Others', { name: 'Others', icon: othersIcon, total: othersTotal });
     }
     if (subscriptionTotal > 0) {
       combinedMap.set('Subscriptions', { name: 'Subscriptions', icon: subscriptionIcon, total: subscriptionTotal });
     }
     
     const homeTotal = homeCategory.categoryTotal;
-    return Array.from(combinedMap.values())
+    
+    // Sort by total first, then assign colors based on position
+    const sortedItems = Array.from(combinedMap.values())
       .map(sub => ({
         name: sub.name,
         icon: sub.icon,
         total: sub.total,
         percentage: homeTotal > 0 ? Math.round((sub.total / homeTotal) * 100) : 0,
-        color: subcategoryColors[sub.name] || '#fef08a'
+        isConsolidated: consolidatedCategories.has(sub.name)
       }))
       .sort((a, b) => b.total - a.total);
+    
+    // Assign colors based on row position (index)
+    return sortedItems.map((item, index) => ({
+      ...item,
+      color: rowColors[Math.min(index, rowColors.length - 1)]
+    }));
   });
 
   // Get total Home spending
@@ -844,6 +962,130 @@ export class DashboardPage implements OnInit {
     const homeCategory = this.subcategoryStats().find(cat => cat.categoryName === 'Home');
     return homeCategory?.categoryTotal || 0;
   });
+
+  // ============================================
+  // Computed Values - Investment Breakdown Heatmap
+  // ============================================
+  protected investmentBreakdownHeatmap = computed(() => {
+    const investments = this.investmentData()
+      .filter(inv => inv.status === InvestmentStatus.ACTIVE && !inv.is_deleted);
+    
+    if (investments.length === 0) return [];
+    
+    // Define row-based colors for Investment types (shades of green)
+    const rowColors = [
+      '#15803d',  // Row 1 - Dark green
+      '#16a34a',  // Row 2 - Medium dark green
+      '#22c55e',  // Row 3 - Medium green
+      '#4ade80',  // Row 4 - Light green
+      '#86efac',  // Row 5 - Lighter green
+      '#bbf7d0',  // Row 6+ - Lightest green
+    ];
+    
+    // Investment type icons
+    const typeIcons: Record<string, string> = {
+      'Physical Gold': '🥇',
+      'MF - SIP': '📊',
+      'Stocks': '📈',
+      'PPF': '🏦',
+      'PF': '💼',
+      'NPS': '🏛️',
+      'RD': '💰',
+      'Land': '🏞️',
+      'House': '🏠'
+    };
+    
+    // Group investments by type
+    const typeMap = new Map<string, { type: string; total: number; returns: number }>();
+    
+    investments.forEach(inv => {
+      const existing = typeMap.get(inv.type);
+      const invested = inv.invested_amount || 0;
+      const returns = inv.interest_earned || 0;
+      
+      if (existing) {
+        existing.total += invested;
+        existing.returns += returns;
+      } else {
+        typeMap.set(inv.type, {
+          type: inv.type,
+          total: invested,
+          returns: returns
+        });
+      }
+    });
+    
+    // Calculate total investments
+    const totalInvested = Array.from(typeMap.values())
+      .reduce((sum, item) => sum + item.total, 0);
+    
+    // Sort by total invested and assign colors
+    const sortedItems = Array.from(typeMap.values())
+      .map(item => ({
+        name: item.type,
+        icon: typeIcons[item.type] || '💵',
+        total: item.total,
+        returns: item.returns,
+        currentValue: item.total + item.returns,
+        percentage: totalInvested > 0 ? Math.round((item.total / totalInvested) * 100) : 0
+      }))
+      .sort((a, b) => b.total - a.total);
+    
+    return sortedItems.map((item, index) => ({
+      ...item,
+      color: rowColors[Math.min(index, rowColors.length - 1)]
+    }));
+  });
+
+  // Get total investment value (invested amount only, no returns)
+  protected investmentTotalValue = computed(() => {
+    return this.investmentBreakdownHeatmap()
+      .reduce((sum, item) => sum + item.total, 0);
+  });
+
+  // State for Investment breakdown popup
+  protected selectedInvestmentBreakdown = signal<{
+    type: string;
+    icon: string;
+    total: number;
+    color: string;
+    investments: { name: string; year: number; amount: number; notes?: string }[];
+  } | null>(null);
+
+  // Open Investment breakdown popup
+  protected openInvestmentBreakdownPopup(investmentType: string): void {
+    const investments = this.investmentData()
+      .filter(inv => inv.status === InvestmentStatus.ACTIVE && !inv.is_deleted && inv.type === investmentType);
+    
+    // Get the heatmap item for color and icon
+    const heatmapItem = this.investmentBreakdownHeatmap().find(item => item.name === investmentType);
+    
+    const matchingInvestments = investments.map(inv => ({
+      name: inv.name,
+      year: inv.year,
+      amount: inv.invested_amount || 0,
+      notes: inv.notes
+    }));
+    
+    // Sort by year desc, then by name
+    matchingInvestments.sort((a, b) => {
+      if (b.year !== a.year) return b.year - a.year;
+      return a.name.localeCompare(b.name);
+    });
+
+    this.selectedInvestmentBreakdown.set({
+      type: investmentType,
+      icon: heatmapItem?.icon || '💵',
+      total: heatmapItem?.total || 0,
+      color: heatmapItem?.color || '#22c55e',
+      investments: matchingInvestments
+    });
+  }
+
+  // Close Investment breakdown popup
+  protected closeInvestmentBreakdownPopup(): void {
+    this.selectedInvestmentBreakdown.set(null);
+  }
 
   // State for Category Distribution popup
   protected showDistributionPopup = signal<boolean>(false);
@@ -856,6 +1098,284 @@ export class DashboardPage implements OnInit {
   // Close Category Distribution popup
   protected closeDistributionPopup(): void {
     this.showDistributionPopup.set(false);
+  }
+
+  // State for Abi breakdown popup
+  protected selectedAbiBreakdown = signal<{
+    name: string;
+    icon: string;
+    total: number;
+    color: string;
+    isConsolidated: boolean;
+    showAllColumns: boolean; // For showing Month, Year, Subcategory, Notes, Amount
+    expenses: { month: string; year: number; amount: number; notes?: string; subcategory?: string }[];
+  } | null>(null);
+
+  // Open Abi breakdown popup - shows actual expense entries with year/month
+  protected openAbiBreakdownPopup(subcategoryName: string): void {
+    const expenses = this.expenseData();
+    
+    // Define patterns for combined categories
+    const patterns: Record<string, RegExp> = {
+      'Shopping': /^online\s*-?\s*|shopping/i,
+      'Food': /^food\s*|snacks?$/i,
+      'Subscriptions': /^(netflix|jio|google|youtube|prime|hotstar|spotify|subscription)/i,
+      'Trips': /trip/i,
+      'Temple & God': /^(god|temple|pooja|puja)/i,
+      'Miscellaneous': /^(miscellaneous|misc|relatives?)/i,
+      'Specs & Lenz': /^contact\s*lenz/i,
+    };
+    
+    const isConsolidated = !!patterns[subcategoryName];
+    
+    // Categories that should show Subcategory/Notes columns instead of Year/Month
+    // This includes consolidated categories AND specific single subcategories
+    const showNotesColumns = new Set(['Shopping', 'Subscriptions', 'Food', 'Trips', 'Temple & God', 'Amma', 'Appa', 'Dhanush', 'Household']);
+    const useNotesFormat = showNotesColumns.has(subcategoryName);
+    
+    // Categories that should show ALL columns: Month, Year, Subcategory, Notes, Amount
+    const showAllColumnsSet = new Set(['miscellaneous', 'gifts', 'mis', 'others']);
+    const showAllColumns = showAllColumnsSet.has(subcategoryName.toLowerCase());
+
+    // Get the heatmap item for color and icon
+    const heatmapItem = this.abiSubcategoryHeatmap().find(item => item.name === subcategoryName);
+    
+    // Filter expenses for Abi category
+    const abiExpenses = expenses.filter(exp => exp.categoryName === 'Abi');
+    
+    let matchingExpenses: { month: string; year: number; amount: number; notes?: string; subcategory?: string }[] = [];
+    
+    if (isConsolidated) {
+      // This is a combined category - find all matching expenses
+      matchingExpenses = abiExpenses
+        .filter(exp => exp.subcategory && patterns[subcategoryName].test(exp.subcategory))
+        .map(exp => ({
+          month: exp.month,
+          year: exp.year,
+          amount: exp.amount,
+          notes: exp.notes,
+          subcategory: exp.subcategory
+        }));
+    } else {
+      // This is a single subcategory - exact match or renamed
+      let searchName = subcategoryName;
+      if (subcategoryName === 'Specs & Lenz') {
+        searchName = 'Contact Lenz';
+      }
+      matchingExpenses = abiExpenses
+        .filter(exp => exp.subcategory?.toLowerCase() === searchName.toLowerCase())
+        .map(exp => ({
+          month: exp.month,
+          year: exp.year,
+          amount: exp.amount,
+          notes: exp.notes,
+          subcategory: exp.subcategory
+        }));
+    }
+    
+    // Sort by year desc, then by month
+    const monthOrder = ['January', 'February', 'March', 'April', 'May', 'June', 
+                        'July', 'August', 'September', 'October', 'November', 'December'];
+    matchingExpenses.sort((a, b) => {
+      if (b.year !== a.year) return b.year - a.year;
+      return monthOrder.indexOf(b.month) - monthOrder.indexOf(a.month);
+    });
+
+    this.selectedAbiBreakdown.set({
+      name: subcategoryName,
+      icon: heatmapItem?.icon || '📦',
+      total: heatmapItem?.total || 0,
+      color: heatmapItem?.color || '#a78bfa',
+      isConsolidated: useNotesFormat || showAllColumns, // Use notes format for consolidated + special subcategories
+      showAllColumns, // For showing all 5 columns
+      expenses: matchingExpenses
+    });
+  }
+
+  // Close Abi breakdown popup
+  protected closeAbiBreakdownPopup(): void {
+    this.selectedAbiBreakdown.set(null);
+  }
+
+  // State for BB breakdown popup
+  protected selectedBbBreakdown = signal<{
+    name: string;
+    icon: string;
+    total: number;
+    color: string;
+    isConsolidated: boolean;
+    showAllColumns: boolean; // For EMI-Debts: show Month, Year, Subcategory, Notes
+    expenses: { month: string; year: number; amount: number; notes?: string; subcategory?: string }[];
+  } | null>(null);
+
+  // Open BB breakdown popup - shows actual expense entries with year/month
+  protected openBbBreakdownPopup(subcategoryName: string): void {
+    const expenses = this.expenseData();
+    
+    // Define patterns for combined categories (matching bbSubcategoryHeatmap)
+    const patterns: Record<string, RegExp> = {
+      'Shopping': /^online\s*-?\s*|shopping/i,
+      'Food': /^food\s*|snacks?$/i,
+      'Subscriptions': /^(netflix|jio|google|youtube|prime|hotstar|spotify|subscription)/i,
+      'EMI - Debts': /^(emi|kadan|hault)/i,
+      'Others': /^(other|astrologer|transport|phone\s*recharge)/i,
+    };
+    
+    const isConsolidated = !!patterns[subcategoryName];
+    
+    // Categories that should show Subcategory/Notes columns instead of Year/Month
+    // This includes consolidated categories AND specific single subcategories
+    const showNotesColumns = new Set(['Shopping', 'Food', 'Subscriptions', 'Amma', 'Appa', 'Dhanush', 'Household']);
+    const useNotesFormat = showNotesColumns.has(subcategoryName);
+    
+    // Categories that should show ALL columns: Month, Year, Subcategory, Notes, Amount
+    const showAllColumnsSet = new Set(['emi - debts', 'others', 'gifts', 'mis', 'miscellaneous']);
+    const showAllColumns = showAllColumnsSet.has(subcategoryName.toLowerCase());
+
+    // Get the heatmap item for color and icon
+    const heatmapItem = this.bbSubcategoryHeatmap().find(item => item.name === subcategoryName);
+    
+    // Filter expenses for BB category
+    const bbExpenses = expenses.filter(exp => exp.categoryName === 'BB');
+    
+    let matchingExpenses: { month: string; year: number; amount: number; notes?: string; subcategory?: string }[] = [];
+    
+    if (isConsolidated) {
+      // This is a combined category - find all matching expenses
+      matchingExpenses = bbExpenses
+        .filter(exp => exp.subcategory && patterns[subcategoryName].test(exp.subcategory))
+        .map(exp => ({
+          month: exp.month,
+          year: exp.year,
+          amount: exp.amount,
+          notes: exp.notes,
+          subcategory: exp.subcategory
+        }));
+    } else {
+      // This is a single subcategory - exact match
+      matchingExpenses = bbExpenses
+        .filter(exp => exp.subcategory?.toLowerCase() === subcategoryName.toLowerCase())
+        .map(exp => ({
+          month: exp.month,
+          year: exp.year,
+          amount: exp.amount,
+          notes: exp.notes,
+          subcategory: exp.subcategory
+        }));
+    }
+    
+    // Sort by year desc, then by month
+    const monthOrder = ['January', 'February', 'March', 'April', 'May', 'June', 
+                        'July', 'August', 'September', 'October', 'November', 'December'];
+    matchingExpenses.sort((a, b) => {
+      if (b.year !== a.year) return b.year - a.year;
+      return monthOrder.indexOf(b.month) - monthOrder.indexOf(a.month);
+    });
+
+    this.selectedBbBreakdown.set({
+      name: subcategoryName,
+      icon: heatmapItem?.icon || '📦',
+      total: heatmapItem?.total || 0,
+      color: heatmapItem?.color || '#60a5fa',
+      isConsolidated: useNotesFormat || showAllColumns, // Use notes format for consolidated + special subcategories
+      showAllColumns, // For EMI-Debts: show all columns
+      expenses: matchingExpenses
+    });
+  }
+
+  // Close BB breakdown popup
+  protected closeBbBreakdownPopup(): void {
+    this.selectedBbBreakdown.set(null);
+  }
+
+  // State for Home breakdown popup
+  protected selectedHomeBreakdown = signal<{
+    name: string;
+    icon: string;
+    total: number;
+    color: string;
+    isConsolidated: boolean;
+    showAllColumns: boolean; // For showing Month, Year, Subcategory, Notes, Amount
+    expenses: { month: string; year: number; amount: number; notes?: string; subcategory?: string }[];
+  } | null>(null);
+
+  // Open Home breakdown popup - shows actual expense entries with year/month
+  protected openHomeBreakdownPopup(subcategoryName: string): void {
+    const expenses = this.expenseData();
+    
+    // Define patterns for combined categories (matching homeSubcategoryHeatmap)
+    const patterns: Record<string, RegExp> = {
+      'Groceries': /groceries?|provisions?|instamart|blinkit/i,
+      'Others': /^(online\s*-?\s*|shopping|decor|recharge|food\s*|snacks?$)/i,
+      'Furniture': /^(sofa\s*cupboard|ac|dress\s*plast)/i,
+      'Subscriptions': /^(netflix|jio|google|youtube|prime|hotstar|spotify|subscription)/i,
+    };
+    
+    const isConsolidated = !!patterns[subcategoryName];
+    
+    // Categories that should show Subcategory/Notes columns instead of Year/Month
+    // This includes consolidated categories AND specific single subcategories
+    const showNotesColumns = new Set(['Groceries', 'Furniture', 'Subscriptions', 'Amma', 'Appa', 'Dhanush', 'Household']);
+    const useNotesFormat = showNotesColumns.has(subcategoryName);
+    
+    // Categories that should show ALL columns: Month, Year, Subcategory, Notes, Amount
+    const showAllColumnsSet = new Set(['others', 'gifts', 'mis', 'miscellaneous']);
+    const showAllColumns = showAllColumnsSet.has(subcategoryName.toLowerCase());
+
+    // Get the heatmap item for color and icon
+    const heatmapItem = this.homeSubcategoryHeatmap().find(item => item.name === subcategoryName);
+    
+    // Filter expenses for Home category
+    const homeExpenses = expenses.filter(exp => exp.categoryName === 'Home');
+    
+    let matchingExpenses: { month: string; year: number; amount: number; notes?: string; subcategory?: string }[] = [];
+    
+    if (isConsolidated) {
+      // This is a combined category - find all matching expenses
+      matchingExpenses = homeExpenses
+        .filter(exp => exp.subcategory && patterns[subcategoryName].test(exp.subcategory))
+        .map(exp => ({
+          month: exp.month,
+          year: exp.year,
+          amount: exp.amount,
+          notes: exp.notes,
+          subcategory: exp.subcategory
+        }));
+    } else {
+      // This is a single subcategory - exact match
+      matchingExpenses = homeExpenses
+        .filter(exp => exp.subcategory?.toLowerCase() === subcategoryName.toLowerCase())
+        .map(exp => ({
+          month: exp.month,
+          year: exp.year,
+          amount: exp.amount,
+          notes: exp.notes,
+          subcategory: exp.subcategory
+        }));
+    }
+    
+    // Sort by year desc, then by month
+    const monthOrder = ['January', 'February', 'March', 'April', 'May', 'June', 
+                        'July', 'August', 'September', 'October', 'November', 'December'];
+    matchingExpenses.sort((a, b) => {
+      if (b.year !== a.year) return b.year - a.year;
+      return monthOrder.indexOf(b.month) - monthOrder.indexOf(a.month);
+    });
+
+    this.selectedHomeBreakdown.set({
+      name: subcategoryName,
+      icon: heatmapItem?.icon || '📦',
+      total: heatmapItem?.total || 0,
+      color: heatmapItem?.color || '#fef08a',
+      isConsolidated: useNotesFormat || showAllColumns, // Use notes format for consolidated + special subcategories
+      showAllColumns, // For showing all 5 columns
+      expenses: matchingExpenses
+    });
+  }
+
+  // Close Home breakdown popup
+  protected closeHomeBreakdownPopup(): void {
+    this.selectedHomeBreakdown.set(null);
   }
 
   // State for expanded categories in stats widget

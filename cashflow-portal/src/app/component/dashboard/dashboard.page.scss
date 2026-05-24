@@ -1383,14 +1383,15 @@
   }
 
   .popup-footer {
-    padding: 16px 24px;
+    padding: 20px 24px;
+    margin-top: 8px;
     background: #f8fafc;
     border-top: 1px solid #e5e7eb;
     display: flex;
     justify-content: flex-end;
 
     .btn {
-      padding: 10px 20px;
+      padding: 12px 24px;
       border-radius: 8px;
       font-size: 14px;
       font-weight: 600;
@@ -2854,6 +2855,8 @@
   overflow: hidden;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
   animation: popupSlideIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  display: flex;
+  flex-direction: column;
 
   @keyframes popupSlideIn {
     from {
@@ -2949,8 +2952,9 @@
 
   .popup-body {
     padding: 0;
-    max-height: 65vh;
+    flex: 1;
     overflow-y: auto;
+    min-height: 0;
 
     &::-webkit-scrollbar {
       width: 6px;
@@ -3166,16 +3170,18 @@
   }
 
   .popup-footer {
-    padding: 16px 24px;
+    padding: 20px 24px;
     border-top: 1px solid #e5e7eb;
     display: flex;
     justify-content: flex-end;
+    flex-shrink: 0;
+    background: #f8fafc;
 
     .btn-secondary {
       background: #f1f5f9;
       color: #374151;
       border: 1px solid #d1d5db;
-      padding: 10px 24px;
+      padding: 12px 28px;
       border-radius: 10px;
       font-weight: 600;
       cursor: pointer;
@@ -3248,6 +3254,8 @@
   flex-wrap: wrap;
   gap: 6px;
   min-height: 120px;
+  align-items: flex-start;
+  align-content: flex-start;
 }
 
 .abi-treemap-cell {
@@ -3257,10 +3265,9 @@
   align-items: center;
   padding: 12px 8px;
   border-radius: 12px;
-  min-width: 90px;
-  min-height: 90px;
-  flex: 1 1 auto;
-  cursor: default;
+  min-width: 80px;
+  flex: 0 1 auto;
+  cursor: pointer;
   position: relative;
   overflow: hidden;
   transition: all 0.3s ease;
@@ -3285,12 +3292,14 @@
     }
   }
   
-  // Size variations
+  // Size variations based on percentage
   &.large {
-    min-width: 140px;
     min-height: 110px;
-    flex-grow: 3 !important;
+    padding: 14px 12px;
     
+    .cell-icon {
+      font-size: 1.8rem;
+    }
     .cell-name {
       font-size: 0.95rem;
     }
@@ -3300,10 +3309,12 @@
   }
   
   &.medium {
-    min-width: 110px;
-    min-height: 100px;
-    flex-grow: 2 !important;
+    min-height: 95px;
+    padding: 12px 10px;
     
+    .cell-icon {
+      font-size: 1.5rem;
+    }
     .cell-name {
       font-size: 0.85rem;
     }
@@ -3313,18 +3324,21 @@
   }
   
   &.small {
-    min-width: 90px;
-    min-height: 85px;
-    flex-grow: 1 !important;
+    min-height: 80px;
+    padding: 10px 8px;
     
+    .cell-icon {
+      font-size: 1.2rem;
+    }
     .cell-name {
       font-size: 0.75rem;
     }
     .cell-amount {
-      font-size: 0.85rem;
+      font-size: 0.8rem;
     }
     .cell-percent {
-      font-size: 0.65rem;
+      font-size: 0.6rem;
+      padding: 1px 6px;
     }
   }
   
@@ -3362,6 +3376,38 @@
     padding: 2px 8px;
     border-radius: 10px;
     margin-top: 4px;
+  }
+  
+  // Consolidated indicator - asterisk on top right corner
+  .consolidated-indicator {
+    position: absolute;
+    top: 4px;
+    right: 8px;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.9);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    line-height: 1;
+  }
+  
+  // Specific cell overrides for Abi heatmap
+  &.cell-crypto-lost {
+    min-height: 80px !important;
+    padding: 10px 8px !important;
+    
+    .cell-icon {
+      font-size: 1.2rem !important;
+    }
+    .cell-name {
+      font-size: 0.75rem !important;
+    }
+    .cell-amount {
+      font-size: 0.8rem !important;
+    }
+    .cell-percent {
+      font-size: 0.6rem !important;
+      padding: 1px 6px !important;
+    }
   }
 }
 
@@ -3432,6 +3478,670 @@
       min-width: 85px;
       min-height: 80px;
     }
+  }
+}
+
+// ============================================
+// Abi Breakdown Popup Styles
+// ============================================
+.abi-breakdown-popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  animation: overlayFadeIn 0.2s ease-out;
+}
+
+.abi-breakdown-popup {
+  background: white;
+  border-radius: 20px;
+  width: 95%;
+  max-width: 600px;
+  max-height: 80vh;
+  overflow: hidden;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  animation: popupSlideIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  display: flex;
+  flex-direction: column;
+
+  .abi-breakdown-header {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px;
+    color: white;
+    gap: 16px;
+    
+    .popup-title-section {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      
+      .popup-icon {
+        font-size: 2rem;
+        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+      }
+      
+      .popup-title-info {
+        h3 {
+          margin: 0;
+          font-size: 20px;
+          font-weight: 800;
+          color: white;
+          text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+        }
+        
+        .popup-subtitle {
+          font-size: 13px;
+          opacity: 0.9;
+          font-weight: 500;
+          color: rgba(255, 255, 255, 0.9);
+        }
+      }
+    }
+    
+    .popup-header-stats {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      margin-left: auto;
+      
+      .popup-total {
+        font-size: 22px;
+        font-weight: 800;
+        color: white;
+        text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+      }
+    }
+  }
+  
+  .abi-breakdown-body {
+    padding: 16px 24px;
+    flex: 1;
+    overflow-y: auto;
+    min-height: 0;
+  }
+  
+  .abi-breakdown-table,
+  .bb-breakdown-table,
+  .home-breakdown-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+
+    thead {
+      background: #f8fafc;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+
+      th {
+        padding: 12px 16px;
+        text-align: left;
+        font-weight: 600;
+        color: #64748b;
+        text-transform: uppercase;
+        font-size: 11px;
+        letter-spacing: 0.5px;
+        border-bottom: 2px solid #e2e8f0;
+
+        &.th-amount {
+          text-align: right;
+        }
+        
+        &.th-year {
+          width: 80px;
+          text-align: center;
+        }
+        
+        &.th-month {
+          text-align: left;
+        }
+        
+        &.th-subcategory {
+          width: 140px;
+          text-align: left;
+        }
+        
+        &.th-notes {
+          text-align: left;
+        }
+      }
+    }
+
+    tbody {
+      .breakdown-row {
+        animation: fadeInUp 0.3s ease-out both;
+        transition: background-color 0.2s ease;
+
+        &:hover {
+          background: #f8fafc;
+        }
+
+        td {
+          padding: 12px 16px;
+          border-bottom: 1px solid #f1f5f9;
+          vertical-align: middle;
+
+          &.td-year {
+            text-align: center;
+            font-weight: 600;
+            color: #64748b;
+            font-size: 13px;
+          }
+          
+          &.td-month {
+            font-weight: 500;
+            color: #1e293b;
+            font-size: 13px;
+          }
+          
+          &.td-subcategory {
+            font-weight: 600;
+            color: #475569;
+            font-size: 13px;
+          }
+          
+          &.td-notes {
+            font-weight: 400;
+            color: #64748b;
+            font-size: 13px;
+            max-width: 300px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+          }
+
+          &.td-amount {
+            text-align: right;
+            font-weight: 600;
+            color: #334155;
+            font-family: 'JetBrains Mono', monospace;
+          }
+        }
+      }
+    }
+
+    tfoot {
+      .total-row {
+        background: #f8fafc;
+
+        td {
+          padding: 14px 16px;
+          border-top: 2px solid #e2e8f0;
+
+          strong {
+            color: #1e293b;
+          }
+
+          &.td-amount strong {
+            font-family: 'JetBrains Mono', monospace;
+          }
+
+          .total-badge {
+            opacity: 0.9;
+          }
+        }
+      }
+    }
+  }
+  
+  .no-data {
+    text-align: center;
+    padding: 40px 20px;
+    color: #94a3b8;
+
+    .no-data-icon {
+      font-size: 3rem;
+      margin-bottom: 12px;
+      display: block;
+    }
+
+    p {
+      font-size: 14px;
+      margin: 0;
+    }
+  }
+  
+  .popup-footer {
+    padding: 20px 24px;
+    border-top: 1px solid #e5e7eb;
+    display: flex;
+    justify-content: flex-end;
+    flex-shrink: 0;
+    background: #f8fafc;
+
+    .btn-secondary {
+      background: #f1f5f9;
+      color: #374151;
+      border: 1px solid #d1d5db;
+      padding: 12px 28px;
+      border-radius: 10px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+
+      &:hover {
+        background: #e2e8f0;
+      }
+    }
+  }
+}
+
+// ============================================
+// BB Breakdown Popup Styles
+// ============================================
+.bb-breakdown-popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  animation: overlayFadeIn 0.2s ease-out;
+}
+
+.bb-breakdown-popup {
+  background: white;
+  border-radius: 20px;
+  width: 95%;
+  max-width: 600px;
+  max-height: 80vh;
+  overflow: hidden;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  animation: popupSlideIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  display: flex;
+  flex-direction: column;
+
+  .bb-breakdown-header {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px;
+    color: white;
+    gap: 16px;
+    
+    .popup-title-section {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      
+      .popup-icon {
+        font-size: 2rem;
+        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+      }
+      
+      .popup-title-info {
+        h3 {
+          margin: 0;
+          font-size: 20px;
+          font-weight: 800;
+          color: white;
+          text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+        }
+        
+        .popup-subtitle {
+          font-size: 13px;
+          opacity: 0.9;
+          font-weight: 500;
+          color: rgba(255, 255, 255, 0.9);
+        }
+      }
+    }
+    
+    .popup-header-stats {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      margin-left: auto;
+      
+      .popup-total {
+        font-size: 22px;
+        font-weight: 800;
+        color: white;
+        text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+      }
+    }
+  }
+  
+  .bb-breakdown-body {
+    padding: 16px 24px;
+    flex: 1;
+    overflow-y: auto;
+    min-height: 0;
+  }
+  
+  .no-data {
+    text-align: center;
+    padding: 40px 20px;
+    color: #94a3b8;
+
+    .no-data-icon {
+      font-size: 3rem;
+      margin-bottom: 12px;
+      display: block;
+    }
+
+    p {
+      font-size: 14px;
+      margin: 0;
+    }
+  }
+  
+  .popup-footer {
+    padding: 20px 24px;
+    border-top: 1px solid #e5e7eb;
+    display: flex;
+    justify-content: flex-end;
+    flex-shrink: 0;
+    background: #f8fafc;
+
+    .btn-secondary {
+      background: #f1f5f9;
+      color: #374151;
+      border: 1px solid #d1d5db;
+      padding: 12px 28px;
+      border-radius: 10px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+
+      &:hover {
+        background: #e2e8f0;
+      }
+    }
+  }
+}
+
+// ============================================
+// Home Breakdown Popup Styles
+// ============================================
+.home-breakdown-popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  animation: overlayFadeIn 0.2s ease-out;
+}
+
+.home-breakdown-popup {
+  background: white;
+  border-radius: 20px;
+  width: 95%;
+  max-width: 600px;
+  max-height: 80vh;
+  overflow: hidden;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  animation: popupSlideIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  display: flex;
+  flex-direction: column;
+
+  .home-breakdown-header {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px;
+    color: #1e293b; // Dark text for yellow background
+    gap: 16px;
+    
+    .popup-title-section {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      
+      .popup-icon {
+        font-size: 2rem;
+        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+      }
+      
+      .popup-title-info {
+        h3 {
+          margin: 0;
+          font-size: 20px;
+          font-weight: 800;
+          color: #1e293b;
+          text-shadow: none;
+        }
+        
+        .popup-subtitle {
+          font-size: 13px;
+          opacity: 0.8;
+          font-weight: 500;
+          color: #475569;
+        }
+      }
+    }
+    
+    .popup-header-stats {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      margin-left: auto;
+      
+      .popup-total {
+        font-size: 22px;
+        font-weight: 800;
+        color: #1e293b;
+        text-shadow: none;
+      }
+    }
+  }
+  
+  .home-breakdown-body {
+    padding: 16px 24px;
+    flex: 1;
+    overflow-y: auto;
+    min-height: 0;
+  }
+  
+  .no-data {
+    text-align: center;
+    padding: 40px 20px;
+    color: #94a3b8;
+
+    .no-data-icon {
+      font-size: 3rem;
+      margin-bottom: 12px;
+      display: block;
+    }
+
+    p {
+      font-size: 14px;
+      margin: 0;
+    }
+  }
+  
+  .popup-footer {
+    padding: 20px 24px;
+    border-top: 1px solid #e5e7eb;
+    display: flex;
+    justify-content: flex-end;
+    flex-shrink: 0;
+    background: #f8fafc;
+
+    .btn-secondary {
+      background: #f1f5f9;
+      color: #374151;
+      border: 1px solid #d1d5db;
+      padding: 12px 28px;
+      border-radius: 10px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+
+      &:hover {
+        background: #e2e8f0;
+      }
+    }
+  }
+}
+
+// ============================================
+// Common Breakdown Table Styles (Global)
+// ============================================
+.bb-breakdown-table,
+.home-breakdown-table,
+.investment-breakdown-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+
+  thead {
+    background: #f8fafc;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+
+    th {
+      padding: 12px 16px;
+      text-align: left;
+      font-weight: 600;
+      color: #64748b;
+      text-transform: uppercase;
+      font-size: 11px;
+      letter-spacing: 0.5px;
+      border-bottom: 2px solid #e2e8f0;
+
+      &.th-amount {
+        text-align: right;
+      }
+      
+      &.th-year {
+        width: 70px;
+        text-align: center;
+      }
+      
+      &.th-month {
+        text-align: left;
+        width: 90px;
+      }
+      
+      &.th-subcategory {
+        text-align: left;
+      }
+      
+      &.th-notes {
+        text-align: left;
+      }
+    }
+  }
+
+  tbody {
+    .breakdown-row {
+      animation: fadeInUp 0.3s ease-out both;
+      transition: background-color 0.2s ease;
+
+      &:hover {
+        background: #f8fafc;
+      }
+
+      td {
+        padding: 12px 16px;
+        border-bottom: 1px solid #f1f5f9;
+        vertical-align: middle;
+
+        &.td-year {
+          text-align: center;
+          font-weight: 600;
+          color: #64748b;
+          font-size: 13px;
+        }
+        
+        &.td-month {
+          font-weight: 500;
+          color: #1e293b;
+          font-size: 13px;
+        }
+        
+        &.td-subcategory {
+          font-weight: 600;
+          color: #475569;
+          font-size: 13px;
+        }
+        
+        &.td-notes {
+          font-weight: 400;
+          color: #64748b;
+          font-size: 13px;
+          max-width: 200px;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+
+        &.td-amount {
+          text-align: right;
+          font-weight: 600;
+          color: #334155;
+          font-family: 'JetBrains Mono', monospace;
+        }
+      }
+    }
+  }
+
+  tfoot {
+    .total-row {
+      background: #f8fafc;
+
+      td {
+        padding: 14px 16px;
+        border-top: 2px solid #e2e8f0;
+
+        strong {
+          color: #1e293b;
+        }
+
+        &.td-amount strong {
+          font-family: 'JetBrains Mono', monospace;
+        }
+      }
+    }
+  }
+}
+
+// All columns table (5 columns - EMI-Debts)
+.all-columns-table {
+  th, td {
+    padding: 10px 12px !important;
+    font-size: 12px !important;
+  }
+  
+  .th-month, .td-month {
+    width: 80px;
+  }
+  
+  .th-year, .td-year {
+    width: 60px;
+  }
+  
+  .th-subcategory, .td-subcategory {
+    width: auto;
+  }
+  
+  .th-notes, .td-notes {
+    max-width: 150px;
   }
 }
 
@@ -3513,6 +4223,212 @@
   }
 }
 
+// BB + Investment Stacked Container
+.bb-investment-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  height: 100%;
+  
+  .bb-heatmap-card,
+  .investment-heatmap-card {
+    flex: 1;
+    margin-top: 0 !important;
+  }
+}
+
+// Abi + BB Row - ensure equal heights
+.abi-bb-row {
+  align-items: stretch;
+  
+  .abi-heatmap-card {
+    height: auto;
+  }
+}
+
+// Investment specific styles
+.investment-heatmap-card {
+  background: linear-gradient(135deg, rgba(74, 222, 128, 0.1) 0%, rgba(34, 197, 94, 0.05) 100%);
+  border: 1px solid rgba(74, 222, 128, 0.3);
+  border-radius: 16px;
+  padding: 16px;
+  margin-top: 12px;
+  
+  .investment-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    
+    .category-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      
+      h4 {
+        margin: 0;
+        font-size: 1rem;
+        font-weight: 600;
+        color: #15803d;
+      }
+    }
+    
+    .investment-total {
+      font-size: 1.1rem;
+      font-weight: 700;
+      padding: 6px 14px;
+      border-radius: 20px;
+      color: #16a34a;
+      background: rgba(74, 222, 128, 0.2);
+    }
+  }
+}
+
+// Investment treemap container - force 2 columns using CSS Grid
+.investment-treemap-container {
+  display: grid !important;
+  grid-template-columns: repeat(2, 1fr) !important;
+  gap: 6px;
+  min-height: auto;
+}
+
+// Investment cell specific styling
+.investment-cell {
+  color: white !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  min-height: 70px;
+  padding: 10px 8px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  border-radius: 12px;
+  
+  &:hover {
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 6px 16px rgba(34, 197, 94, 0.3);
+  }
+  
+  .cell-icon {
+    font-size: 1.2rem;
+    margin-bottom: 2px;
+  }
+  
+  .cell-name {
+    font-weight: 600;
+    font-size: 0.8rem;
+    text-align: center;
+    line-height: 1.2;
+  }
+  
+  .cell-amount {
+    font-size: 0.85rem;
+    font-weight: 700;
+    margin-top: 2px;
+  }
+}
+
+// Investment Breakdown Popup
+.investment-breakdown-popup-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.investment-breakdown-popup {
+  background: white;
+  border-radius: 16px;
+  width: 90%;
+  max-width: 650px;
+  max-height: 80vh;
+  overflow: hidden;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  animation: slideUp 0.3s ease-out;
+
+  .investment-breakdown-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 24px;
+    color: white;
+
+    .popup-title-section {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+
+      .popup-icon {
+        font-size: 2rem;
+        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+      }
+
+      .popup-title-info {
+        h3 {
+          margin: 0;
+          font-size: 1.25rem;
+          font-weight: 700;
+        }
+
+        .popup-subtitle {
+          font-size: 0.85rem;
+          opacity: 0.9;
+        }
+      }
+    }
+
+    .popup-header-stats {
+      .popup-total {
+        font-size: 1.5rem;
+        font-weight: 700;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+      }
+    }
+  }
+
+  .investment-breakdown-body {
+    padding: 16px 24px;
+    max-height: 400px;
+    overflow-y: auto;
+  }
+
+  .popup-footer {
+    padding: 16px 24px;
+    border-top: 1px solid #e2e8f0;
+    display: flex;
+    justify-content: flex-end;
+
+    .btn-secondary {
+      padding: 10px 24px;
+      background: #f1f5f9;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      color: #475569;
+      cursor: pointer;
+      transition: all 0.2s ease;
+
+      &:hover {
+        background: #e2e8f0;
+      }
+    }
+  }
+}
+
+// Investment table specific styling
+.investment-breakdown-table {
+  .th-name, .td-name {
+    text-align: left;
+    font-weight: 600;
+    color: #1e293b;
+  }
+}
+
 // Common heatmap wrapper and container
 .category-heatmap-wrapper {
   overflow: hidden;
@@ -3523,6 +4439,8 @@
   flex-wrap: wrap;
   gap: 6px;
   min-height: 120px;
+  align-items: flex-start;
+  align-content: flex-start;
 }
 
 .category-treemap-cell {
@@ -3532,9 +4450,8 @@
   align-items: center;
   padding: 12px 8px;
   border-radius: 12px;
-  min-width: 90px;
-  min-height: 90px;
-  flex: 1 1 auto;
+  min-width: 80px;
+  flex: 0 1 auto;
   cursor: default;
   position: relative;
   overflow: hidden;
@@ -3569,12 +4486,14 @@
     box-shadow: 0 8px 20px rgba(250, 204, 21, 0.3);
   }
   
-  // Size variations
+  // Size variations based on percentage
   &.large {
-    min-width: 140px;
     min-height: 110px;
-    flex-grow: 3 !important;
+    padding: 14px 12px;
     
+    .cell-icon {
+      font-size: 1.8rem;
+    }
     .cell-name {
       font-size: 0.95rem;
     }
@@ -3584,10 +4503,12 @@
   }
   
   &.medium {
-    min-width: 110px;
-    min-height: 100px;
-    flex-grow: 2 !important;
+    min-height: 95px;
+    padding: 12px 10px;
     
+    .cell-icon {
+      font-size: 1.5rem;
+    }
     .cell-name {
       font-size: 0.85rem;
     }
@@ -3597,18 +4518,21 @@
   }
   
   &.small {
-    min-width: 90px;
-    min-height: 85px;
-    flex-grow: 1 !important;
+    min-height: 80px;
+    padding: 10px 8px;
     
+    .cell-icon {
+      font-size: 1.2rem;
+    }
     .cell-name {
       font-size: 0.75rem;
     }
     .cell-amount {
-      font-size: 0.85rem;
+      font-size: 0.8rem;
     }
     .cell-percent {
-      font-size: 0.65rem;
+      font-size: 0.6rem;
+      padding: 1px 6px;
     }
   }
   
@@ -3660,6 +4584,23 @@
       color: #713f12;
       background: rgba(0, 0, 0, 0.1);
     }
+    
+    // Consolidated indicator asterisk for Home cells
+    .consolidated-indicator {
+      color: #713f12;
+    }
+  }
+  
+  // Consolidated indicator - asterisk on top right corner
+  .consolidated-indicator {
+    position: absolute;
+    top: 4px;
+    right: 8px;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.9);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    line-height: 1;
   }
 }
 
