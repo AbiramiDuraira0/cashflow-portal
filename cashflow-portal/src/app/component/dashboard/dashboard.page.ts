@@ -964,13 +964,14 @@ export class DashboardPage implements OnInit {
   });
 
   // ============================================
-  // Computed Values - Investment Breakdown Heatmap
+  // Computed Values - Investment Breakdown Heatmap (from Expense table)
   // ============================================
   protected investmentBreakdownHeatmap = computed(() => {
-    const investments = this.investmentData()
-      .filter(inv => inv.status === InvestmentStatus.ACTIVE && !inv.is_deleted);
+    // Filter expenses for Investment category only
+    const investmentExpenses = this.expenseData()
+      .filter(exp => !exp.isDeleted && exp.categoryName === 'Investment');
     
-    if (investments.length === 0) return [];
+    if (investmentExpenses.length === 0) return [];
     
     // Define row-based colors for Investment types (shades of green)
     const rowColors = [
@@ -982,8 +983,8 @@ export class DashboardPage implements OnInit {
       '#bbf7d0',  // Row 6+ - Lightest green
     ];
     
-    // Investment type icons
-    const typeIcons: Record<string, string> = {
+    // Investment type icons mapping
+    const investmentIcons: Record<string, string> = {
       'Physical Gold': '🥇',
       'MF - SIP': '📊',
       'Stocks': '📈',
@@ -992,42 +993,53 @@ export class DashboardPage implements OnInit {
       'NPS': '🏛️',
       'RD': '💰',
       'Land': '🏞️',
-      'House': '🏠'
+      'House': '🏠',
+      'Gold': '🥇',
+      'Mutual Fund': '📊',
+      'SIP': '📊',
+      'Fixed Deposit': '🏦',
+      'FD': '🏦'
     };
     
-    // Group investments by type
-    const typeMap = new Map<string, { type: string; total: number; returns: number }>();
+    // Group expenses by subcategory (investment type)
+    const investmentMap = new Map<string, { 
+      name: string; 
+      icon: string; 
+      total: number; 
+      count: number 
+    }>();
     
-    investments.forEach(inv => {
-      const existing = typeMap.get(inv.type);
-      const invested = inv.invested_amount || 0;
-      const returns = inv.interest_earned || 0;
+    investmentExpenses.forEach(exp => {
+      const investmentType = exp.subcategory || 'Other Investment';
+      const existing = investmentMap.get(investmentType);
+      const amount = exp.amount || 0;
       
       if (existing) {
-        existing.total += invested;
-        existing.returns += returns;
+        existing.total += amount;
+        existing.count += 1;
       } else {
-        typeMap.set(inv.type, {
-          type: inv.type,
-          total: invested,
-          returns: returns
+        investmentMap.set(investmentType, {
+          name: investmentType,
+          icon: exp.subcategoryIcon || investmentIcons[investmentType] || '�',
+          total: amount,
+          count: 1
         });
       }
     });
     
-    // Calculate total investments
-    const totalInvested = Array.from(typeMap.values())
+    // Calculate total investment
+    const totalInvestment = Array.from(investmentMap.values())
       .reduce((sum, item) => sum + item.total, 0);
     
     // Sort by total invested and assign colors
-    const sortedItems = Array.from(typeMap.values())
+    const sortedItems = Array.from(investmentMap.values())
       .map(item => ({
-        name: item.type,
-        icon: typeIcons[item.type] || '💵',
+        name: item.name,
+        icon: item.icon,
         total: item.total,
-        returns: item.returns,
-        currentValue: item.total + item.returns,
-        percentage: totalInvested > 0 ? Math.round((item.total / totalInvested) * 100) : 0
+        count: item.count,
+        percentage: totalInvestment > 0 ? Math.round((item.total / totalInvestment) * 100) : 0,
+        isConsolidated: false
       }))
       .sort((a, b) => b.total - a.total);
     
@@ -1037,7 +1049,7 @@ export class DashboardPage implements OnInit {
     }));
   });
 
-  // Get total investment value (invested amount only, no returns)
+  // Get total investment value from expense data
   protected investmentTotalValue = computed(() => {
     return this.investmentBreakdownHeatmap()
       .reduce((sum, item) => sum + item.total, 0);
@@ -1049,28 +1061,29 @@ export class DashboardPage implements OnInit {
     icon: string;
     total: number;
     color: string;
-    investments: { name: string; year: number; amount: number; notes?: string }[];
+    investments: { year: number; month: string; notes?: string; amount: number }[];
   } | null>(null);
 
   // Open Investment breakdown popup
   protected openInvestmentBreakdownPopup(investmentType: string): void {
-    const investments = this.investmentData()
-      .filter(inv => inv.status === InvestmentStatus.ACTIVE && !inv.is_deleted && inv.type === investmentType);
+    // Filter expenses for Investment category and the specific subcategory (investment type)
+    const expenses = this.expenseData()
+      .filter(exp => !exp.isDeleted && exp.categoryName === 'Investment' && (exp.subcategory === investmentType || (!exp.subcategory && investmentType === 'Other Investment')));
     
     // Get the heatmap item for color and icon
     const heatmapItem = this.investmentBreakdownHeatmap().find(item => item.name === investmentType);
     
-    const matchingInvestments = investments.map(inv => ({
-      name: inv.name,
-      year: inv.year,
-      amount: inv.invested_amount || 0,
-      notes: inv.notes
+    const matchingExpenses = expenses.map(exp => ({
+      year: exp.year,
+      month: exp.month,
+      notes: exp.notes,
+      amount: exp.amount || 0
     }));
     
-    // Sort by year desc, then by name
-    matchingInvestments.sort((a, b) => {
+    // Sort by year desc, then by amount desc
+    matchingExpenses.sort((a, b) => {
       if (b.year !== a.year) return b.year - a.year;
-      return a.name.localeCompare(b.name);
+      return b.amount - a.amount;
     });
 
     this.selectedInvestmentBreakdown.set({
@@ -1078,7 +1091,7 @@ export class DashboardPage implements OnInit {
       icon: heatmapItem?.icon || '💵',
       total: heatmapItem?.total || 0,
       color: heatmapItem?.color || '#22c55e',
-      investments: matchingInvestments
+      investments: matchingExpenses
     });
   }
 
