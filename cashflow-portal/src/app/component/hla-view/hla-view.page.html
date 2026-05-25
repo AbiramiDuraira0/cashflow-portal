@@ -26,7 +26,7 @@
       <div class="card-icon">📋</div>
       <div class="card-content">
         <p class="card-label">Total Records</p>
-        <h2 class="card-value">{{ hlaRecords.length }}</h2>
+        <h2 class="card-value">{{ hlaRecords().length }}</h2>
         <p class="card-subtitle">HLA categories tracked</p>
       </div>
     </div>
@@ -68,6 +68,14 @@
                 </span>
               </span>
             </th>
+            <th class="col-amount sortable" (click)="sortBy('amount')">
+              <span class="header-content">
+                Amount (INR)
+                <span class="sort-icon" [class.active]="sortColumn() === 'amount'">
+                  {{ getSortIcon('amount') }}
+                </span>
+              </span>
+            </th>
             <th class="col-type sortable" (click)="sortBy('type')">
               <span class="header-content">
                 Type
@@ -98,6 +106,9 @@
               <td class="col-category">
                 <span class="category-text">{{ record.name }}</span>
               </td>
+              <td class="col-amount">
+                <span class="amount-value">{{ formatCurrency(record.amount) }}</span>
+              </td>
               <td class="col-type">
                 <span class="type-badge" [class]="record.type">{{ record.type }}</span>
               </td>
@@ -110,6 +121,15 @@
             </tr>
           }
         </tbody>
+        <tfoot>
+          <tr class="total-row">
+            <td colspan="3"><strong>Total</strong></td>
+            <td class="col-amount">
+              <strong class="total-amount">{{ formatCurrency(totalAmount()) }}</strong>
+            </td>
+            <td colspan="2"></td>
+          </tr>
+        </tfoot>
       </table>
 
       <!-- Pagination Controls -->

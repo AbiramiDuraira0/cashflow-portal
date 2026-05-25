@@ -332,6 +332,11 @@
     min-width: 180px;
   }
 
+  .col-amount {
+    width: 150px;
+    text-align: right;
+  }
+
   .col-type {
     width: 130px;
     text-align: center;
@@ -374,6 +379,38 @@
     font-size: 15px;
     font-weight: 600;
     color: #1e293b;
+  }
+
+  .amount-value {
+    font-size: 14px;
+    font-weight: 600;
+    color: #059669;
+    background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+}
+
+// ============================================
+// Total Row Styles
+// ============================================
+.total-row {
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+
+  td {
+    border-bottom: none;
+    padding: 14px 16px;
+  }
+
+  .total-amount {
+    font-size: 16px;
+    font-weight: 700;
+    color: #059669;
+    background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
   }
 }
 
