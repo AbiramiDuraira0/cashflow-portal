@@ -8,6 +8,10 @@
         <span class="date-icon">📅</span>
         <span class="date-text">{{ currentDate }}</span>
       </button>
+      <button class="hla-view-btn" routerLink="/hla-view">
+        <span class="hla-icon">📊</span>
+        <span class="hla-text">HLA Overview</span>
+      </button>
       <button 
         class="refresh-btn" 
         (click)="refreshData()"
@@ -248,7 +252,6 @@
                        [class.cell-crypto-lost]="sub.name.toLowerCase() === 'crypto lost'"
                        [style.background]="sub.color"
                        [style.flex-basis]="'calc(' + (sub.percentage * 2) + '% - 6px)'"
-                       [style.max-width]="'calc(' + (sub.percentage * 2.5) + '% - 6px)'"
                        [style.animation-delay]="(i * 0.08) + 's'"
                        (click)="openAbiBreakdownPopup(sub.name)">
                     @if (sub.isConsolidated) {
@@ -303,7 +306,7 @@
             </div>
           }
 
-          <!-- Investment Breakdown -->
+          <!-- Investment Breakdown Heatmap (from Expense table) -->
           @if (investmentBreakdownHeatmap().length > 0) {
             <div class="chart-card investment-heatmap-card">
               <div class="chart-card-header investment-header">
@@ -313,18 +316,21 @@
                 <span class="category-total investment-total">{{ formatCurrency(investmentTotalValue()) }}</span>
               </div>
               <div class="category-heatmap-wrapper">
-                <div class="category-treemap-container investment-treemap-container">
+                <div class="investment-grid-container">
                   @for (inv of investmentBreakdownHeatmap(); track inv.name; let i = $index) {
-                    <div class="category-treemap-cell investment-cell" 
+                    <div class="investment-grid-cell" 
                          [class.large]="inv.percentage >= 25"
                          [class.medium]="inv.percentage >= 10 && inv.percentage < 25"
                          [class.small]="inv.percentage < 10"
                          [style.background]="inv.color"
+                         [style.flex-basis]="'calc(' + (inv.percentage * 2) + '% - 6px)'"
+                         [style.max-width]="'calc(' + (inv.percentage * 2.5) + '% - 6px)'"
                          [style.animation-delay]="(i * 0.08) + 's'"
                          (click)="openInvestmentBreakdownPopup(inv.name)">
                       <span class="cell-icon">{{ inv.icon }}</span>
                       <span class="cell-name">{{ inv.name }}</span>
                       <span class="cell-amount">{{ formatCurrency(inv.total) }}</span>
+                      <span class="cell-percent">{{ inv.percentage }}%</span>
                     </div>
                   }
                 </div>
@@ -501,28 +507,28 @@
     </div>
   }
 
-  <!-- Abi Breakdown Popup -->
-  @if (selectedAbiBreakdown()) {
-    <div class="popup-overlay abi-breakdown-popup-overlay" (click)="closeAbiBreakdownPopup()">
-      <div class="popup-card abi-breakdown-popup" (click)="$event.stopPropagation()">
-        <div class="popup-header abi-breakdown-header" [style.background]="selectedAbiBreakdown()!.color">
+  <!-- Unified Category Breakdown Popup (Abi, BB, Home) -->
+  @if (selectedCategoryBreakdown()) {
+    <div class="popup-overlay category-breakdown-popup-overlay" (click)="closeCategoryBreakdownPopup()">
+      <div class="popup-card category-breakdown-popup" (click)="$event.stopPropagation()">
+        <div class="popup-header category-breakdown-header" [style.background]="selectedCategoryBreakdown()!.color">
           <div class="popup-title-section">
-            <span class="popup-icon">{{ selectedAbiBreakdown()!.icon }}</span>
+            <span class="popup-icon">{{ selectedCategoryBreakdown()!.icon }}</span>
             <div class="popup-title-info">
-              <h3>{{ selectedAbiBreakdown()!.name }}</h3>
-              <span class="popup-subtitle">{{ selectedAbiBreakdown()!.expenses.length }} Transaction(s)</span>
+              <h3>{{ selectedCategoryBreakdown()!.name }}</h3>
+              <span class="popup-subtitle">{{ selectedCategoryBreakdown()!.expenses.length }} Transaction(s)</span>
             </div>
           </div>
           <div class="popup-header-stats">
-            <span class="popup-total">{{ formatCurrency(selectedAbiBreakdown()!.total) }}</span>
+            <span class="popup-total">{{ formatCurrency(selectedCategoryBreakdown()!.total) }}</span>
           </div>
         </div>
         
-        <div class="popup-body abi-breakdown-body">
-          @if (selectedAbiBreakdown()!.expenses.length > 0) {
-            @if (selectedAbiBreakdown()!.showAllColumns) {
+        <div class="popup-body category-breakdown-body">
+          @if (selectedCategoryBreakdown()!.expenses.length > 0) {
+            @if (selectedCategoryBreakdown()!.showAllColumns) {
               <!-- All columns: Show Month, Year, Subcategory, Notes, Amount -->
-              <table class="abi-breakdown-table all-columns-table">
+              <table class="breakdown-table all-columns-table">
                 <thead>
                   <tr>
                     <th class="th-month">Month</th>
@@ -533,7 +539,7 @@
                   </tr>
                 </thead>
                 <tbody>
-                  @for (expense of selectedAbiBreakdown()!.expenses; track $index; let i = $index) {
+                  @for (expense of selectedCategoryBreakdown()!.expenses; track $index; let i = $index) {
                     <tr class="breakdown-row" [style.animation-delay]="(i * 0.03) + 's'">
                       <td class="td-month">{{ expense.month }}</td>
                       <td class="td-year">{{ expense.year }}</td>
@@ -545,14 +551,14 @@
                 </tbody>
                 <tfoot>
                   <tr class="total-row">
-                    <td colspan="4"><strong>Total ({{ selectedAbiBreakdown()!.expenses.length }} entries)</strong></td>
-                    <td class="td-amount"><strong>{{ formatCurrency(selectedAbiBreakdown()!.total) }}</strong></td>
+                    <td colspan="4"><strong>Total ({{ selectedCategoryBreakdown()!.expenses.length }} entries)</strong></td>
+                    <td class="td-amount"><strong>{{ formatCurrency(selectedCategoryBreakdown()!.total) }}</strong></td>
                   </tr>
                 </tfoot>
               </table>
-            } @else if (selectedAbiBreakdown()!.isConsolidated) {
+            } @else if (selectedCategoryBreakdown()!.isConsolidated) {
               <!-- Consolidated category: Show Subcategory, Notes, Amount -->
-              <table class="abi-breakdown-table consolidated-table">
+              <table class="breakdown-table consolidated-table">
                 <thead>
                   <tr>
                     <th class="th-subcategory">Subcategory</th>
@@ -561,7 +567,7 @@
                   </tr>
                 </thead>
                 <tbody>
-                  @for (expense of selectedAbiBreakdown()!.expenses; track $index; let i = $index) {
+                  @for (expense of selectedCategoryBreakdown()!.expenses; track $index; let i = $index) {
                     <tr class="breakdown-row" [style.animation-delay]="(i * 0.03) + 's'">
                       <td class="td-subcategory">{{ expense.subcategory }}</td>
                       <td class="td-notes">{{ expense.notes || '-' }}</td>
@@ -571,14 +577,14 @@
                 </tbody>
                 <tfoot>
                   <tr class="total-row">
-                    <td class="td-subcategory" colspan="2"><strong>Total ({{ selectedAbiBreakdown()!.expenses.length }} entries)</strong></td>
-                    <td class="td-amount"><strong>{{ formatCurrency(selectedAbiBreakdown()!.total) }}</strong></td>
+                    <td class="td-subcategory" colspan="2"><strong>Total ({{ selectedCategoryBreakdown()!.expenses.length }} entries)</strong></td>
+                    <td class="td-amount"><strong>{{ formatCurrency(selectedCategoryBreakdown()!.total) }}</strong></td>
                   </tr>
                 </tfoot>
               </table>
             } @else {
               <!-- Single category: Show Year, Month, Amount -->
-              <table class="abi-breakdown-table">
+              <table class="breakdown-table">
                 <thead>
                   <tr>
                     <th class="th-year">Year</th>
@@ -587,7 +593,7 @@
                   </tr>
                 </thead>
                 <tbody>
-                  @for (expense of selectedAbiBreakdown()!.expenses; track $index; let i = $index) {
+                  @for (expense of selectedCategoryBreakdown()!.expenses; track $index; let i = $index) {
                     <tr class="breakdown-row" [style.animation-delay]="(i * 0.03) + 's'">
                       <td class="td-year">{{ expense.year }}</td>
                       <td class="td-month">{{ expense.month }}</td>
@@ -597,8 +603,8 @@
                 </tbody>
                 <tfoot>
                   <tr class="total-row">
-                    <td class="td-year" colspan="2"><strong>Total ({{ selectedAbiBreakdown()!.expenses.length }} entries)</strong></td>
-                    <td class="td-amount"><strong>{{ formatCurrency(selectedAbiBreakdown()!.total) }}</strong></td>
+                    <td class="td-year" colspan="2"><strong>Total ({{ selectedCategoryBreakdown()!.expenses.length }} entries)</strong></td>
+                    <td class="td-amount"><strong>{{ formatCurrency(selectedCategoryBreakdown()!.total) }}</strong></td>
                   </tr>
                 </tfoot>
               </table>
@@ -612,7 +618,7 @@
         </div>
         
         <div class="popup-footer">
-          <button class="btn btn-secondary" (click)="closeAbiBreakdownPopup()">Close</button>
+          <button class="btn btn-secondary" (click)="closeCategoryBreakdownPopup()">Close</button>
         </div>
       </div>
     </div>
@@ -620,9 +626,9 @@
 
   <!-- Investment Breakdown Popup -->
   @if (selectedInvestmentBreakdown()) {
-    <div class="popup-overlay investment-breakdown-popup-overlay" (click)="closeInvestmentBreakdownPopup()">
-      <div class="popup-card investment-breakdown-popup" (click)="$event.stopPropagation()">
-        <div class="popup-header investment-breakdown-header" [style.background]="selectedInvestmentBreakdown()!.color">
+    <div class="popup-overlay category-breakdown-popup-overlay" (click)="closeInvestmentBreakdownPopup()">
+      <div class="popup-card category-breakdown-popup" (click)="$event.stopPropagation()">
+        <div class="popup-header category-breakdown-header" [style.background]="selectedInvestmentBreakdown()!.color">
           <div class="popup-title-section">
             <span class="popup-icon">{{ selectedInvestmentBreakdown()!.icon }}</span>
             <div class="popup-title-info">
@@ -635,13 +641,13 @@
           </div>
         </div>
         
-        <div class="popup-body investment-breakdown-body">
+        <div class="popup-body category-breakdown-body">
           @if (selectedInvestmentBreakdown()!.investments.length > 0) {
-            <table class="investment-breakdown-table">
+            <table class="breakdown-table">
               <thead>
                 <tr>
-                  <th class="th-name">Name</th>
                   <th class="th-year">Year</th>
+                  <th class="th-month">Month</th>
                   <th class="th-notes">Notes</th>
                   <th class="th-amount">Amount</th>
                 </tr>
@@ -649,8 +655,8 @@
               <tbody>
                 @for (inv of selectedInvestmentBreakdown()!.investments; track $index; let i = $index) {
                   <tr class="breakdown-row" [style.animation-delay]="(i * 0.03) + 's'">
-                    <td class="td-name">{{ inv.name }}</td>
                     <td class="td-year">{{ inv.year }}</td>
+                    <td class="td-month">{{ inv.month }}</td>
                     <td class="td-notes">{{ inv.notes || '-' }}</td>
                     <td class="td-amount">{{ formatCurrency(inv.amount) }}</td>
                   </tr>
@@ -673,240 +679,6 @@
         
         <div class="popup-footer">
           <button class="btn btn-secondary" (click)="closeInvestmentBreakdownPopup()">Close</button>
-        </div>
-      </div>
-    </div>
-  }
-
-  <!-- BB Breakdown Popup -->
-  @if (selectedBbBreakdown()) {
-    <div class="popup-overlay bb-breakdown-popup-overlay" (click)="closeBbBreakdownPopup()">
-      <div class="popup-card bb-breakdown-popup" (click)="$event.stopPropagation()">
-        <div class="popup-header bb-breakdown-header" [style.background]="selectedBbBreakdown()!.color">
-          <div class="popup-title-section">
-            <span class="popup-icon">{{ selectedBbBreakdown()!.icon }}</span>
-            <div class="popup-title-info">
-              <h3>{{ selectedBbBreakdown()!.name }}</h3>
-              <span class="popup-subtitle">{{ selectedBbBreakdown()!.expenses.length }} Transaction(s)</span>
-            </div>
-          </div>
-          <div class="popup-header-stats">
-            <span class="popup-total">{{ formatCurrency(selectedBbBreakdown()!.total) }}</span>
-          </div>
-        </div>
-        
-        <div class="popup-body bb-breakdown-body">
-          @if (selectedBbBreakdown()!.expenses.length > 0) {
-            @if (selectedBbBreakdown()!.showAllColumns) {
-              <!-- EMI-Debts: Show Month, Year, Subcategory, Notes, Amount -->
-              <table class="bb-breakdown-table all-columns-table">
-                <thead>
-                  <tr>
-                    <th class="th-month">Month</th>
-                    <th class="th-year">Year</th>
-                    <th class="th-subcategory">Subcategory</th>
-                    <th class="th-notes">Notes</th>
-                    <th class="th-amount">Amount</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  @for (expense of selectedBbBreakdown()!.expenses; track $index; let i = $index) {
-                    <tr class="breakdown-row" [style.animation-delay]="(i * 0.03) + 's'">
-                      <td class="td-month">{{ expense.month }}</td>
-                      <td class="td-year">{{ expense.year }}</td>
-                      <td class="td-subcategory">{{ expense.subcategory }}</td>
-                      <td class="td-notes">{{ expense.notes || '-' }}</td>
-                      <td class="td-amount">{{ formatCurrency(expense.amount) }}</td>
-                    </tr>
-                  }
-                </tbody>
-                <tfoot>
-                  <tr class="total-row">
-                    <td colspan="4"><strong>Total ({{ selectedBbBreakdown()!.expenses.length }} entries)</strong></td>
-                    <td class="td-amount"><strong>{{ formatCurrency(selectedBbBreakdown()!.total) }}</strong></td>
-                  </tr>
-                </tfoot>
-              </table>
-            } @else if (selectedBbBreakdown()!.isConsolidated) {
-              <!-- Consolidated category: Show Subcategory, Notes, Amount -->
-              <table class="bb-breakdown-table consolidated-table">
-                <thead>
-                  <tr>
-                    <th class="th-subcategory">Subcategory</th>
-                    <th class="th-notes">Notes</th>
-                    <th class="th-amount">Amount</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  @for (expense of selectedBbBreakdown()!.expenses; track $index; let i = $index) {
-                    <tr class="breakdown-row" [style.animation-delay]="(i * 0.03) + 's'">
-                      <td class="td-subcategory">{{ expense.subcategory }}</td>
-                      <td class="td-notes">{{ expense.notes || '-' }}</td>
-                      <td class="td-amount">{{ formatCurrency(expense.amount) }}</td>
-                    </tr>
-                  }
-                </tbody>
-                <tfoot>
-                  <tr class="total-row">
-                    <td class="td-subcategory" colspan="2"><strong>Total ({{ selectedBbBreakdown()!.expenses.length }} entries)</strong></td>
-                    <td class="td-amount"><strong>{{ formatCurrency(selectedBbBreakdown()!.total) }}</strong></td>
-                  </tr>
-                </tfoot>
-              </table>
-            } @else {
-              <!-- Single category: Show Year, Month, Amount -->
-              <table class="bb-breakdown-table">
-                <thead>
-                  <tr>
-                    <th class="th-year">Year</th>
-                    <th class="th-month">Month</th>
-                    <th class="th-amount">Amount</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  @for (expense of selectedBbBreakdown()!.expenses; track $index; let i = $index) {
-                    <tr class="breakdown-row" [style.animation-delay]="(i * 0.03) + 's'">
-                      <td class="td-year">{{ expense.year }}</td>
-                      <td class="td-month">{{ expense.month }}</td>
-                      <td class="td-amount">{{ formatCurrency(expense.amount) }}</td>
-                    </tr>
-                  }
-                </tbody>
-                <tfoot>
-                  <tr class="total-row">
-                    <td class="td-year" colspan="2"><strong>Total ({{ selectedBbBreakdown()!.expenses.length }} entries)</strong></td>
-                    <td class="td-amount"><strong>{{ formatCurrency(selectedBbBreakdown()!.total) }}</strong></td>
-                  </tr>
-                </tfoot>
-              </table>
-            }
-          } @else {
-            <div class="no-data">
-              <span class="no-data-icon">📭</span>
-              <p>No expense data found</p>
-            </div>
-          }
-        </div>
-        
-        <div class="popup-footer">
-          <button class="btn btn-secondary" (click)="closeBbBreakdownPopup()">Close</button>
-        </div>
-      </div>
-    </div>
-  }
-
-  <!-- Home Breakdown Popup -->
-  @if (selectedHomeBreakdown()) {
-    <div class="popup-overlay home-breakdown-popup-overlay" (click)="closeHomeBreakdownPopup()">
-      <div class="popup-card home-breakdown-popup" (click)="$event.stopPropagation()">
-        <div class="popup-header home-breakdown-header" [style.background]="selectedHomeBreakdown()!.color">
-          <div class="popup-title-section">
-            <span class="popup-icon">{{ selectedHomeBreakdown()!.icon }}</span>
-            <div class="popup-title-info">
-              <h3>{{ selectedHomeBreakdown()!.name }}</h3>
-              <span class="popup-subtitle">{{ selectedHomeBreakdown()!.expenses.length }} Transaction(s)</span>
-            </div>
-          </div>
-          <div class="popup-header-stats">
-            <span class="popup-total">{{ formatCurrency(selectedHomeBreakdown()!.total) }}</span>
-          </div>
-        </div>
-        
-        <div class="popup-body home-breakdown-body">
-          @if (selectedHomeBreakdown()!.expenses.length > 0) {
-            @if (selectedHomeBreakdown()!.showAllColumns) {
-              <!-- All columns: Show Month, Year, Subcategory, Notes, Amount -->
-              <table class="home-breakdown-table all-columns-table">
-                <thead>
-                  <tr>
-                    <th class="th-month">Month</th>
-                    <th class="th-year">Year</th>
-                    <th class="th-subcategory">Subcategory</th>
-                    <th class="th-notes">Notes</th>
-                    <th class="th-amount">Amount</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  @for (expense of selectedHomeBreakdown()!.expenses; track $index; let i = $index) {
-                    <tr class="breakdown-row" [style.animation-delay]="(i * 0.03) + 's'">
-                      <td class="td-month">{{ expense.month }}</td>
-                      <td class="td-year">{{ expense.year }}</td>
-                      <td class="td-subcategory">{{ expense.subcategory }}</td>
-                      <td class="td-notes">{{ expense.notes || '-' }}</td>
-                      <td class="td-amount">{{ formatCurrency(expense.amount) }}</td>
-                    </tr>
-                  }
-                </tbody>
-                <tfoot>
-                  <tr class="total-row">
-                    <td colspan="4"><strong>Total ({{ selectedHomeBreakdown()!.expenses.length }} entries)</strong></td>
-                    <td class="td-amount"><strong>{{ formatCurrency(selectedHomeBreakdown()!.total) }}</strong></td>
-                  </tr>
-                </tfoot>
-              </table>
-            } @else if (selectedHomeBreakdown()!.isConsolidated) {
-              <!-- Consolidated category: Show Subcategory, Notes, Amount -->
-              <table class="home-breakdown-table consolidated-table">
-                <thead>
-                  <tr>
-                    <th class="th-subcategory">Subcategory</th>
-                    <th class="th-notes">Notes</th>
-                    <th class="th-amount">Amount</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  @for (expense of selectedHomeBreakdown()!.expenses; track $index; let i = $index) {
-                    <tr class="breakdown-row" [style.animation-delay]="(i * 0.03) + 's'">
-                      <td class="td-subcategory">{{ expense.subcategory }}</td>
-                      <td class="td-notes">{{ expense.notes || '-' }}</td>
-                      <td class="td-amount">{{ formatCurrency(expense.amount) }}</td>
-                    </tr>
-                  }
-                </tbody>
-                <tfoot>
-                  <tr class="total-row">
-                    <td class="td-subcategory" colspan="2"><strong>Total ({{ selectedHomeBreakdown()!.expenses.length }} entries)</strong></td>
-                    <td class="td-amount"><strong>{{ formatCurrency(selectedHomeBreakdown()!.total) }}</strong></td>
-                  </tr>
-                </tfoot>
-              </table>
-            } @else {
-              <!-- Single category: Show Year, Month, Amount -->
-              <table class="home-breakdown-table">
-                <thead>
-                  <tr>
-                    <th class="th-year">Year</th>
-                    <th class="th-month">Month</th>
-                    <th class="th-amount">Amount</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  @for (expense of selectedHomeBreakdown()!.expenses; track $index; let i = $index) {
-                    <tr class="breakdown-row" [style.animation-delay]="(i * 0.03) + 's'">
-                      <td class="td-year">{{ expense.year }}</td>
-                      <td class="td-month">{{ expense.month }}</td>
-                      <td class="td-amount">{{ formatCurrency(expense.amount) }}</td>
-                    </tr>
-                  }
-                </tbody>
-                <tfoot>
-                  <tr class="total-row">
-                    <td class="td-year" colspan="2"><strong>Total ({{ selectedHomeBreakdown()!.expenses.length }} entries)</strong></td>
-                    <td class="td-amount"><strong>{{ formatCurrency(selectedHomeBreakdown()!.total) }}</strong></td>
-                  </tr>
-                </tfoot>
-              </table>
-            }
-          } @else {
-            <div class="no-data">
-              <span class="no-data-icon">📭</span>
-              <p>No expense data found</p>
-            </div>
-          }
-        </div>
-        
-        <div class="popup-footer">
-          <button class="btn btn-secondary" (click)="closeHomeBreakdownPopup()">Close</button>
         </div>
       </div>
     </div>

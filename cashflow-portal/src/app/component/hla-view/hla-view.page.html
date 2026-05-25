@@ -1,0 +1,270 @@
+<section class="hla-view-page">
+  <!-- Page Header -->
+  <header class="page-header">
+    <div class="header-content">
+      <div class="title-section">
+        <h1>{{ pageTitle }}</h1>
+        <p class="subtitle">High Level Allocation Overview</p>
+      </div>
+      <div class="header-actions">
+        <button class="btn-back" routerLink="/dashboard" data-tooltip="Back to Dashboard">
+          <span class="icon">←</span>
+          <span class="text">Dashboard</span>
+        </button>
+        <div class="date-badge">
+          <span class="icon">📅</span>
+          <span class="text">{{ currentDate }}</span>
+        </div>
+        <button class="refresh-btn" (click)="refreshData()" [disabled]="loading()" data-tooltip="Refresh Data">
+          <span [class.spinning]="loading()">🔄</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Summary Cards -->
+  <div class="summary-cards">
+    <!-- Total Income Card -->
+    <div class="summary-card income">
+      <div class="card-icon">🧿</div>
+      <div class="card-content">
+        <p class="card-label">Total Income</p>
+        <h2 class="card-value">{{ formatCurrency(totalIncome()) }}</h2>
+        <p class="card-subtitle">All time earnings</p>
+      </div>
+    </div>
+
+    <!-- Balance Card -->
+    <div class="summary-card balance" [class.negative]="balance() < 0">
+      <div class="card-icon">{{ balance() >= 0 ? '📈' : '📉' }}</div>
+      <div class="card-content">
+        <p class="card-label">Balance</p>
+        <h2 class="card-value">{{ formatCurrency(balance()) }}</h2>
+        <p class="card-subtitle">Income - Allocations</p>
+      </div>
+    </div>
+
+    <!-- Investment Total Card -->
+    <div class="summary-card investment clickable" (click)="showTypePopup('investment')">
+      <div class="card-icon">🎯</div>
+      <div class="card-content">
+        <p class="card-label">Investment</p>
+        <h2 class="card-value">{{ formatCurrency(investmentTotal()) }}</h2>
+        <p class="card-subtitle">Total invested</p>
+      </div>
+    </div>
+
+    <!-- Debt Total Card -->
+    <div class="summary-card debt clickable" (click)="showTypePopup('debt')">
+      <div class="card-icon">💎</div>
+      <div class="card-content">
+        <p class="card-label">Money To Get</p>
+        <h2 class="card-value">{{ formatCurrency(debtTotal()) }}</h2>
+        <p class="card-subtitle">Total debt paid</p>
+      </div>
+    </div>
+
+    <!-- Family Total Card -->
+    <div class="summary-card family clickable" (click)="showTypePopup('family')">
+      <div class="card-icon">👨‍👩‍👧‍👦</div>
+      <div class="card-content">
+        <p class="card-label">Family</p>
+        <h2 class="card-value">{{ formatCurrency(familyTotal()) }}</h2>
+        <p class="card-subtitle">Family expenses</p>
+      </div>
+    </div>
+
+    <!-- Expense Total Card -->
+    <div class="summary-card expense clickable" (click)="showTypePopup('expense')">
+      <div class="card-icon">🌍</div>
+      <div class="card-content">
+        <p class="card-label">Expense</p>
+        <h2 class="card-value">{{ formatCurrency(expenseTotal()) }}</h2>
+        <p class="card-subtitle">Total expenses</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- HLA Records Table -->
+  <div class="entries-container">
+    <div class="table-wrapper">
+      <table class="entries-table">
+        <thead>
+          <tr>
+            <th class="col-sno">S.No</th>
+            <th class="col-icon">Icon</th>
+            <th class="col-category sortable" (click)="sortBy('name')">
+              <span class="header-content">
+                Category
+                <span class="sort-icon" [class.active]="sortColumn() === 'name'">
+                  {{ getSortIcon('name') }}
+                </span>
+              </span>
+            </th>
+            <th class="col-amount sortable" (click)="sortBy('amount')">
+              <span class="header-content">
+                Amount (INR)
+                <span class="sort-icon" [class.active]="sortColumn() === 'amount'">
+                  {{ getSortIcon('amount') }}
+                </span>
+              </span>
+            </th>
+            <th class="col-type sortable" (click)="sortBy('type')">
+              <span class="header-content">
+                Type
+                <span class="sort-icon" [class.active]="sortColumn() === 'type'">
+                  {{ getSortIcon('type') }}
+                </span>
+              </span>
+            </th>
+            <th class="col-status sortable" (click)="sortBy('status')">
+              <span class="header-content">
+                Status
+                <span class="sort-icon" [class.active]="sortColumn() === 'status'">
+                  {{ getSortIcon('status') }}
+                </span>
+              </span>
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (record of paginatedRecords(); track record.id; let i = $index) {
+            <tr class="entry-row" [style.animation-delay]="(i * 0.03) + 's'">
+              <td class="col-sno">
+                <span class="sno-badge">{{ getRowNumber(i) }}</span>
+              </td>
+              <td class="col-icon">
+                <span class="icon-cell">{{ record.icon }}</span>
+              </td>
+              <td class="col-category">
+                <span class="category-text">
+                  {{ record.name }}
+                  @if (record.isHardcoded) {
+                    <span class="hardcoded-flag" data-tooltip="Hardcoded Amount">📌</span>
+                  }
+                </span>
+              </td>
+              <td class="col-amount">
+                <span class="amount-value">{{ formatCurrency(record.amount) }}</span>
+              </td>
+              <td class="col-type">
+                <span class="type-badge" [class]="record.type">{{ record.type }}</span>
+              </td>
+              <td class="col-status">
+                <span class="status-badge" [class]="record.status">
+                  <span class="status-dot"></span>
+                  {{ record.status }}
+                </span>
+              </td>
+            </tr>
+          }
+        </tbody>
+        <tfoot>
+          <tr class="total-row">
+            <td colspan="3"><strong>Total</strong></td>
+            <td class="col-amount">
+              <strong class="total-amount">{{ formatCurrency(totalAmount()) }}</strong>
+            </td>
+            <td colspan="2"></td>
+          </tr>
+        </tfoot>
+      </table>
+
+      <!-- Pagination Controls -->
+      <div class="pagination-container">
+        <div class="pagination-info">
+          {{ paginationInfo() }}
+        </div>
+        
+        <div class="page-size-selector">
+          <label for="pageSize">Records per page:</label>
+          <select id="pageSize" [(ngModel)]="pageSize" (ngModelChange)="onPageSizeChange()">
+            @for (size of pageSizeOptions; track size) {
+              <option [value]="size">{{ size }}</option>
+            }
+          </select>
+        </div>
+        
+        <div class="pagination-controls">
+          <button 
+            class="page-btn" 
+            (click)="prevPage()" 
+            [disabled]="currentPage() === 1"
+            data-tooltip="Previous Page">
+            ◀
+          </button>
+          
+          @for (pageNum of getPageNumbers(); track pageNum) {
+            <button 
+              class="page-btn" 
+              [class.active]="pageNum === currentPage()"
+              (click)="goToPage(pageNum)"
+              [disabled]="pageNum === currentPage()">
+              {{ pageNum }}
+            </button>
+          }
+          
+          <button 
+            class="page-btn" 
+            (click)="nextPage()" 
+            [disabled]="currentPage() === totalPages()"
+            data-tooltip="Next Page">
+            ▶
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Type Breakdown Popup -->
+@if (showPopup()) {
+  <div class="popup-overlay" (click)="closePopup()">
+    <div class="popup-content" (click)="$event.stopPropagation()">
+      <div class="popup-header">
+        <h3>{{ popupTitle() }} Breakdown</h3>
+        <button class="popup-close" (click)="closePopup()">✕</button>
+      </div>
+      <div class="popup-body">
+        <table class="popup-table">
+          <thead>
+            <tr>
+              <th>S.No</th>
+              <th>Icon</th>
+              <th>Name</th>
+              <th>Amount</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (record of popupRecords(); track record.id; let i = $index) {
+              <tr>
+                <td>{{ i + 1 }}</td>
+                <td>{{ record.icon }}</td>
+                <td>
+                  {{ record.name }}
+                  @if (record.isHardcoded) {
+                    <span class="hardcoded-flag" data-tooltip="Hardcoded Amount">📌</span>
+                  }
+                </td>
+                <td>{{ formatCurrency(record.amount) }}</td>
+                <td>
+                  <span class="status-badge" [class]="record.status">
+                    {{ record.status }}
+                  </span>
+                </td>
+              </tr>
+            }
+          </tbody>
+          <tfoot>
+            <tr>
+              <td colspan="3"><strong>Total</strong></td>
+              <td><strong>{{ formatCurrency(popupTotal()) }}</strong></td>
+              <td></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+  </div>
+}
