@@ -26,7 +26,7 @@
   <div class="summary-cards">
     <!-- Total Income Card -->
     <div class="summary-card income">
-      <div class="card-icon">�</div>
+      <div class="card-icon">🧿</div>
       <div class="card-content">
         <p class="card-label">Total Income</p>
         <h2 class="card-value">{{ formatCurrency(totalIncome()) }}</h2>
@@ -45,8 +45,8 @@
     </div>
 
     <!-- Investment Total Card -->
-    <div class="summary-card investment">
-      <div class="card-icon">📈</div>
+    <div class="summary-card investment clickable" (click)="showTypePopup('investment')">
+      <div class="card-icon">🎯</div>
       <div class="card-content">
         <p class="card-label">Investment</p>
         <h2 class="card-value">{{ formatCurrency(investmentTotal()) }}</h2>
@@ -55,17 +55,17 @@
     </div>
 
     <!-- Debt Total Card -->
-    <div class="summary-card debt">
-      <div class="card-icon">�</div>
+    <div class="summary-card debt clickable" (click)="showTypePopup('debt')">
+      <div class="card-icon">💎</div>
       <div class="card-content">
-        <p class="card-label">Debts</p>
+        <p class="card-label">Money To Get</p>
         <h2 class="card-value">{{ formatCurrency(debtTotal()) }}</h2>
         <p class="card-subtitle">Total debt paid</p>
       </div>
     </div>
 
     <!-- Family Total Card -->
-    <div class="summary-card family">
+    <div class="summary-card family clickable" (click)="showTypePopup('family')">
       <div class="card-icon">👨‍👩‍👧‍👦</div>
       <div class="card-content">
         <p class="card-label">Family</p>
@@ -75,8 +75,8 @@
     </div>
 
     <!-- Expense Total Card -->
-    <div class="summary-card expense">
-      <div class="card-icon">�</div>
+    <div class="summary-card expense clickable" (click)="showTypePopup('expense')">
+      <div class="card-icon">🌍</div>
       <div class="card-content">
         <p class="card-label">Expense</p>
         <h2 class="card-value">{{ formatCurrency(expenseTotal()) }}</h2>
@@ -137,7 +137,12 @@
                 <span class="icon-cell">{{ record.icon }}</span>
               </td>
               <td class="col-category">
-                <span class="category-text">{{ record.name }}</span>
+                <span class="category-text">
+                  {{ record.name }}
+                  @if (record.isHardcoded) {
+                    <span class="hardcoded-flag" data-tooltip="Hardcoded Amount">📌</span>
+                  }
+                </span>
               </td>
               <td class="col-amount">
                 <span class="amount-value">{{ formatCurrency(record.amount) }}</span>
@@ -211,3 +216,55 @@
     </div>
   </div>
 </section>
+
+<!-- Type Breakdown Popup -->
+@if (showPopup()) {
+  <div class="popup-overlay" (click)="closePopup()">
+    <div class="popup-content" (click)="$event.stopPropagation()">
+      <div class="popup-header">
+        <h3>{{ popupTitle() }} Breakdown</h3>
+        <button class="popup-close" (click)="closePopup()">✕</button>
+      </div>
+      <div class="popup-body">
+        <table class="popup-table">
+          <thead>
+            <tr>
+              <th>S.No</th>
+              <th>Icon</th>
+              <th>Name</th>
+              <th>Amount</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (record of popupRecords(); track record.id; let i = $index) {
+              <tr>
+                <td>{{ i + 1 }}</td>
+                <td>{{ record.icon }}</td>
+                <td>
+                  {{ record.name }}
+                  @if (record.isHardcoded) {
+                    <span class="hardcoded-flag" data-tooltip="Hardcoded Amount">📌</span>
+                  }
+                </td>
+                <td>{{ formatCurrency(record.amount) }}</td>
+                <td>
+                  <span class="status-badge" [class]="record.status">
+                    {{ record.status }}
+                  </span>
+                </td>
+              </tr>
+            }
+          </tbody>
+          <tfoot>
+            <tr>
+              <td colspan="3"><strong>Total</strong></td>
+              <td><strong>{{ formatCurrency(popupTotal()) }}</strong></td>
+              <td></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+  </div>
+}

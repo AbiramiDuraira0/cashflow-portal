@@ -15,6 +15,7 @@ type HlaRecord = {
   type: 'debt' | 'investment' | 'expense' | 'family' | 'asset' | 'subscription';
   status: 'active' | 'pending' | 'completed';
   amount: number;
+  isHardcoded: boolean;
 };
 
 type SortColumn = 'name' | 'type' | 'status' | 'amount';
@@ -53,21 +54,24 @@ export class HlaViewPage {
 
   private readonly hlaConfigs: HlaCategoryConfig[] = [
     { id: 1, name: 'BB EMI - Debts', icon: '💳', type: 'debt', status: 'active', dataSource: 'expense', categoryPatterns: ['BB'], subcategoryPatterns: [/^(emi|kadan|hault)/i] },
-    { id: 2, name: 'Gold Loan', icon: '🥇', type: 'debt', status: 'completed', dataSource: 'debt', debtLoanName: 'Gold Loan' },
+    { id: 2, name: 'Gold Loan + BOB Edu Loan', icon: '🥇', type: 'expense', status: 'completed', dataSource: 'fixed', fixedAmount: 570000 },
     { id: 3, name: 'Stock + MF + PPF + RD + NPS', icon: '📈', type: 'investment', status: 'active', dataSource: 'expense', categoryPatterns: ['Investment'], subcategoryPatterns: [/stock|mf|sip|mutual|ppf|rd|recurring|nps/i] },
-    { id: 4, name: 'Crypto Lost', icon: '₿', type: 'investment', status: 'completed', dataSource: 'fixed', fixedAmount: 150000 },
-    { id: 5, name: 'Ring', icon: '💍', type: 'investment', status: 'completed', dataSource: 'fixed', fixedAmount: 54000 },
+    { id: 4, name: 'Crypto Lost', icon: '₿', type: 'expense', status: 'completed', dataSource: 'fixed', fixedAmount: 150000 },
+    { id: 5, name: 'Gold Ring', icon: '💍', type: 'investment', status: 'completed', dataSource: 'fixed', fixedAmount: 60000 },
     { id: 6, name: 'Furniture', icon: '🪑', type: 'family', status: 'completed', dataSource: 'expense', categoryPatterns: ['Home'], subcategoryPatterns: [/^(sofa\s*cupboard|ac|dress\s*plast|furniture)/i] },
-    { id: 7, name: 'Trips', icon: '✈️', type: 'expense', status: 'completed', dataSource: 'fixed', fixedAmount: 97260 },
+    { id: 7, name: 'Trips', icon: '✈️', type: 'expense', status: 'completed', dataSource: 'fixed', fixedAmount: 100000 },
     { id: 8, name: 'Wifi + Recharge', icon: '📶', type: 'expense', status: 'active', dataSource: 'expense', includeAllFromCategories: ['Wifi'], categoryPatterns: ['Home', 'BB', 'Abi'], subcategoryPatterns: [/recharge|jio|phone\s*recharge|netflix|prime|hotstar|spotify|subscription|google|youtube/i] },
     { id: 9, name: 'Rajeswari - Debts', icon: '👩', type: 'debt', status: 'active', dataSource: 'fixed', fixedAmount: 42500 },
     { id: 10, name: 'Chit', icon: '📝', type: 'investment', status: 'completed', dataSource: 'expense', categoryPatterns: ['Home'], subcategoryPatterns: [/chit/i] },
-    { id: 11, name: 'Amma', icon: '👩', type: 'family', status: 'active', dataSource: 'expense', categoryPatterns: ['BB'], subcategoryPatterns: [/amma/i] },
-    { id: 12, name: 'Appa', icon: '👨‍🦳', type: 'family', status: 'active', dataSource: 'expense', categoryPatterns: ['BB'], subcategoryPatterns: [/appa/i] },
-    { id: 13, name: 'Dhanush', icon: '👦', type: 'family', status: 'active', dataSource: 'expense', categoryPatterns: ['BB'], subcategoryPatterns: [/dhanush/i] },
+    { id: 11, name: 'Amma', icon: '👩', type: 'family', status: 'active', dataSource: 'fixed', fixedAmount: 30000 },
+    { id: 12, name: 'Appa', icon: '👨‍🦳', type: 'family', status: 'active', dataSource: 'fixed', fixedAmount: 30000 },
+    { id: 13, name: 'Dhanush', icon: '👦', type: 'family', status: 'active', dataSource: 'fixed', fixedAmount: 10000 },
     { id: 14, name: 'Scooty', icon: '🛵', type: 'expense', status: 'active', dataSource: 'expense', categoryPatterns: ['Abi'], subcategoryPatterns: [/scooty/i] },
     { id: 15, name: 'Pratheek - Debts', icon: '👨', type: 'debt', status: 'active', dataSource: 'fixed', fixedAmount: 9000 },
     { id: 16, name: 'Medical', icon: '🏥', type: 'expense', status: 'active', dataSource: 'expense', categoryPatterns: ['BB', 'Abi'], subcategoryPatterns: [/medical|hospital|doctor/i] },
+    { id: 17, name: 'Abi', icon: '🧿', type: 'family', status: 'active', dataSource: 'fixed', fixedAmount: 100000 },
+    { id: 18, name: 'God', icon: '🛕', type: 'family', status: 'active', dataSource: 'fixed', fixedAmount: 12000 },
+    { id: 19, name: 'BB Gifts', icon: '🎁', type: 'family', status: 'active', dataSource: 'fixed', fixedAmount: 50000 },
   ];
 
   private expenseData = this.expenseService.getExpensesSignal();
@@ -111,7 +115,7 @@ export class HlaViewPage {
         totalAmount = config.fixedAmount || 0;
       }
       
-      return { id: config.id, name: config.name, icon: config.icon, type: config.type, status: config.status, amount: totalAmount };
+      return { id: config.id, name: config.name, icon: config.icon, type: config.type, status: config.status, amount: totalAmount, isHardcoded: config.dataSource === 'fixed' };
     });
   });
 
@@ -133,6 +137,21 @@ export class HlaViewPage {
   protected debtTotal = computed(() => this.hlaRecords().filter(r => r.type === 'debt').reduce((sum, r) => sum + r.amount, 0));
   protected familyTotal = computed(() => this.hlaRecords().filter(r => r.type === 'family').reduce((sum, r) => sum + r.amount, 0));
   protected expenseTotal = computed(() => this.hlaRecords().filter(r => r.type === 'expense').reduce((sum, r) => sum + r.amount, 0));
+
+  // Popup state
+  protected showPopup = signal<boolean>(false);
+  protected popupType = signal<string>('');
+  protected popupTitle = computed(() => {
+    const typeMap: Record<string, string> = {
+      'investment': 'Investment',
+      'debt': 'Debts',
+      'family': 'Family',
+      'expense': 'Expense'
+    };
+    return typeMap[this.popupType()] || '';
+  });
+  protected popupRecords = computed(() => this.hlaRecords().filter(r => r.type === this.popupType()));
+  protected popupTotal = computed(() => this.popupRecords().reduce((sum, r) => sum + r.amount, 0));
 
   constructor() {
     const now = new Date();
@@ -160,6 +179,16 @@ export class HlaViewPage {
   onPageSizeChange(): void { this.currentPage.set(1); }
   getRowNumber(index: number): number { return (this.currentPage() - 1) * this.pageSize() + index + 1; }
   formatCurrency(amount: number): string { return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(amount); }
+
+  showTypePopup(type: string): void {
+    this.popupType.set(type);
+    this.showPopup.set(true);
+  }
+
+  closePopup(): void {
+    this.showPopup.set(false);
+    this.popupType.set('');
+  }
 
   async refreshData(): Promise<void> {
     this.loading.set(true);
