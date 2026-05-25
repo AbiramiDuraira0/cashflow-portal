@@ -6,6 +6,7 @@ import { PaginationHelper, SortingHelper, SortDirection } from '../../shared';
 import { ExpenseService, ExpenseEntry } from '../../services/expense.service';
 import { DebtService, DebtEntry } from '../../services/debt.service';
 import { InvestmentService, InvestmentEntry } from '../../services/investment.service';
+import { IncomeService } from '../../services/income.service';
 
 type HlaRecord = {
   id: number;
@@ -28,6 +29,7 @@ type HlaCategoryConfig = {
   fixedAmount?: number;
   categoryPatterns?: string[];
   subcategoryPatterns?: RegExp[];
+  includeAllFromCategories?: string[];  // Categories where ALL expenses should be included
   debtLoanName?: string;
   investmentNamePattern?: RegExp;
 };
@@ -43,7 +45,9 @@ export class HlaViewPage {
   private expenseService = inject(ExpenseService);
   private debtService = inject(DebtService);
   private investmentService = inject(InvestmentService);
+  private incomeService = inject(IncomeService);
   
+  protected loading = signal<boolean>(false);
   protected pageTitle = 'High Level Allocation Overview';
   protected currentDate: string;
 
@@ -52,18 +56,18 @@ export class HlaViewPage {
     { id: 2, name: 'Gold Loan', icon: '🥇', type: 'debt', status: 'completed', dataSource: 'debt', debtLoanName: 'Gold Loan' },
     { id: 3, name: 'Stock + MF + PPF + RD + NPS', icon: '📈', type: 'investment', status: 'active', dataSource: 'expense', categoryPatterns: ['Investment'], subcategoryPatterns: [/stock|mf|sip|mutual|ppf|rd|recurring|nps/i] },
     { id: 4, name: 'Crypto Lost', icon: '₿', type: 'investment', status: 'completed', dataSource: 'fixed', fixedAmount: 150000 },
-    { id: 5, name: 'Ring', icon: '💍', type: 'asset', status: 'completed', dataSource: 'fixed', fixedAmount: 54000 },
-    { id: 6, name: 'Furniture', icon: '🪑', type: 'asset', status: 'completed', dataSource: 'expense', categoryPatterns: ['Home'], subcategoryPatterns: [/^(sofa\s*cupboard|ac|dress\s*plast|furniture)/i] },
-    { id: 7, name: 'Trips', icon: '✈️', type: 'expense', status: 'active', dataSource: 'expense', categoryPatterns: ['Abi', 'BB'], subcategoryPatterns: [/trip|uttrakand/i] },
-    { id: 8, name: 'Wifi + Recharge', icon: '📶', type: 'subscription', status: 'active', dataSource: 'expense', categoryPatterns: ['Home', 'BB', 'Abi'], subcategoryPatterns: [/wifi|recharge|jio|phone\s*recharge|netflix|prime|hotstar|spotify|subscription|google|youtube/i] },
-    { id: 9, name: 'Rajeswari - Debts', icon: '👩', type: 'family', status: 'completed', dataSource: 'fixed', fixedAmount: 42500 },
-    { id: 10, name: 'Chit', icon: '📝', type: 'investment', status: 'active', dataSource: 'expense', categoryPatterns: ['Investment'], subcategoryPatterns: [/chit/i] },
+    { id: 5, name: 'Ring', icon: '💍', type: 'investment', status: 'completed', dataSource: 'fixed', fixedAmount: 54000 },
+    { id: 6, name: 'Furniture', icon: '🪑', type: 'family', status: 'completed', dataSource: 'expense', categoryPatterns: ['Home'], subcategoryPatterns: [/^(sofa\s*cupboard|ac|dress\s*plast|furniture)/i] },
+    { id: 7, name: 'Trips', icon: '✈️', type: 'expense', status: 'completed', dataSource: 'fixed', fixedAmount: 97260 },
+    { id: 8, name: 'Wifi + Recharge', icon: '📶', type: 'expense', status: 'active', dataSource: 'expense', includeAllFromCategories: ['Wifi'], categoryPatterns: ['Home', 'BB', 'Abi'], subcategoryPatterns: [/recharge|jio|phone\s*recharge|netflix|prime|hotstar|spotify|subscription|google|youtube/i] },
+    { id: 9, name: 'Rajeswari - Debts', icon: '👩', type: 'debt', status: 'active', dataSource: 'fixed', fixedAmount: 42500 },
+    { id: 10, name: 'Chit', icon: '📝', type: 'investment', status: 'completed', dataSource: 'expense', categoryPatterns: ['Home'], subcategoryPatterns: [/chit/i] },
     { id: 11, name: 'Amma', icon: '👩', type: 'family', status: 'active', dataSource: 'expense', categoryPatterns: ['BB'], subcategoryPatterns: [/amma/i] },
     { id: 12, name: 'Appa', icon: '👨‍🦳', type: 'family', status: 'active', dataSource: 'expense', categoryPatterns: ['BB'], subcategoryPatterns: [/appa/i] },
     { id: 13, name: 'Dhanush', icon: '👦', type: 'family', status: 'active', dataSource: 'expense', categoryPatterns: ['BB'], subcategoryPatterns: [/dhanush/i] },
-    { id: 14, name: 'Scooty', icon: '🛵', type: 'asset', status: 'completed', dataSource: 'expense', categoryPatterns: ['Abi'], subcategoryPatterns: [/scooty/i] },
-    { id: 15, name: 'Pratheek - Debts', icon: '👨', type: 'family', status: 'completed', dataSource: 'fixed', fixedAmount: 9000 },
-    { id: 16, name: 'Medical', icon: '🏥', type: 'expense', status: 'pending', dataSource: 'expense', categoryPatterns: ['BB', 'Abi'], subcategoryPatterns: [/medical|hospital|doctor/i] },
+    { id: 14, name: 'Scooty', icon: '🛵', type: 'expense', status: 'active', dataSource: 'expense', categoryPatterns: ['Abi'], subcategoryPatterns: [/scooty/i] },
+    { id: 15, name: 'Pratheek - Debts', icon: '👨', type: 'debt', status: 'active', dataSource: 'fixed', fixedAmount: 9000 },
+    { id: 16, name: 'Medical', icon: '🏥', type: 'expense', status: 'active', dataSource: 'expense', categoryPatterns: ['BB', 'Abi'], subcategoryPatterns: [/medical|hospital|doctor/i] },
   ];
 
   private expenseData = this.expenseService.getExpensesSignal();
@@ -80,8 +84,17 @@ export class HlaViewPage {
       
       if (config.dataSource === 'expense') {
         const matchingExpenses = expenses.filter((exp: ExpenseEntry) => {
+          const categoryLower = exp.categoryName.toLowerCase();
+          
+          // Check if this expense belongs to a category where ALL should be included
+          const includeAll = config.includeAllFromCategories?.some(
+            cat => categoryLower.includes(cat.toLowerCase()) || cat.toLowerCase().includes(categoryLower)
+          );
+          if (includeAll) return true;
+          
+          // Otherwise, check category + subcategory pattern match
           const categoryMatch = config.categoryPatterns?.some(
-            pattern => exp.categoryName.toLowerCase() === pattern.toLowerCase()
+            pattern => categoryLower === pattern.toLowerCase()
           );
           if (!categoryMatch) return false;
           const subcategory = exp.subcategory || '';
@@ -105,7 +118,7 @@ export class HlaViewPage {
   protected sortColumn = signal<SortColumn>('amount');
   protected sortDirection = signal<SortDirection>('desc');
   protected currentPage = signal<number>(1);
-  protected pageSize = signal<number>(10);
+  protected pageSize = signal<number>(25);
   protected readonly pageSizeOptions = PaginationHelper.PAGE_SIZE_OPTIONS;
 
   protected sortedRecords = computed(() => SortingHelper.sort(this.hlaRecords(), this.sortColumn(), this.sortDirection()));
@@ -114,6 +127,12 @@ export class HlaViewPage {
   protected totalPages = computed(() => this.paginationResult().totalPages);
   protected paginationInfo = computed(() => PaginationHelper.getPaginationInfo(this.paginationResult()));
   protected totalAmount = computed(() => this.hlaRecords().reduce((sum, record) => sum + record.amount, 0));
+  protected totalIncome = computed(() => this.incomeService.getTotalIncome());
+  protected balance = computed(() => this.totalIncome() - this.totalAmount());
+  protected investmentTotal = computed(() => this.hlaRecords().filter(r => r.type === 'investment').reduce((sum, r) => sum + r.amount, 0));
+  protected debtTotal = computed(() => this.hlaRecords().filter(r => r.type === 'debt').reduce((sum, r) => sum + r.amount, 0));
+  protected familyTotal = computed(() => this.hlaRecords().filter(r => r.type === 'family').reduce((sum, r) => sum + r.amount, 0));
+  protected expenseTotal = computed(() => this.hlaRecords().filter(r => r.type === 'expense').reduce((sum, r) => sum + r.amount, 0));
 
   constructor() {
     const now = new Date();
@@ -141,4 +160,18 @@ export class HlaViewPage {
   onPageSizeChange(): void { this.currentPage.set(1); }
   getRowNumber(index: number): number { return (this.currentPage() - 1) * this.pageSize() + index + 1; }
   formatCurrency(amount: number): string { return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(amount); }
+
+  async refreshData(): Promise<void> {
+    this.loading.set(true);
+    try {
+      await Promise.all([
+        this.expenseService.loadExpenseData(),
+        this.debtService.loadDebtData(),
+        this.investmentService.loadInvestmentData(),
+        this.incomeService.loadIncomeData()
+      ]);
+    } finally {
+      this.loading.set(false);
+    }
+  }
 }

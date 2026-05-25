@@ -15,39 +15,72 @@
           <span class="icon">📅</span>
           <span class="text">{{ currentDate }}</span>
         </div>
+        <button class="refresh-btn" (click)="refreshData()" [disabled]="loading()" data-tooltip="Refresh Data">
+          <span [class.spinning]="loading()">🔄</span>
+        </button>
       </div>
     </div>
   </header>
 
   <!-- Summary Cards -->
   <div class="summary-cards">
-    <!-- Total Records Card -->
-    <div class="summary-card total">
-      <div class="card-icon">📋</div>
+    <!-- Total Income Card -->
+    <div class="summary-card income">
+      <div class="card-icon">�</div>
       <div class="card-content">
-        <p class="card-label">Total Records</p>
-        <h2 class="card-value">{{ hlaRecords().length }}</h2>
-        <p class="card-subtitle">HLA categories tracked</p>
+        <p class="card-label">Total Income</p>
+        <h2 class="card-value">{{ formatCurrency(totalIncome()) }}</h2>
+        <p class="card-subtitle">All time earnings</p>
       </div>
     </div>
 
-    <!-- Active Items Card -->
-    <div class="summary-card active">
-      <div class="card-icon">✅</div>
+    <!-- Balance Card -->
+    <div class="summary-card balance" [class.negative]="balance() < 0">
+      <div class="card-icon">{{ balance() >= 0 ? '📈' : '📉' }}</div>
       <div class="card-content">
-        <p class="card-label">Active Items</p>
-        <h2 class="card-value">{{ getActiveCount() }}</h2>
-        <p class="card-subtitle">Currently active</p>
+        <p class="card-label">Balance</p>
+        <h2 class="card-value">{{ formatCurrency(balance()) }}</h2>
+        <p class="card-subtitle">Income - Allocations</p>
       </div>
     </div>
 
-    <!-- Pending Items Card -->
-    <div class="summary-card pending">
-      <div class="card-icon">⏳</div>
+    <!-- Investment Total Card -->
+    <div class="summary-card investment">
+      <div class="card-icon">📈</div>
       <div class="card-content">
-        <p class="card-label">Pending Items</p>
-        <h2 class="card-value">{{ getPendingCount() }}</h2>
-        <p class="card-subtitle">Awaiting action</p>
+        <p class="card-label">Investment</p>
+        <h2 class="card-value">{{ formatCurrency(investmentTotal()) }}</h2>
+        <p class="card-subtitle">Total invested</p>
+      </div>
+    </div>
+
+    <!-- Debt Total Card -->
+    <div class="summary-card debt">
+      <div class="card-icon">�</div>
+      <div class="card-content">
+        <p class="card-label">Debts</p>
+        <h2 class="card-value">{{ formatCurrency(debtTotal()) }}</h2>
+        <p class="card-subtitle">Total debt paid</p>
+      </div>
+    </div>
+
+    <!-- Family Total Card -->
+    <div class="summary-card family">
+      <div class="card-icon">👨‍👩‍👧‍👦</div>
+      <div class="card-content">
+        <p class="card-label">Family</p>
+        <h2 class="card-value">{{ formatCurrency(familyTotal()) }}</h2>
+        <p class="card-subtitle">Family expenses</p>
+      </div>
+    </div>
+
+    <!-- Expense Total Card -->
+    <div class="summary-card expense">
+      <div class="card-icon">�</div>
+      <div class="card-content">
+        <p class="card-label">Expense</p>
+        <h2 class="card-value">{{ formatCurrency(expenseTotal()) }}</h2>
+        <p class="card-subtitle">Total expenses</p>
       </div>
     </div>
   </div>
@@ -58,7 +91,7 @@
       <table class="entries-table">
         <thead>
           <tr>
-            <th class="col-sno">#</th>
+            <th class="col-sno">S.No</th>
             <th class="col-icon">Icon</th>
             <th class="col-category sortable" (click)="sortBy('name')">
               <span class="header-content">
