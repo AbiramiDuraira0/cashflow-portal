@@ -1,0 +1,160 @@
+<section class="hla-view-page">
+  <!-- Page Header -->
+  <header class="page-header">
+    <div class="header-content">
+      <div class="title-section">
+        <h1>{{ pageTitle }}</h1>
+        <p class="subtitle">High Level Allocation Overview</p>
+      </div>
+      <div class="header-actions">
+        <button class="btn-back" routerLink="/dashboard" data-tooltip="Back to Dashboard">
+          <span class="icon">←</span>
+          <span class="text">Dashboard</span>
+        </button>
+        <div class="date-badge">
+          <span class="icon">📅</span>
+          <span class="text">{{ currentDate }}</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Summary Cards -->
+  <div class="summary-cards">
+    <!-- Total Records Card -->
+    <div class="summary-card total">
+      <div class="card-icon">📋</div>
+      <div class="card-content">
+        <p class="card-label">Total Records</p>
+        <h2 class="card-value">{{ hlaRecords.length }}</h2>
+        <p class="card-subtitle">HLA categories tracked</p>
+      </div>
+    </div>
+
+    <!-- Active Items Card -->
+    <div class="summary-card active">
+      <div class="card-icon">✅</div>
+      <div class="card-content">
+        <p class="card-label">Active Items</p>
+        <h2 class="card-value">{{ getActiveCount() }}</h2>
+        <p class="card-subtitle">Currently active</p>
+      </div>
+    </div>
+
+    <!-- Pending Items Card -->
+    <div class="summary-card pending">
+      <div class="card-icon">⏳</div>
+      <div class="card-content">
+        <p class="card-label">Pending Items</p>
+        <h2 class="card-value">{{ getPendingCount() }}</h2>
+        <p class="card-subtitle">Awaiting action</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- HLA Records Table -->
+  <div class="entries-container">
+    <div class="table-wrapper">
+      <table class="entries-table">
+        <thead>
+          <tr>
+            <th class="col-sno">#</th>
+            <th class="col-icon">Icon</th>
+            <th class="col-category sortable" (click)="sortBy('name')">
+              <span class="header-content">
+                Category
+                <span class="sort-icon" [class.active]="sortColumn() === 'name'">
+                  {{ getSortIcon('name') }}
+                </span>
+              </span>
+            </th>
+            <th class="col-type sortable" (click)="sortBy('type')">
+              <span class="header-content">
+                Type
+                <span class="sort-icon" [class.active]="sortColumn() === 'type'">
+                  {{ getSortIcon('type') }}
+                </span>
+              </span>
+            </th>
+            <th class="col-status sortable" (click)="sortBy('status')">
+              <span class="header-content">
+                Status
+                <span class="sort-icon" [class.active]="sortColumn() === 'status'">
+                  {{ getSortIcon('status') }}
+                </span>
+              </span>
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (record of paginatedRecords(); track record.id; let i = $index) {
+            <tr class="entry-row" [style.animation-delay]="(i * 0.03) + 's'">
+              <td class="col-sno">
+                <span class="sno-badge">{{ getRowNumber(i) }}</span>
+              </td>
+              <td class="col-icon">
+                <span class="icon-cell">{{ record.icon }}</span>
+              </td>
+              <td class="col-category">
+                <span class="category-text">{{ record.name }}</span>
+              </td>
+              <td class="col-type">
+                <span class="type-badge" [class]="record.type">{{ record.type }}</span>
+              </td>
+              <td class="col-status">
+                <span class="status-badge" [class]="record.status">
+                  <span class="status-dot"></span>
+                  {{ record.status }}
+                </span>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+
+      <!-- Pagination Controls -->
+      <div class="pagination-container">
+        <div class="pagination-info">
+          {{ paginationInfo() }}
+        </div>
+        
+        <div class="page-size-selector">
+          <label for="pageSize">Records per page:</label>
+          <select id="pageSize" [(ngModel)]="pageSize" (ngModelChange)="onPageSizeChange()">
+            @for (size of pageSizeOptions; track size) {
+              <option [value]="size">{{ size }}</option>
+            }
+          </select>
+        </div>
+        
+        <div class="pagination-controls">
+          <button 
+            class="page-btn" 
+            (click)="prevPage()" 
+            [disabled]="currentPage() === 1"
+            data-tooltip="Previous Page">
+            ◀
+          </button>
+          
+          @for (pageNum of getPageNumbers(); track pageNum) {
+            <button 
+              class="page-btn" 
+              [class.active]="pageNum === currentPage()"
+              (click)="goToPage(pageNum)"
+              [disabled]="pageNum === currentPage()">
+              {{ pageNum }}
+            </button>
+          }
+          
+          <button 
+            class="page-btn" 
+            (click)="nextPage()" 
+            [disabled]="currentPage() === totalPages()"
+            data-tooltip="Next Page">
+            ▶
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
