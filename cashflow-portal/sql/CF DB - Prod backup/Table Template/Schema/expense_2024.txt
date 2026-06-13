@@ -18,17 +18,13 @@ CREATE TABLE public.expense_2024 (
 	is_delete bool NOT NULL DEFAULT false,
 	created_at timestamptz NOT NULL DEFAULT now(),
 	updated_at timestamptz NOT NULL DEFAULT now(),
-	CONSTRAINT chk_expense_2024_year CHECK ((year = 2024)),
-	CONSTRAINT expense_2024_amount_inr_check CHECK ((amount_inr >= (0)::numeric)),
+	CONSTRAINT chk_expense_2024_year CHECK (((year = 2024))),
+	CONSTRAINT expense_2024_amount_inr_check CHECK (((amount_inr >= (0)::numeric))),
 	CONSTRAINT expense_2024_pkey PRIMARY KEY (expense_id)
 );
-CREATE INDEX idx_expense_2024_category ON public.expense_2024 USING btree (category_name);
-CREATE INDEX idx_expense_2024_is_delete ON public.expense_2024 USING btree (is_delete);
-CREATE INDEX idx_expense_2024_year_month ON public.expense_2024 USING btree (year, month);
+CREATE INDEX idx_expense_2024_category ON public.expense_2024 (category_name);
+CREATE INDEX idx_expense_2024_is_delete ON public.expense_2024 (is_delete);
+CREATE INDEX idx_expense_2024_year_month ON public.expense_2024 ("year","month");
 
--- Table Triggers
 
-create trigger trg_expense_2024_updated_at before
-update
-    on
-    public.expense_2024 for each row execute function set_expense_updated_at();
+-- public.expense_2024 foreign keys

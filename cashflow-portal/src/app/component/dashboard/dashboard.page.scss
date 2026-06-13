@@ -768,8 +768,13 @@
     }
 
     @media (max-width: 768px) {
-      grid-template-columns: repeat(6, minmax(0, 1fr));
-      gap: 6px;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    @media (max-width: 480px) {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
     }
   }
 
@@ -796,12 +801,18 @@
     }
 
     @media (max-width: 768px) {
-      padding: 12px;
+      padding: 14px;
       flex-direction: column;
       text-align: center;
+      gap: 8px;
+      min-height: 120px;
+      height: auto;
+    }
+
+    @media (max-width: 480px) {
+      padding: 12px;
       gap: 6px;
-      min-height: 105px;
-      height: 105px;
+      min-height: 110px;
     }
 
     &:hover {
@@ -818,6 +829,10 @@
       }
 
       @media (max-width: 768px) {
+        font-size: 28px;
+      }
+
+      @media (max-width: 480px) {
         font-size: 24px;
       }
     }
@@ -843,7 +858,12 @@
       }
 
       @media (max-width: 768px) {
-        font-size: 13px;
+        font-size: 14px;
+        margin-bottom: 4px;
+      }
+
+      @media (max-width: 480px) {
+        font-size: 12px;
       }
     }
 
@@ -861,7 +881,11 @@
       }
 
       @media (max-width: 768px) {
-        font-size: 15px;
+        font-size: 16px;
+      }
+
+      @media (max-width: 480px) {
+        font-size: 14px;
       }
     }
 
@@ -876,6 +900,10 @@
 
       @media (max-width: 768px) {
         font-size: 11px;
+      }
+
+      @media (max-width: 480px) {
+        font-size: 10px;
       }
     }
 
@@ -2575,13 +2603,86 @@
   @media (max-width: 768px) {
     .heatmap-table-card {
       .heatmap-table {
-        thead th {
-          padding: 10px 6px;
-          font-size: 10px;
+        thead {
+          tr {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          }
           
-          &.th-bar {
+          th {
+            padding: 10px 8px;
+            font-size: 11px;
+            color: #ffffff;
+            border-bottom: none;
+            
+            &.th-bar {
+              display: none;
+            }
+          }
+        }
+        
+        tbody .heatmap-row {
+          background: #ffffff;
+          border-bottom: 1px solid #e5e7eb;
+          
+          td {
+            padding: 14px 8px;
+            border-bottom: none;
+          }
+          
+          .td-category {
+            gap: 8px;
+            
+            .category-color-dot {
+              width: 8px;
+              height: 8px;
+            }
+            
+            .category-icon {
+              font-size: 1.2rem;
+            }
+            
+            .category-name {
+              font-size: 0.9rem;
+              font-weight: 600;
+              color: #1f2937;
+            }
+          }
+          
+          .td-amount {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: #111827;
+          }
+          
+          .td-bar {
             display: none;
           }
+          
+          .td-percent .percent-badge {
+            padding: 5px 10px;
+            font-size: 0.8rem;
+            min-width: 45px;
+            border-radius: 12px;
+          }
+          
+          &:nth-child(even) {
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+          }
+          
+          &:hover {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.08) 100%);
+          }
+        }
+      }
+    }
+  }
+
+  @media (max-width: 480px) {
+    .heatmap-table-card {
+      .heatmap-table {
+        thead th {
+          padding: 8px 6px;
+          font-size: 10px;
         }
         
         tbody .heatmap-row {
@@ -2593,26 +2694,22 @@
             gap: 6px;
             
             .category-icon {
-              font-size: 1.1rem;
+              font-size: 1rem;
             }
             
             .category-name {
-              font-size: 0.85rem;
+              font-size: 0.8rem;
             }
           }
           
           .td-amount {
-            font-size: 0.85rem;
-          }
-          
-          .td-bar {
-            display: none;
+            font-size: 0.8rem;
           }
           
           .td-percent .percent-badge {
             padding: 4px 8px;
-            font-size: 0.75rem;
-            min-width: 40px;
+            font-size: 0.7rem;
+            min-width: 38px;
           }
         }
       }

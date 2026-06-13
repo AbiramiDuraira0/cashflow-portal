@@ -16,22 +16,15 @@ CREATE TABLE public.income (
 	created_at timestamptz NULL DEFAULT CURRENT_TIMESTAMP,
 	updated_at timestamptz NULL DEFAULT CURRENT_TIMESTAMP,
 	mnc_company varchar(100) NULL,
-	CONSTRAINT chk_amount CHECK ((amount_inr >= (0)::numeric)),
-	CONSTRAINT chk_month CHECK (((month)::text = ANY ((ARRAY['January'::character varying, 'February'::character varying, 'March'::character varying, 'April'::character varying, 'May'::character varying, 'June'::character varying, 'July'::character varying, 'August'::character varying, 'September'::character varying, 'October'::character varying, 'November'::character varying, 'December'::character varying])::text[]))),
-	CONSTRAINT chk_year CHECK (((year >= 2000) AND (year <= 2100))),
+	CONSTRAINT chk_amount CHECK (((amount_inr >= (0)::numeric))),
+	CONSTRAINT chk_month CHECK ((((month)::text = ANY ((ARRAY['January'::character varying, 'February'::character varying, 'March'::character varying, 'April'::character varying, 'May'::character varying, 'June'::character varying, 'July'::character varying, 'August'::character varying, 'September'::character varying, 'October'::character varying, 'November'::character varying, 'December'::character varying])::text[])))),
+	CONSTRAINT chk_year CHECK ((((year >= 2000) AND (year <= 2100)))),
 	CONSTRAINT income_pkey PRIMARY KEY (income_id)
 );
-CREATE INDEX idx_income_created_at ON public.income USING btree (created_at);
-CREATE INDEX idx_income_date ON public.income USING btree (date);
-CREATE INDEX idx_income_is_delete ON public.income USING btree (is_delete);
-CREATE INDEX idx_income_mnc_company ON public.income USING btree (mnc_company) WHERE (mnc_company IS NOT NULL);
-CREATE INDEX idx_income_month ON public.income USING btree (month);
-CREATE INDEX idx_income_year ON public.income USING btree (year);
-CREATE UNIQUE INDEX unique_month_year ON public.income USING btree (year, month) WHERE (is_delete = false);
-
--- Table Triggers
-
-create trigger update_income_updated_at before
-update
-    on
-    public.income for each row execute function update_updated_at_column();
+CREATE INDEX idx_income_created_at ON public.income (created_at);
+CREATE INDEX idx_income_date ON public.income ("date");
+CREATE INDEX idx_income_is_delete ON public.income (is_delete);
+CREATE INDEX idx_income_mnc_company ON public.income (mnc_company);
+CREATE INDEX idx_income_month ON public.income ("month");
+CREATE INDEX idx_income_year ON public.income ("year");
+CREATE UNIQUE INDEX unique_month_year ON public.income ("year","month");

@@ -21,22 +21,18 @@ CREATE TABLE public.debts (
 	is_delete bool NOT NULL DEFAULT false,
 	created_at timestamptz NOT NULL DEFAULT now(),
 	updated_at timestamptz NOT NULL DEFAULT now(),
-	CONSTRAINT debts_amount_paid_check CHECK ((amount_paid >= (0)::numeric)),
-	CONSTRAINT debts_debt_type_check CHECK (((debt_type)::text = ANY ((ARRAY['debt'::character varying, 'receivable'::character varying])::text[]))),
-	CONSTRAINT debts_emi_amount_check CHECK ((emi_amount >= (0)::numeric)),
-	CONSTRAINT debts_outstanding_amount_check CHECK ((outstanding_amount >= (0)::numeric)),
+	CONSTRAINT debts_amount_paid_check CHECK (((amount_paid >= (0)::numeric))),
+	CONSTRAINT debts_debt_type_check CHECK ((((debt_type)::text = ANY ((ARRAY['debt'::character varying, 'receivable'::character varying])::text[])))),
+	CONSTRAINT debts_emi_amount_check CHECK (((emi_amount >= (0)::numeric))),
+	CONSTRAINT debts_outstanding_amount_check CHECK (((outstanding_amount >= (0)::numeric))),
 	CONSTRAINT debts_pkey PRIMARY KEY (debt_id),
-	CONSTRAINT debts_principal_amount_check CHECK ((principal_amount >= (0)::numeric)),
-	CONSTRAINT debts_status_check CHECK (((status)::text = ANY ((ARRAY['open'::character varying, 'closed'::character varying])::text[])))
+	CONSTRAINT debts_principal_amount_check CHECK (((principal_amount >= (0)::numeric))),
+	CONSTRAINT debts_status_check CHECK ((((status)::text = ANY ((ARRAY['open'::character varying, 'closed'::character varying])::text[]))))
 );
-CREATE INDEX idx_debts_bank_person ON public.debts USING btree (bank_or_person);
-CREATE INDEX idx_debts_is_delete ON public.debts USING btree (is_delete);
-CREATE INDEX idx_debts_status ON public.debts USING btree (status);
-CREATE INDEX idx_debts_type ON public.debts USING btree (debt_type);
+CREATE INDEX idx_debts_bank_person ON public.debts (bank_or_person);
+CREATE INDEX idx_debts_is_delete ON public.debts (is_delete);
+CREATE INDEX idx_debts_status ON public.debts (status);
+CREATE INDEX idx_debts_type ON public.debts (debt_type);
 
--- Table Triggers
 
-create trigger trg_debts_updated_at before
-update
-    on
-    public.debts for each row execute function set_debts_updated_at();
+-- public.debts foreign keys

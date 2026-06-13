@@ -127,6 +127,20 @@
 		"is_deleted" : false
 	},
 	{
+		"tax_id" : 30,
+		"year" : 2026,
+		"month" : 4,
+		"tax_paid" : 13278.00,
+		"taxable_income" : null,
+		"status" : "paid",
+		"payment_date" : null,
+		"payment_mode" : "Online",
+		"notes" : "New Tax",
+		"created_at" : "2026-04-06T12:48:45.372Z",
+		"updated_at" : "2026-04-30T13:05:33.670Z",
+		"is_deleted" : false
+	},
+	{
 		"tax_id" : 10,
 		"year" : 2024,
 		"month" : 8,
@@ -376,20 +390,6 @@
 		"notes" : "New Tax",
 		"created_at" : "2026-04-06T12:48:50.440Z",
 		"updated_at" : "2026-04-06T12:55:28.768Z",
-		"is_deleted" : true
-	},
-	{
-		"tax_id" : 30,
-		"year" : 2026,
-		"month" : 4,
-		"tax_paid" : 0.00,
-		"taxable_income" : null,
-		"status" : "paid",
-		"payment_date" : null,
-		"payment_mode" : "Online",
-		"notes" : "New Tax",
-		"created_at" : "2026-04-06T12:48:45.372Z",
-		"updated_at" : "2026-04-06T12:55:49.134Z",
 		"is_deleted" : true
 	},
 	{
