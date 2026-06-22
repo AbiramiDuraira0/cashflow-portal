@@ -64,7 +64,13 @@ type BreakdownPopupData = {
   styleUrls: ['./dashboard.page.scss']
 })
 export class DashboardPage implements OnInit {
+  // Injected Services
   private connectionTest = inject(ConnectionTestService);
+  private incomeService = inject(IncomeService);
+  private expenseService = inject(ExpenseService);
+  private debtService = inject(DebtService);
+  private investmentService = inject(InvestmentService);
+  private categoryService = inject(CategoryService);
   
   // Set loading to false immediately since data is pre-initialized
   loading = signal(false);
@@ -76,8 +82,111 @@ export class DashboardPage implements OnInit {
   protected showTestPopup = signal<boolean>(false);
   protected testResult = signal<{ success: boolean; message: string; } | null>(null);
 
+  // Data signals
+  protected incomeData = signal<IncomeEntry[]>([]);
+  protected expenseData = signal<ExpenseEntry[]>([]);
+  protected debtData = signal<DebtEntry[]>([]);
+  protected investmentData = signal<InvestmentEntry[]>([]);
+  protected categoryData = signal<Category[]>([]);
+
+  // Calendar state signals
+  protected showCalendar = signal<boolean>(false);
+  protected calendarDate = signal<Date>(new Date());
+  protected selectedDate = signal<Date>(new Date());
+  protected showMonthDropdown = signal<boolean>(false);
+  protected showYearDropdown = signal<boolean>(false);
+
+  // Months array for calendar
+  protected months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+  // Calendar computed values
+  protected calendarMonth = computed(() => this.calendarDate().getMonth());
+  protected calendarYear = computed(() => this.calendarDate().getFullYear());
+  protected calendarYearOptions = computed(() => {
+    const currentYear = new Date().getFullYear();
+    const years: number[] = [];
+    for (let y = currentYear - 10; y <= currentYear + 10; y++) {
+      years.push(y);
+    }
+    return years;
+  });
+
+  // Calendar days computed
+  protected calendarDays = computed(() => {
+    const date = this.calendarDate();
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    const firstDay = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const today = new Date();
+    const selected = this.selectedDate();
+    
+    const days: { day: number | null; isToday: boolean; isSelected: boolean; isCurrentMonth: boolean; date: Date | null }[] = [];
+    
+    // Add empty slots for days before the first day of the month
+    for (let i = 0; i < firstDay; i++) {
+      days.push({ day: null, isToday: false, isSelected: false, isCurrentMonth: false, date: null });
+    }
+    
+    // Add days of the month
+    for (let d = 1; d <= daysInMonth; d++) {
+      const dayDate = new Date(year, month, d);
+      days.push({
+        day: d,
+        isToday: dayDate.toDateString() === today.toDateString(),
+        isSelected: dayDate.toDateString() === selected.toDateString(),
+        isCurrentMonth: true,
+        date: dayDate
+      });
+    }
+    
+    return days;
+  });
+
+  // Hovered category for tooltip
+  protected hoveredCategory = signal<{ name: string; icon: string; total: number; percentage: number; color: string; index?: number } | null>(null);
+
+  // Category colors
+  protected CATEGORY_COLORS: Record<string, string> = {
+    'Food': '#ef4444',
+    'Transport': '#f97316',
+    'Shopping': '#eab308',
+    'Entertainment': '#84cc16',
+    'Bills': '#22c55e',
+    'Healthcare': '#14b8a6',
+    'Education': '#06b6d4',
+    'Investment': '#0ea5e9',
+    'Personal': '#6366f1',
+    'Travel': '#8b5cf6',
+    'Home': '#a855f7',
+    'Other': '#6b7280'
+  };
+
+  // Consolidation configs for subcategory grouping
+  protected CONSOLIDATION_CONFIGS: Record<string, CategoryHeatmapConfig> = {
+    'Abi': {
+      categoryName: 'Abi',
+      rowColors: ['#818cf8', '#a78bfa', '#c4b5fd', '#ddd6fe', '#ede9fe'],
+      consolidatedCategories: new Set(['Travel', 'Personal Care', 'Entertainment']),
+      patterns: [],
+      renameMap: {}
+    },
+    'BB': {
+      categoryName: 'BB',
+      rowColors: ['#f472b6', '#f9a8d4', '#fbcfe8', '#fce7f3', '#fdf2f8'],
+      consolidatedCategories: new Set(['Travel', 'Personal Care', 'Entertainment']),
+      patterns: [],
+      renameMap: {}
+    }
+  };
+
   constructor() {
     // Date is already initialized above
+  }
+
+  // Tooltip position helper
+  protected getTooltipPosition(): { top: string; left: string; transform: string } {
+    return { top: '50%', left: '50%', transform: 'translate(-50%, -50%)' };
   }
 
   // ============================================

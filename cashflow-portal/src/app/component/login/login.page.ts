@@ -74,9 +74,10 @@ export class LoginPage implements OnDestroy {
         this.isShaking = false;
       }, 500);
 
-    setTimeout(() => {
-      this.showError = false;
-    }, 3000);
+      setTimeout(() => {
+        this.showError = false;
+      }, 3000);
+    }
   }
 
   private showOtpErrorMessage(message: string) {
@@ -172,5 +173,151 @@ export class LoginPage implements OnDestroy {
 
   isOtpComplete(): boolean {
     return this.otpDigits.every(digit => digit !== '');
+  }
+
+  onOtpPaste(event: ClipboardEvent): void {
+    event.preventDefault();
+    const pastedData = event.clipboardData?.getData('text') || '';
+    const digits = pastedData.replace(/\D/g, '').slice(0, 4).split('');
+    
+    // Fill the OTP digits array
+    for (let i = 0; i < 4; i++) {
+      this.otpDigits[i] = digits[i] || '';
+      const input = document.getElementById(`otp-${i}`) as HTMLInputElement;
+      if (input) {
+        input.value = this.otpDigits[i];
+      }
+    }
+    
+    // Update the combined OTP value
+    this.otp = this.otpDigits.join('');
+    
+    // Focus the next empty input or the last input
+    const nextEmptyIndex = this.otpDigits.findIndex(d => d === '');
+    const focusIndex = nextEmptyIndex === -1 ? 3 : nextEmptyIndex;
+    const nextInput = document.getElementById(`otp-${focusIndex}`) as HTMLInputElement;
+    if (nextInput) {
+      nextInput.focus();
+    }
+  }
+
+  onOtpDigitInput(index: number, event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const value = input.value.replace(/\D/g, '').slice(0, 1);
+    
+    // Update the digit
+    this.otpDigits[index] = value;
+    input.value = value;
+    
+    // Update the combined OTP value
+    this.otp = this.otpDigits.join('');
+    
+    // Move to next input if a digit was entered
+    if (value && index < 3) {
+      const nextInput = document.getElementById(`otp-${index + 1}`) as HTMLInputElement;
+      if (nextInput) {
+        nextInput.focus();
+      }
+    }
+  }
+
+  onOtpKeyDown(index: number, event: KeyboardEvent): void {
+    // Handle backspace
+    if (event.key === 'Backspace') {
+      if (!this.otpDigits[index] && index > 0) {
+        // If current field is empty, move to previous and clear it
+        const prevInput = document.getElementById(`otp-${index - 1}`) as HTMLInputElement;
+        if (prevInput) {
+          this.otpDigits[index - 1] = '';
+          prevInput.value = '';
+          prevInput.focus();
+        }
+      } else {
+        // Clear current field
+        this.otpDigits[index] = '';
+      }
+      this.otp = this.otpDigits.join('');
+    }
+    
+    // Handle arrow keys
+    if (event.key === 'ArrowLeft' && index > 0) {
+      const prevInput = document.getElementById(`otp-${index - 1}`) as HTMLInputElement;
+      if (prevInput) {
+        prevInput.focus();
+      }
+    }
+    if (event.key === 'ArrowRight' && index < 3) {
+      const nextInput = document.getElementById(`otp-${index + 1}`) as HTMLInputElement;
+      if (nextInput) {
+        nextInput.focus();
+      }
+    }
+  }
+
+  async verifyOtp(): Promise<void> {
+    if (!this.isOtpComplete()) {
+      return;
+    }
+
+    this.isVerifyingOtp = true;
+    this.showOtpError = false;
+
+    try {
+      const result = this.otpService.verifyOtp(this.otp);
+      
+      if (result.valid) {
+        // OTP verified successfully
+        sessionStorage.setItem('isAuthenticated', 'true');
+        await this.router.navigate(['/dashboard']);
+      } else {
+        this.showOtpErrorMessage(result.message || 'Invalid OTP. Please try again.');
+        this.clearOtpInputs();
+      }
+    } catch (error) {
+      console.error('OTP verification error:', error);
+      this.showOtpErrorMessage('Verification failed. Please try again.');
+      this.clearOtpInputs();
+    } finally {
+      this.isVerifyingOtp = false;
+    }
+  }
+
+  async resendOtp(): Promise<void> {
+    if (this.isSendingOtp || this.remainingTime > 0) {
+      return;
+    }
+
+    this.isSendingOtp = true;
+    this.showOtpError = false;
+
+    try {
+      const result = await this.otpService.sendOtpViaEmail({
+        email: this.recipientEmail,
+        userName: 'User'
+      });
+      
+      if (result.success) {
+        this.otpSent = true;
+        this.clearOtpInputs();
+        this.startTimer();
+      } else {
+        this.showOtpErrorMessage(result.message || 'Failed to send OTP. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error resending OTP:', error);
+      this.showOtpErrorMessage('Failed to send OTP. Please try again.');
+    } finally {
+      this.isSendingOtp = false;
+    }
+  }
+
+  goBackToPasscode(): void {
+    this.currentStep = 'passcode';
+    this.clearTimer();
+    this.clearOtpInputs();
+    this.showOtpError = false;
+    this.otpErrorMessage = '';
+    this.passcode = '';
+    this.showError = false;
   }
 }

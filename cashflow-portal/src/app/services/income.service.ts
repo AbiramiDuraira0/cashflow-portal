@@ -1,6 +1,5 @@
 import { Injectable, signal, inject } from '@angular/core';
 import { SupabaseService } from './supabase.service';
-import { MOCK_INCOME_DATA } from './mock-data';
 
 /**
  * Database Income Entry Type (matches DB schema)
@@ -37,76 +36,9 @@ export type IncomeEntry = {
 
 // Mock data for QA/Demo environment
 const MOCK_INCOME_DATA: IncomeEntry[] = [
-  {
-    id: 1,
-    month: 'March',
-    year: 2026,
-    amount: 125000,
-    source: 'Salary',
-    mncCompany: 'Tech Corp',
-    notes: 'Regular monthly salary',
-    date: '2026-03-01',
-    created_at: '2026-03-01T00:00:00Z',
-    updated_at: '2026-03-01T00:00:00Z'
-  },
-  {
-    id: 2,
-    month: 'February',
-    year: 2026,
-    amount: 120000,
-    source: 'Salary',
-    mncCompany: 'Tech Corp',
-    notes: 'February salary',
-    date: '2026-02-01',
-    created_at: '2026-02-01T00:00:00Z',
-    updated_at: '2026-02-01T00:00:00Z'
-  },
-  {
-    id: 3,
-    month: 'January',
-    year: 2026,
-    amount: 150000,
-    source: 'Salary',
-    mncCompany: 'Tech Corp',
-    notes: 'January salary with bonus',
-    date: '2026-01-01',
-    created_at: '2026-01-01T00:00:00Z',
-    updated_at: '2026-01-01T00:00:00Z'
-  },
-  {
-    id: 4,
-    month: 'December',
-    year: 2025,
-    amount: 130000,
-    source: 'Salary',
-    mncCompany: 'Tech Corp',
-    notes: 'December salary',
-    date: '2025-12-01',
-    created_at: '2025-12-01T00:00:00Z',
-    updated_at: '2025-12-01T00:00:00Z'
-  },
-  {
-    id: 5,
-    month: 'November',
-    year: 2025,
-    amount: 118000,
-    source: 'Salary',
-    mncCompany: 'Tech Corp',
-    date: '2025-11-01',
-    created_at: '2025-11-01T00:00:00Z',
-    updated_at: '2025-11-01T00:00:00Z'
-  },
-  {
-    id: 6,
-    month: 'October',
-    year: 2025,
-    amount: 122000,
-    source: 'Freelance',
-    notes: 'Consulting project payment',
-    date: '2025-10-01',
-    created_at: '2025-10-01T00:00:00Z',
-    updated_at: '2025-10-01T00:00:00Z'
-  }
+  { id: 1, month: 'March', year: 2026, amount: 125000, source: 'Salary', mncCompany: 'Tech Corp', notes: 'Regular monthly salary', date: '2026-03-01', created_at: '2026-03-01T00:00:00Z', updated_at: '2026-03-01T00:00:00Z' },
+  { id: 2, month: 'February', year: 2026, amount: 120000, source: 'Salary', mncCompany: 'Tech Corp', notes: 'February salary', date: '2026-02-01', created_at: '2026-02-01T00:00:00Z', updated_at: '2026-02-01T00:00:00Z' },
+  { id: 3, month: 'January', year: 2026, amount: 150000, source: 'Salary', mncCompany: 'Tech Corp', notes: 'January salary with bonus', date: '2026-01-01', created_at: '2026-01-01T00:00:00Z', updated_at: '2026-01-01T00:00:00Z' }
 ];
 
 @Injectable({
@@ -139,12 +71,13 @@ export class IncomeService {
     try {
       console.log('📂 Loading income data from database...');
       
-      const { data, error } = await this.supabase.db
-        .from('income')
-        .select('*')
-        .eq('is_delete', false)
-        .order('year', { ascending: false })
-        .order('created_at', { ascending: false });
+      if (this.USE_DB) {
+        const { data, error } = await this.supabase.db
+          .from('income')
+          .select('*')
+          .eq('is_delete', false)
+          .order('year', { ascending: false })
+          .order('created_at', { ascending: false });
 
         if (error) {
           console.error('❌ Database error:', error.message);
@@ -276,6 +209,7 @@ export class IncomeService {
       // Use provided date or calculate default (1st of month)
       const date = entry.date || new Date(entry.year, this.getMonthIndex(entry.month), 1).toISOString().split('T')[0];
 
+      if (this.USE_DB) {
         const newEntry = {
           year: entry.year,
           month: entry.month,
@@ -360,6 +294,7 @@ export class IncomeService {
         dbUpdates.date = new Date(year, this.getMonthIndex(month), 1).toISOString().split('T')[0];
       }
 
+      if (this.USE_DB) {
         console.log('✏️ Updating entry in DB:', id, dbUpdates);
 
         const { data, error } = await this.supabase.db

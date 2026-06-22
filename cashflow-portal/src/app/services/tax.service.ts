@@ -127,7 +127,7 @@ export class TaxService {
         this.taxEntries.set([...MOCK_TAX_ENTRIES]);
         console.log('✅ Loaded mock tax entries:', MOCK_TAX_ENTRIES.length);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading tax entries:', error);
       throw error;
     } finally {
@@ -194,7 +194,7 @@ export class TaxService {
         }
         console.log('✅ Tax entry added (mock):', newEntry);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error adding tax entry:', error);
       throw error;
     } finally {
@@ -225,7 +225,7 @@ export class TaxService {
         this.taxEntries.set(updated);
         console.log('✅ Tax entry updated (mock)');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating tax entry:', error);
       throw error;
     } finally {
@@ -252,7 +252,7 @@ export class TaxService {
         this.taxEntries.set(updated);
         console.log('✅ Tax entry deleted (mock)');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error deleting tax entry:', error);
       throw error;
     } finally {
