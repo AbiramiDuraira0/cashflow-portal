@@ -64,23 +64,161 @@ type BreakdownPopupData = {
   styleUrls: ['./dashboard.page.scss']
 })
 export class DashboardPage implements OnInit {
-  // Injected Services
   private connectionTest = inject(ConnectionTestService);
   private incomeService = inject(IncomeService);
   private expenseService = inject(ExpenseService);
   private debtService = inject(DebtService);
   private investmentService = inject(InvestmentService);
   private categoryService = inject(CategoryService);
-  
-  // Set loading to false immediately since data is pre-initialized
-  loading = signal(false);
 
-  // Today's date - updates on component load
-  currentDate = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+  // ============================================
+  // Constants
+  // ============================================
+  protected readonly months = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'
+  ];
+
+  // Centralized category colors - single source of truth
+  private readonly CATEGORY_COLORS: Record<string, string> = {
+    'Abi': '#a78bfa',
+    'BB': '#60a5fa',
+    'CC': '#fbbf24',
+    'Home': '#fef08a',
+    'Investment': '#4ade80',
+    'Medical': '#f87171',
+    'Misc': '#9ca3af',
+    'Monthly Needs': '#22d3ee',
+    'Savings': '#34d399',
+    'Wifi': '#f87171',
+  };
+
+  // Heatmap row colors by category type
+  private readonly HEATMAP_ROW_COLORS: Record<string, string[]> = {
+    'Abi': ['#5b21b6', '#6d28d9', '#7c3aed', '#8b5cf6', '#a78bfa', '#b197fc'],
+    'BB': ['#1d4ed8', '#2563eb', '#3b82f6', '#60a5fa', '#93c5fd', '#dbeafe'],
+    'Home': ['#ca8a04', '#eab308', '#facc15', '#fde047', '#fef08a', '#fef9c3'],
+    'Investment': ['#15803d', '#16a34a', '#22c55e', '#4ade80', '#86efac', '#bbf7d0'],
+  };
+
+  // Consolidation patterns for each category
+  private readonly CONSOLIDATION_CONFIGS: Record<string, CategoryHeatmapConfig> = {
+    'Abi': {
+      categoryName: 'Abi',
+      rowColors: this.HEATMAP_ROW_COLORS['Abi'],
+      consolidatedCategories: new Set(['Shopping', 'Subscriptions', 'Food', 'Trips', 'Temple & God', 'Miscellaneous']),
+      patterns: [
+        { name: 'Shopping', pattern: /^online\s*-?\s*|shopping/i, defaultIcon: '🛒' },
+        { name: 'Food', pattern: /^food\s*|snacks?$/i, defaultIcon: '🍽️' },
+        { name: 'Subscriptions', pattern: /^(netflix|jio|google|youtube|prime|hotstar|spotify|subscription)/i, defaultIcon: '📺' },
+        { name: 'Trips', pattern: /trip/i, defaultIcon: '✈️' },
+        { name: 'Temple & God', pattern: /^(god|temple|pooja|puja)/i, defaultIcon: '🛕' },
+        { name: 'Miscellaneous', pattern: /^(miscellaneous|misc|relatives?)/i, defaultIcon: '📦' },
+      ],
+      renameMap: { 'Contact Lenz': 'Specs & Lenz' }
+    },
+    'BB': {
+      categoryName: 'BB',
+      rowColors: this.HEATMAP_ROW_COLORS['BB'],
+      consolidatedCategories: new Set(['EMI - Debts', 'Others', 'Shopping', 'Food', 'Subscriptions']),
+      patterns: [
+        { name: 'Shopping', pattern: /^online\s*-?\s*|shopping/i, defaultIcon: '🛒' },
+        { name: 'Food', pattern: /^food\s*|snacks?$/i, defaultIcon: '🍽️' },
+        { name: 'Subscriptions', pattern: /^(netflix|jio|google|youtube|prime|hotstar|spotify|subscription)/i, defaultIcon: '📺' },
+        { name: 'EMI - Debts', pattern: /^(emi|kadan|hault)/i, defaultIcon: '💳' },
+        { name: 'Others', pattern: /^(other|astrologer|transport|phone\s*recharge)/i, defaultIcon: '📦' },
+      ]
+    },
+    'Home': {
+      categoryName: 'Home',
+      rowColors: this.HEATMAP_ROW_COLORS['Home'],
+      consolidatedCategories: new Set(['Groceries', 'Furniture', 'Subscriptions', 'Others']),
+      patterns: [
+        { name: 'Groceries', pattern: /groceries?|provisions?|instamart|blinkit/i, defaultIcon: '🛒' },
+        { name: 'Furniture', pattern: /^(sofa\s*cupboard|ac|dress\s*plast)/i, defaultIcon: '🪑' },
+        { name: 'Others', pattern: /^(online\s*-?\s*|shopping|decor|recharge|food\s*|snacks?$)/i, defaultIcon: '📦' },
+        { name: 'Subscriptions', pattern: /^(netflix|jio|google|youtube|prime|hotstar|spotify|subscription)/i, defaultIcon: '📺' },
+      ]
+    }
+  };
+
+  // ============================================
+  // State Signals
+  // ============================================
+  loading = signal(true);
   
   // Test connection state
   protected showTestPopup = signal<boolean>(false);
   protected testResult = signal<{ success: boolean; message: string; } | null>(null);
+
+  // Donut chart hover state
+  protected hoveredCategory = signal<{ name: string; icon: string; total: number; percentage: number; color: string; index?: number } | null>(null);
+
+  // Get tooltip position based on segment index
+  protected getTooltipPosition = computed(() => {
+    const hovered = this.hoveredCategory();
+    if (!hovered || hovered.index === undefined) {
+      return { top: '-80px', left: '50%', transform: 'translateX(-50%)' };
+    }
+    
+    const categories = this.categorySpendingWithPercentage();
+    const index = hovered.index;
+    
+    // Calculate the middle angle of the segment
+    let startAngle = -90; // Start from top
+    for (let i = 0; i < index; i++) {
+      startAngle += categories[i].percentage * 3.6;
+    }
+    const midAngle = startAngle + (hovered.percentage * 3.6) / 2;
+    
+    // Convert to radians
+    const midRad = (midAngle * Math.PI) / 180;
+    
+    // Position tooltip at the outer edge of the donut (radius ~100px from center for 180px donut)
+    const radius = 110; // Distance from center to tooltip
+    const x = Math.cos(midRad) * radius;
+    const y = Math.sin(midRad) * radius;
+    
+    // Convert to CSS position (center is at 90px, 90px for 180px container)
+    const centerX = 90;
+    const centerY = 90;
+    
+    // Adjust transform based on position to prevent tooltip from hiding on edges
+    // Left side of donut (x < 0): anchor tooltip from the right side
+    // Right side of donut (x > 0): anchor tooltip from the left side
+    let transform = 'translate(-50%, -50%)';
+    let leftPos = centerX + x;
+    
+    if (x < -30) {
+      // Segment is on the left side - position tooltip to the right of the anchor point
+      transform = 'translate(0%, -50%)';
+      leftPos = centerX + x + 20; // Shift right a bit
+    } else if (x > 30) {
+      // Segment is on the right side - position tooltip to the left of the anchor point
+      transform = 'translate(-100%, -50%)';
+      leftPos = centerX + x - 20; // Shift left a bit
+    }
+    
+    return {
+      top: `${centerY + y}px`,
+      left: `${leftPos}px`,
+      transform: transform
+    };
+  });
+
+  // Calendar state
+  protected showCalendar = signal<boolean>(false);
+  protected showYearDropdown = signal<boolean>(false);
+  protected showMonthDropdown = signal<boolean>(false);
+  protected calendarDate = signal<Date>(new Date());
+  protected selectedDate = signal<Date>(new Date());
+
+  // Current date info
+  protected currentDate: string;
+  protected currentMonth: string;
+  protected currentYear: number;
+  protected previousMonth: string;
+  protected previousYear: number;
 
   // Data signals
   protected incomeData = signal<IncomeEntry[]>([]);
@@ -89,104 +227,107 @@ export class DashboardPage implements OnInit {
   protected investmentData = signal<InvestmentEntry[]>([]);
   protected categoryData = signal<Category[]>([]);
 
-  // Calendar state signals
-  protected showCalendar = signal<boolean>(false);
-  protected calendarDate = signal<Date>(new Date());
-  protected selectedDate = signal<Date>(new Date());
-  protected showMonthDropdown = signal<boolean>(false);
-  protected showYearDropdown = signal<boolean>(false);
-
-  // Months array for calendar
-  protected months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-
   // Calendar computed values
-  protected calendarMonth = computed(() => this.calendarDate().getMonth());
-  protected calendarYear = computed(() => this.calendarDate().getFullYear());
+  protected calendarMonthYear = computed(() => {
+    const date = this.calendarDate();
+    return `${this.months[date.getMonth()]} ${date.getFullYear()}`;
+  });
+
+  protected calendarMonth = computed(() => {
+    return this.calendarDate().getMonth();
+  });
+
+  protected calendarYear = computed(() => {
+    return this.calendarDate().getFullYear();
+  });
+
   protected calendarYearOptions = computed(() => {
     const currentYear = new Date().getFullYear();
     const years: number[] = [];
-    for (let y = currentYear - 10; y <= currentYear + 10; y++) {
-      years.push(y);
+    // Show 50 years in the past and 10 years in the future
+    for (let year = currentYear - 50; year <= currentYear + 10; year++) {
+      years.push(year);
     }
     return years;
   });
 
-  // Calendar days computed
   protected calendarDays = computed(() => {
     const date = this.calendarDate();
-    const year = date.getFullYear();
-    const month = date.getMonth();
-    const firstDay = new Date(year, month, 1).getDay();
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
     const today = new Date();
     const selected = this.selectedDate();
     
-    const days: { day: number | null; isToday: boolean; isSelected: boolean; isCurrentMonth: boolean; date: Date | null }[] = [];
+    const year = date.getFullYear();
+    const month = date.getMonth();
     
-    // Add empty slots for days before the first day of the month
-    for (let i = 0; i < firstDay; i++) {
-      days.push({ day: null, isToday: false, isSelected: false, isCurrentMonth: false, date: null });
+    // First day of the month
+    const firstDay = new Date(year, month, 1);
+    const startingDay = firstDay.getDay();
+    
+    // Last day of the month
+    const lastDay = new Date(year, month + 1, 0);
+    const totalDays = lastDay.getDate();
+    
+    // Previous month's last days
+    const prevMonthLastDay = new Date(year, month, 0).getDate();
+    
+    const days: { date: number; isCurrentMonth: boolean; isToday: boolean; isSelected: boolean }[] = [];
+    
+    // Previous month days
+    for (let i = startingDay - 1; i >= 0; i--) {
+      days.push({
+        date: prevMonthLastDay - i,
+        isCurrentMonth: false,
+        isToday: false,
+        isSelected: false
+      });
     }
     
-    // Add days of the month
-    for (let d = 1; d <= daysInMonth; d++) {
-      const dayDate = new Date(year, month, d);
+    // Current month days
+    for (let i = 1; i <= totalDays; i++) {
+      const isToday = today.getDate() === i && 
+                      today.getMonth() === month && 
+                      today.getFullYear() === year;
+      const isSelected = selected.getDate() === i && 
+                         selected.getMonth() === month && 
+                         selected.getFullYear() === year;
       days.push({
-        day: d,
-        isToday: dayDate.toDateString() === today.toDateString(),
-        isSelected: dayDate.toDateString() === selected.toDateString(),
+        date: i,
         isCurrentMonth: true,
-        date: dayDate
+        isToday,
+        isSelected
+      });
+    }
+    
+    // Next month days to complete the grid (6 rows x 7 days = 42)
+    const remainingDays = 42 - days.length;
+    for (let i = 1; i <= remainingDays; i++) {
+      days.push({
+        date: i,
+        isCurrentMonth: false,
+        isToday: false,
+        isSelected: false
       });
     }
     
     return days;
   });
 
-  // Hovered category for tooltip
-  protected hoveredCategory = signal<{ name: string; icon: string; total: number; percentage: number; color: string; index?: number } | null>(null);
-
-  // Category colors
-  protected CATEGORY_COLORS: Record<string, string> = {
-    'Food': '#ef4444',
-    'Transport': '#f97316',
-    'Shopping': '#eab308',
-    'Entertainment': '#84cc16',
-    'Bills': '#22c55e',
-    'Healthcare': '#14b8a6',
-    'Education': '#06b6d4',
-    'Investment': '#0ea5e9',
-    'Personal': '#6366f1',
-    'Travel': '#8b5cf6',
-    'Home': '#a855f7',
-    'Other': '#6b7280'
-  };
-
-  // Consolidation configs for subcategory grouping
-  protected CONSOLIDATION_CONFIGS: Record<string, CategoryHeatmapConfig> = {
-    'Abi': {
-      categoryName: 'Abi',
-      rowColors: ['#818cf8', '#a78bfa', '#c4b5fd', '#ddd6fe', '#ede9fe'],
-      consolidatedCategories: new Set(['Travel', 'Personal Care', 'Entertainment']),
-      patterns: [],
-      renameMap: {}
-    },
-    'BB': {
-      categoryName: 'BB',
-      rowColors: ['#f472b6', '#f9a8d4', '#fbcfe8', '#fce7f3', '#fdf2f8'],
-      consolidatedCategories: new Set(['Travel', 'Personal Care', 'Entertainment']),
-      patterns: [],
-      renameMap: {}
-    }
-  };
-
   constructor() {
-    // Date is already initialized above
-  }
-
-  // Tooltip position helper
-  protected getTooltipPosition(): { top: string; left: string; transform: string } {
-    return { top: '50%', left: '50%', transform: 'translate(-50%, -50%)' };
+    // Format current date
+    const now = new Date();
+    const options: Intl.DateTimeFormatOptions = { 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    };
+    this.currentDate = now.toLocaleDateString('en-US', options);
+    this.currentMonth = this.months[now.getMonth()];
+    this.currentYear = now.getFullYear();
+    
+    // Calculate previous month
+    const prevMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    this.previousMonth = this.months[prevMonthDate.getMonth()];
+    this.previousYear = prevMonthDate.getFullYear();
   }
 
   // ============================================
