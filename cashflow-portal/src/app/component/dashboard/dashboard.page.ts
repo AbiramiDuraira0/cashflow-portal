@@ -50,7 +50,7 @@ type BreakdownPopupData = {
   icon: string;
   total: number;
   color: string;
-  categoryType: 'abi' | 'bb' | 'home' | 'investment';
+  categoryType: 'personal' | 'family' | 'home' | 'investment';
   isConsolidated: boolean;
   showAllColumns: boolean;
   expenses: { month: string; year: number; amount: number; notes?: string; subcategory?: string }[];
@@ -81,8 +81,8 @@ export class DashboardPage implements OnInit {
 
   // Centralized category colors - single source of truth
   private readonly CATEGORY_COLORS: Record<string, string> = {
-    'Abi': '#a78bfa',
-    'BB': '#60a5fa',
+    'Personal': '#a78bfa',
+    'Family': '#60a5fa',
     'CC': '#fbbf24',
     'Home': '#fef08a',
     'Investment': '#4ade80',
@@ -95,17 +95,17 @@ export class DashboardPage implements OnInit {
 
   // Heatmap row colors by category type
   private readonly HEATMAP_ROW_COLORS: Record<string, string[]> = {
-    'Abi': ['#5b21b6', '#6d28d9', '#7c3aed', '#8b5cf6', '#a78bfa', '#b197fc'],
-    'BB': ['#1d4ed8', '#2563eb', '#3b82f6', '#60a5fa', '#93c5fd', '#dbeafe'],
+    'Personal': ['#5b21b6', '#6d28d9', '#7c3aed', '#8b5cf6', '#a78bfa', '#b197fc'],
+    'Family': ['#1d4ed8', '#2563eb', '#3b82f6', '#60a5fa', '#93c5fd', '#dbeafe'],
     'Home': ['#ca8a04', '#eab308', '#facc15', '#fde047', '#fef08a', '#fef9c3'],
     'Investment': ['#15803d', '#16a34a', '#22c55e', '#4ade80', '#86efac', '#bbf7d0'],
   };
 
   // Consolidation patterns for each category
   private readonly CONSOLIDATION_CONFIGS: Record<string, CategoryHeatmapConfig> = {
-    'Abi': {
-      categoryName: 'Abi',
-      rowColors: this.HEATMAP_ROW_COLORS['Abi'],
+    'Personal': {
+      categoryName: 'Personal',
+      rowColors: this.HEATMAP_ROW_COLORS['Personal'],
       consolidatedCategories: new Set(['Shopping', 'Subscriptions', 'Food', 'Trips', 'Temple & God', 'Miscellaneous']),
       patterns: [
         { name: 'Shopping', pattern: /^online\s*-?\s*|shopping/i, defaultIcon: '🛒' },
@@ -117,9 +117,9 @@ export class DashboardPage implements OnInit {
       ],
       renameMap: { 'Contact Lenz': 'Specs & Lenz' }
     },
-    'BB': {
-      categoryName: 'BB',
-      rowColors: this.HEATMAP_ROW_COLORS['BB'],
+    'Family': {
+      categoryName: 'Family',
+      rowColors: this.HEATMAP_ROW_COLORS['Family'],
       consolidatedCategories: new Set(['EMI - Debts', 'Others', 'Shopping', 'Food', 'Subscriptions']),
       patterns: [
         { name: 'Shopping', pattern: /^online\s*-?\s*|shopping/i, defaultIcon: '🛒' },
@@ -704,22 +704,22 @@ export class DashboardPage implements OnInit {
     }));
   }
 
-  // Computed Values - Abi Subcategory Heatmap Data
-  protected abiSubcategoryHeatmap = computed(() => this.buildCategoryHeatmap('Abi'));
+  // Computed Values - Personal Subcategory Heatmap Data
+  protected personalSubcategoryHeatmap = computed(() => this.buildCategoryHeatmap('Personal'));
 
-  // Get total Abi spending
-  protected abiTotalSpending = computed(() => {
-    const abiCategory = this.subcategoryStats().find(cat => cat.categoryName === 'Abi');
-    return abiCategory?.categoryTotal || 0;
+  // Get total Personal spending
+  protected personalTotalSpending = computed(() => {
+    const personalCategory = this.subcategoryStats().find(cat => cat.categoryName === 'Personal');
+    return personalCategory?.categoryTotal || 0;
   });
 
-  // Computed Values - BB Subcategory Heatmap Data
-  protected bbSubcategoryHeatmap = computed(() => this.buildCategoryHeatmap('BB'));
+  // Computed Values - Family Subcategory Heatmap Data
+  protected familySubcategoryHeatmap = computed(() => this.buildCategoryHeatmap('Family'));
 
-  // Get total BB spending
-  protected bbTotalSpending = computed(() => {
-    const bbCategory = this.subcategoryStats().find(cat => cat.categoryName === 'BB');
-    return bbCategory?.categoryTotal || 0;
+  // Get total Family spending
+  protected familyTotalSpending = computed(() => {
+    const familyCategory = this.subcategoryStats().find(cat => cat.categoryName === 'Family');
+    return familyCategory?.categoryTotal || 0;
   });
 
   // Computed Values - Home Subcategory Heatmap Data
@@ -896,7 +896,7 @@ export class DashboardPage implements OnInit {
 
   // Patterns for breakdown display logic (reuse from configs)
   private readonly BREAKDOWN_PATTERNS: Record<string, Record<string, RegExp>> = {
-    'Abi': {
+    'Personal': {
       'Shopping': /^online\s*-?\s*|shopping/i,
       'Food': /^food\s*|snacks?$/i,
       'Subscriptions': /^(netflix|jio|google|youtube|prime|hotstar|spotify|subscription)/i,
@@ -905,7 +905,7 @@ export class DashboardPage implements OnInit {
       'Miscellaneous': /^(miscellaneous|misc|relatives?)/i,
       'Specs & Lenz': /^contact\s*lenz/i,
     },
-    'BB': {
+    'Family': {
       'Shopping': /^online\s*-?\s*|shopping/i,
       'Food': /^food\s*|snacks?$/i,
       'Subscriptions': /^(netflix|jio|google|youtube|prime|hotstar|spotify|subscription)/i,
@@ -922,9 +922,9 @@ export class DashboardPage implements OnInit {
 
   // Show Notes columns set per category
   private readonly SHOW_NOTES_COLUMNS: Record<string, Set<string>> = {
-    'Abi': new Set(['Shopping', 'Subscriptions', 'Food', 'Trips', 'Temple & God', 'Amma', 'Appa', 'Dhanush', 'Household']),
-    'BB': new Set(['Shopping', 'Food', 'Subscriptions', 'Amma', 'Appa', 'Dhanush', 'Household']),
-    'Home': new Set(['Groceries', 'Furniture', 'Subscriptions', 'Amma', 'Appa', 'Dhanush', 'Household']),
+    'Personal': new Set(['Shopping', 'Subscriptions', 'Food', 'Trips', 'Temple & God', 'Parent 1', 'Parent 2', 'Sibling', 'Household']),
+    'Family': new Set(['Shopping', 'Food', 'Subscriptions', 'Parent 1', 'Parent 2', 'Sibling', 'Household']),
+    'Home': new Set(['Groceries', 'Furniture', 'Subscriptions', 'Parent 1', 'Parent 2', 'Sibling', 'Household']),
   };
 
   // Show All Columns set (lowercase for comparison)
@@ -932,8 +932,8 @@ export class DashboardPage implements OnInit {
 
   // Default colors per category
   private readonly DEFAULT_BREAKDOWN_COLORS: Record<string, string> = {
-    'Abi': '#a78bfa',
-    'BB': '#60a5fa',
+    'Personal': '#a78bfa',
+    'Family': '#60a5fa',
     'Home': '#fef08a',
     'Investment': '#22c55e'
   };
@@ -945,11 +945,11 @@ export class DashboardPage implements OnInit {
 
   /**
    * Unified method to open category breakdown popup
-   * Replaces: openAbiBreakdownPopup, openBbBreakdownPopup, openHomeBreakdownPopup
+   * Replaces: openPersonalBreakdownPopup, openFamilyBreakdownPopup, openHomeBreakdownPopup
    */
-  protected openCategoryBreakdownPopup(subcategoryName: string, categoryType: 'abi' | 'bb' | 'home'): void {
+  protected openCategoryBreakdownPopup(subcategoryName: string, categoryType: 'personal' | 'family' | 'home'): void {
     const categoryName = categoryType.charAt(0).toUpperCase() + categoryType.slice(1);
-    const actualCategoryName = categoryName === 'Abi' ? 'Abi' : categoryName === 'Bb' ? 'BB' : 'Home';
+    const actualCategoryName = categoryName === 'Personal' ? 'Personal' : categoryName === 'Family' ? 'Family' : 'Home';
     
     const expenses = this.expenseData();
     const patterns = this.BREAKDOWN_PATTERNS[actualCategoryName] || {};
@@ -991,8 +991,8 @@ export class DashboardPage implements OnInit {
   // Helper: Get heatmap for a category
   private getHeatmapForCategory(categoryName: string): HeatmapItem[] {
     switch (categoryName) {
-      case 'Abi': return this.abiSubcategoryHeatmap();
-      case 'BB': return this.bbSubcategoryHeatmap();
+      case 'Personal': return this.personalSubcategoryHeatmap();
+      case 'Family': return this.familySubcategoryHeatmap();
       case 'Home': return this.homeSubcategoryHeatmap();
       default: return [];
     }
@@ -1047,19 +1047,19 @@ export class DashboardPage implements OnInit {
   }
 
   // Legacy methods for backward compatibility with templates
-  protected openAbiBreakdownPopup(subcategoryName: string): void {
-    this.openCategoryBreakdownPopup(subcategoryName, 'abi');
+  protected openPersonalBreakdownPopup(subcategoryName: string): void {
+    this.openCategoryBreakdownPopup(subcategoryName, 'personal');
   }
 
-  protected closeAbiBreakdownPopup(): void {
+  protected closePersonalBreakdownPopup(): void {
     this.closeCategoryBreakdownPopup();
   }
 
-  protected openBbBreakdownPopup(subcategoryName: string): void {
-    this.openCategoryBreakdownPopup(subcategoryName, 'bb');
+  protected openFamilyBreakdownPopup(subcategoryName: string): void {
+    this.openCategoryBreakdownPopup(subcategoryName, 'family');
   }
 
-  protected closeBbBreakdownPopup(): void {
+  protected closeFamilyBreakdownPopup(): void {
     this.closeCategoryBreakdownPopup();
   }
 
@@ -1072,14 +1072,14 @@ export class DashboardPage implements OnInit {
   }
 
   // Computed getters for backward compatibility with HTML templates
-  protected selectedAbiBreakdown = computed(() => {
+  protected selectedPersonalBreakdown = computed(() => {
     const data = this.selectedCategoryBreakdown();
-    return data?.categoryType === 'abi' ? data : null;
+    return data?.categoryType === 'personal' ? data : null;
   });
 
-  protected selectedBbBreakdown = computed(() => {
+  protected selectedFamilyBreakdown = computed(() => {
     const data = this.selectedCategoryBreakdown();
-    return data?.categoryType === 'bb' ? data : null;
+    return data?.categoryType === 'family' ? data : null;
   });
 
   protected selectedHomeBreakdown = computed(() => {

@@ -1590,7 +1590,7 @@
     }
     
     // Asymmetric layout: Heatmap narrower, Abi wider
-    &.heatmap-abi-row {
+    &.heatmap-personal-row {
       grid-template-columns: 2fr 3fr;
     }
 
@@ -1598,7 +1598,7 @@
       grid-template-columns: 1fr;
       gap: 16px;
       
-      &.heatmap-abi-row {
+      &.heatmap-personal-row {
         grid-template-columns: 1fr;
       }
     }
@@ -3346,7 +3346,7 @@
 // ============================================
 // Abi Subcategory Heatmap Styles
 // ============================================
-.abi-section {
+.personal-section {
   margin-top: 8px;
 }
 
@@ -3354,24 +3354,24 @@
   display: block;
 }
 
-.abi-heatmap-card {
+.personal-heatmap-card {
   background: linear-gradient(135deg, rgba(167, 139, 250, 0.08) 0%, rgba(139, 92, 246, 0.04) 100%);
   border: 1px solid rgba(167, 139, 250, 0.2);
   border-radius: 16px;
   padding: 16px;
   
-  .abi-header {
+  .personal-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 12px;
     
-    .abi-title {
+    .personal-title {
       display: flex;
       align-items: center;
       gap: 10px;
       
-      .abi-icon {
+      .personal-icon {
         font-size: 1.4rem;
       }
       
@@ -3383,7 +3383,7 @@
       }
     }
     
-    .abi-total {
+    .personal-total {
       font-size: 1.1rem;
       font-weight: 700;
       color: #7c3aed;
@@ -3394,11 +3394,11 @@
   }
 }
 
-.abi-heatmap-wrapper {
+.personal-heatmap-wrapper {
   overflow: hidden;
 }
 
-.abi-treemap-container {
+.personal-treemap-container {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
@@ -3413,7 +3413,7 @@
   }
 }
 
-.abi-treemap-cell {
+.personal-treemap-cell {
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -3580,16 +3580,16 @@
 
 // Dark mode support for Abi heatmap
 @media (prefers-color-scheme: dark) {
-  .abi-heatmap-card {
+  .personal-heatmap-card {
     background: linear-gradient(135deg, rgba(167, 139, 250, 0.12) 0%, rgba(139, 92, 246, 0.08) 100%);
     border-color: rgba(167, 139, 250, 0.3);
     
-    .abi-header {
-      .abi-title h4 {
+    .personal-header {
+      .personal-title h4 {
         color: #c4b5fd;
       }
       
-      .abi-total {
+      .personal-total {
         color: #a78bfa;
         background: rgba(167, 139, 250, 0.2);
       }
@@ -3599,11 +3599,11 @@
 
 // Responsive adjustments
 @media (max-width: 768px) {
-  .abi-treemap-container {
+  .personal-treemap-container {
     gap: 4px;
   }
   
-  .abi-treemap-cell {
+  .personal-treemap-cell {
     min-width: 75px;
     min-height: 75px;
     padding: 8px 6px;
@@ -3921,13 +3921,13 @@
 // ============================================
 // BB & Home Subcategory Heatmap Styles
 // ============================================
-.bb-section,
+.family-section,
 .home-section {
   margin-top: 8px;
 }
 
 // Common styles for category heatmap cards
-.bb-heatmap-card,
+.family-heatmap-card,
 .home-heatmap-card {
   border-radius: 16px;
   padding: 16px;
@@ -3953,11 +3953,11 @@
 }
 
 // BB specific styles
-.bb-heatmap-card {
+.family-heatmap-card {
   background: linear-gradient(135deg, rgba(96, 165, 250, 0.08) 0%, rgba(59, 130, 246, 0.04) 100%);
   border: 1px solid rgba(96, 165, 250, 0.2);
   
-  .bb-header {
+  .family-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -3967,7 +3967,7 @@
       color: #1d4ed8;
     }
     
-    .bb-total {
+    .family-total {
       color: #3b82f6;
       background: rgba(96, 165, 250, 0.15);
     }
@@ -3997,13 +3997,13 @@
 }
 
 // BB + Investment Stacked Container
-.bb-investment-stack {
+.family-investment-stack {
   display: flex;
   flex-direction: column;
   gap: 12px;
   height: 100%;
   
-  .bb-heatmap-card,
+  .family-heatmap-card,
   .investment-heatmap-card {
     flex: 1;
     margin-top: 0 !important;
@@ -4011,10 +4011,10 @@
 }
 
 // Abi + BB Row - ensure equal heights
-.abi-bb-row {
+.personal-bb-row {
   align-items: stretch;
   
-  .abi-heatmap-card {
+  .personal-heatmap-card {
     height: auto;
   }
 }
@@ -4376,7 +4376,7 @@
   }
   
   // BB cell hover shadow
-  &.bb-cell:hover {
+  &.family-cell:hover {
     box-shadow: 0 8px 20px rgba(96, 165, 250, 0.3);
   }
   
@@ -4505,16 +4505,16 @@
 
 // Dark mode support for BB & Home heatmaps
 @media (prefers-color-scheme: dark) {
-  .bb-heatmap-card {
+  .family-heatmap-card {
     background: linear-gradient(135deg, rgba(96, 165, 250, 0.12) 0%, rgba(59, 130, 246, 0.08) 100%);
     border-color: rgba(96, 165, 250, 0.3);
     
-    .bb-header {
+    .family-header {
       .category-title h4 {
         color: #93c5fd;
       }
       
-      .bb-total {
+      .family-total {
         color: #60a5fa;
         background: rgba(96, 165, 250, 0.2);
       }

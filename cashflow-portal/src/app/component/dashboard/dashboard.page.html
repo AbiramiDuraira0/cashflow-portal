@@ -151,8 +151,8 @@
         <span class="total-badge">Total: {{ formatCurrency(totalCategorySpending()) }}</span>
       </div>
       
-      <!-- Row 1: Heatmap + Abi Expenses Breakdown -->
-      <div class="charts-grid heatmap-abi-row">
+      <!-- Row 1: Heatmap + Personal Expenses Breakdown -->
+      <div class="charts-grid heatmap-personal-row">
         <!-- Heatmap Table View -->
         <div class="chart-card heatmap-card heatmap-table-card">
           <div class="chart-card-header">
@@ -228,21 +228,21 @@
         }
       </div>
 
-      <!-- Row 2: Abi + (BB + Investment stacked) -->
-      <div class="charts-grid two-columns abi-bb-row" style="margin-top: 16px;">
-        <!-- Abi Subcategory Heatmap -->
-        @if (abiSubcategoryHeatmap().length > 0) {
-          <div class="chart-card abi-heatmap-card">
-            <div class="chart-card-header abi-header">
-              <div class="abi-title">
-                <h4>Abi Expenses Breakdown</h4>
+      <!-- Row 2: Personal + (Family + Investment stacked) -->
+      <div class="charts-grid two-columns personal-family-row" style="margin-top: 16px;">
+        <!-- Personal Subcategory Heatmap -->
+        @if (personalSubcategoryHeatmap().length > 0) {
+          <div class="chart-card personal-heatmap-card">
+            <div class="chart-card-header personal-header">
+              <div class="personal-title">
+                <h4>Personal Expenses Breakdown</h4>
               </div>
-              <span class="abi-total">{{ formatCurrency(abiTotalSpending()) }}</span>
+              <span class="personal-total">{{ formatCurrency(personalTotalSpending()) }}</span>
             </div>
-            <div class="abi-heatmap-wrapper">
-              <div class="abi-treemap-container">
-                @for (sub of abiSubcategoryHeatmap(); track sub.name; let i = $index) {
-                  <div class="abi-treemap-cell" 
+            <div class="personal-heatmap-wrapper">
+              <div class="personal-treemap-container">
+                @for (sub of personalSubcategoryHeatmap(); track sub.name; let i = $index) {
+                  <div class="personal-treemap-cell" 
                        [class.large]="sub.percentage >= 25"
                        [class.medium]="sub.percentage >= 10 && sub.percentage < 25"
                        [class.small]="sub.percentage < 10"
@@ -253,7 +253,7 @@
                        [style.background]="sub.color"
                        [style.flex-basis]="'calc(' + (sub.percentage * 2) + '% - 6px)'"
                        [style.animation-delay]="(i * 0.08) + 's'"
-                       (click)="openAbiBreakdownPopup(sub.name)">
+                       (click)="openPersonalBreakdownPopup(sub.name)">
                     @if (sub.isConsolidated) {
                       <span class="consolidated-indicator">*</span>
                     }
@@ -268,21 +268,21 @@
           </div>
         }
 
-        <!-- BB + Investment Stacked Container -->
-        <div class="bb-investment-stack">
-          <!-- BB Subcategory Heatmap -->
-          @if (bbSubcategoryHeatmap().length > 0) {
-            <div class="chart-card bb-heatmap-card">
-              <div class="chart-card-header bb-header">
+        <!-- Family + Investment Stacked Container -->
+        <div class="family-investment-stack">
+          <!-- Family Subcategory Heatmap -->
+          @if (familySubcategoryHeatmap().length > 0) {
+            <div class="chart-card family-heatmap-card">
+              <div class="chart-card-header family-header">
                 <div class="category-title">
-                  <h4>BB Expenses Breakdown</h4>
+                  <h4>Family Expenses Breakdown</h4>
                 </div>
-                <span class="category-total bb-total">{{ formatCurrency(bbTotalSpending()) }}</span>
+                <span class="category-total family-total">{{ formatCurrency(familyTotalSpending()) }}</span>
               </div>
               <div class="category-heatmap-wrapper">
                 <div class="category-treemap-container">
-                  @for (sub of bbSubcategoryHeatmap(); track sub.name; let i = $index) {
-                    <div class="category-treemap-cell bb-cell" 
+                  @for (sub of familySubcategoryHeatmap(); track sub.name; let i = $index) {
+                    <div class="category-treemap-cell family-cell" 
                          [class.large]="sub.percentage >= 25"
                          [class.medium]="sub.percentage >= 10 && sub.percentage < 25"
                          [class.small]="sub.percentage < 10"
@@ -291,7 +291,7 @@
                          [style.flex-basis]="'calc(' + (sub.percentage * 2) + '% - 6px)'"
                          [style.max-width]="'calc(' + (sub.percentage * 2.5) + '% - 6px)'"
                          [style.animation-delay]="(i * 0.08) + 's'"
-                         (click)="openBbBreakdownPopup(sub.name)">
+                         (click)="openFamilyBreakdownPopup(sub.name)">
                       @if (sub.isConsolidated) {
                         <span class="consolidated-indicator">*</span>
                       }
@@ -507,7 +507,7 @@
     </div>
   }
 
-  <!-- Unified Category Breakdown Popup (Abi, BB, Home) -->
+  <!-- Unified Category Breakdown Popup (Personal, Family, Home) -->
   @if (selectedCategoryBreakdown()) {
     <div class="popup-overlay category-breakdown-popup-overlay" (click)="closeCategoryBreakdownPopup()">
       <div class="popup-card category-breakdown-popup" (click)="$event.stopPropagation()">

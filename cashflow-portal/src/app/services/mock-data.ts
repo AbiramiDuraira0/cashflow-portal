@@ -1,4 +1,4 @@
-/**
+﻿/**
  * ============================================================
  * MOCK DATA FOR QA BRANCH
  * ============================================================
@@ -43,29 +43,29 @@ export const MOCK_EXPENSE_DATA = [
   { expense_id: 10, month: 'June', year: 2026, category_id: 1, category_name: 'Home', category_icon: '🏠', sub_category: 'Monthly Rent', subcategory_icon: '🏡', amount_inr: 18000, notes: 'Apartment rent', is_delete: false, created_at: '2026-06-01T10:00:00Z', updated_at: '2026-06-01T10:00:00Z' },
 
   // ============================================
-  // ABI EXPENSES (for Abi Heatmap - Personal spending)
+  // PERSONAL EXPENSES (for Personal Heatmap)
   // ============================================
-  { expense_id: 11, month: 'January', year: 2026, category_id: 2, category_name: 'Abi', category_icon: '👩', sub_category: 'Personal Care', subcategory_icon: '💄', amount_inr: 3500, notes: 'Skincare products', is_delete: false, created_at: '2026-01-08T10:00:00Z', updated_at: '2026-01-08T10:00:00Z' },
-  { expense_id: 12, month: 'January', year: 2026, category_id: 2, category_name: 'Abi', category_icon: '👩', sub_category: 'Clothing', subcategory_icon: '👗', amount_inr: 5000, notes: 'Winter wear', is_delete: false, created_at: '2026-01-15T10:00:00Z', updated_at: '2026-01-15T10:00:00Z' },
-  { expense_id: 13, month: 'February', year: 2026, category_id: 2, category_name: 'Abi', category_icon: '�', sub_category: 'Entertainment', subcategory_icon: '�', amount_inr: 1200, notes: 'Movies & concerts', is_delete: false, created_at: '2026-02-10T10:00:00Z', updated_at: '2026-02-10T10:00:00Z' },
-  { expense_id: 14, month: 'February', year: 2026, category_id: 2, category_name: 'Abi', category_icon: '👩', sub_category: 'Food & Dining', subcategory_icon: '🍽️', amount_inr: 2500, notes: 'Restaurant visits', is_delete: false, created_at: '2026-02-14T10:00:00Z', updated_at: '2026-02-14T10:00:00Z' },
-  { expense_id: 15, month: 'March', year: 2026, category_id: 2, category_name: 'Abi', category_icon: '👩', sub_category: 'Travel', subcategory_icon: '✈️', amount_inr: 8000, notes: 'Weekend trip', is_delete: false, created_at: '2026-03-20T10:00:00Z', updated_at: '2026-03-20T10:00:00Z' },
-  { expense_id: 16, month: 'March', year: 2026, category_id: 2, category_name: 'Abi', category_icon: '👩', sub_category: 'Health & Fitness', subcategory_icon: '🏋️', amount_inr: 2000, notes: 'Gym membership', is_delete: false, created_at: '2026-03-01T10:00:00Z', updated_at: '2026-03-01T10:00:00Z' },
-  { expense_id: 17, month: 'April', year: 2026, category_id: 2, category_name: 'Abi', category_icon: '👩', sub_category: 'Education', subcategory_icon: '📚', amount_inr: 4500, notes: 'Online course', is_delete: false, created_at: '2026-04-05T10:00:00Z', updated_at: '2026-04-05T10:00:00Z' },
-  { expense_id: 18, month: 'May', year: 2026, category_id: 2, category_name: 'Abi', category_icon: '👩', sub_category: 'Personal Care', subcategory_icon: '💄', amount_inr: 2800, notes: 'Beauty products', is_delete: false, created_at: '2026-05-12T10:00:00Z', updated_at: '2026-05-12T10:00:00Z' },
-  { expense_id: 19, month: 'June', year: 2026, category_id: 2, category_name: 'Abi', category_icon: '👩', sub_category: 'Clothing', subcategory_icon: '👗', amount_inr: 6000, notes: 'Summer collection', is_delete: false, created_at: '2026-06-10T10:00:00Z', updated_at: '2026-06-10T10:00:00Z' },
+  { expense_id: 11, month: 'January', year: 2026, category_id: 2, category_name: 'Personal', category_icon: '�', sub_category: 'Personal Care', subcategory_icon: '💄', amount_inr: 3500, notes: 'Skincare products', is_delete: false, created_at: '2026-01-08T10:00:00Z', updated_at: '2026-01-08T10:00:00Z' },
+  { expense_id: 12, month: 'January', year: 2026, category_id: 2, category_name: 'Personal', category_icon: '�', sub_category: 'Clothing', subcategory_icon: '👗', amount_inr: 5000, notes: 'Winter wear', is_delete: false, created_at: '2026-01-15T10:00:00Z', updated_at: '2026-01-15T10:00:00Z' },
+  { expense_id: 13, month: 'February', year: 2026, category_id: 2, category_name: 'Personal', category_icon: '�', sub_category: 'Entertainment', subcategory_icon: '�', amount_inr: 1200, notes: 'Movies & concerts', is_delete: false, created_at: '2026-02-10T10:00:00Z', updated_at: '2026-02-10T10:00:00Z' },
+  { expense_id: 14, month: 'February', year: 2026, category_id: 2, category_name: 'Personal', category_icon: '👩', sub_category: 'Food & Dining', subcategory_icon: '🍽️', amount_inr: 2500, notes: 'Restaurant visits', is_delete: false, created_at: '2026-02-14T10:00:00Z', updated_at: '2026-02-14T10:00:00Z' },
+  { expense_id: 15, month: 'March', year: 2026, category_id: 2, category_name: 'Personal', category_icon: '👩', sub_category: 'Travel', subcategory_icon: '✈️', amount_inr: 8000, notes: 'Weekend trip', is_delete: false, created_at: '2026-03-20T10:00:00Z', updated_at: '2026-03-20T10:00:00Z' },
+  { expense_id: 16, month: 'March', year: 2026, category_id: 2, category_name: 'Personal', category_icon: '👩', sub_category: 'Health & Fitness', subcategory_icon: '🏋️', amount_inr: 2000, notes: 'Gym membership', is_delete: false, created_at: '2026-03-01T10:00:00Z', updated_at: '2026-03-01T10:00:00Z' },
+  { expense_id: 17, month: 'April', year: 2026, category_id: 2, category_name: 'Personal', category_icon: '👩', sub_category: 'Education', subcategory_icon: '📚', amount_inr: 4500, notes: 'Online course', is_delete: false, created_at: '2026-04-05T10:00:00Z', updated_at: '2026-04-05T10:00:00Z' },
+  { expense_id: 18, month: 'May', year: 2026, category_id: 2, category_name: 'Personal', category_icon: '👩', sub_category: 'Personal Care', subcategory_icon: '💄', amount_inr: 2800, notes: 'Beauty products', is_delete: false, created_at: '2026-05-12T10:00:00Z', updated_at: '2026-05-12T10:00:00Z' },
+  { expense_id: 19, month: 'June', year: 2026, category_id: 2, category_name: 'Personal', category_icon: '👩', sub_category: 'Clothing', subcategory_icon: '👗', amount_inr: 6000, notes: 'Summer collection', is_delete: false, created_at: '2026-06-10T10:00:00Z', updated_at: '2026-06-10T10:00:00Z' },
 
   // ============================================
-  // BB EXPENSES (for BB Heatmap - Family spending)
+  // FAMILY EXPENSES (for Family Heatmap)
   // ============================================
-  { expense_id: 20, month: 'January', year: 2026, category_id: 3, category_name: 'BB', category_icon: '👶', sub_category: 'Baby Care', subcategory_icon: '🍼', amount_inr: 3000, notes: 'Diapers & formula', is_delete: false, created_at: '2026-01-10T10:00:00Z', updated_at: '2026-01-10T10:00:00Z' },
-  { expense_id: 21, month: 'January', year: 2026, category_id: 3, category_name: 'BB', category_icon: '👶', sub_category: 'Toys & Games', subcategory_icon: '🧸', amount_inr: 1500, notes: 'Educational toys', is_delete: false, created_at: '2026-01-18T10:00:00Z', updated_at: '2026-01-18T10:00:00Z' },
-  { expense_id: 22, month: 'February', year: 2026, category_id: 3, category_name: 'BB', category_icon: '👶', sub_category: 'Baby Care', subcategory_icon: '🍼', amount_inr: 3200, notes: 'Monthly supplies', is_delete: false, created_at: '2026-02-08T10:00:00Z', updated_at: '2026-02-08T10:00:00Z' },
-  { expense_id: 23, month: 'February', year: 2026, category_id: 3, category_name: 'BB', category_icon: '👶', sub_category: 'Clothing', subcategory_icon: '👕', amount_inr: 2000, notes: 'Baby clothes', is_delete: false, created_at: '2026-02-20T10:00:00Z', updated_at: '2026-02-20T10:00:00Z' },
-  { expense_id: 24, month: 'March', year: 2026, category_id: 3, category_name: 'BB', category_icon: '👶', sub_category: 'Medical', subcategory_icon: '💊', amount_inr: 1800, notes: 'Vaccination', is_delete: false, created_at: '2026-03-15T10:00:00Z', updated_at: '2026-03-15T10:00:00Z' },
-  { expense_id: 25, month: 'April', year: 2026, category_id: 3, category_name: 'BB', category_icon: '�', sub_category: 'Baby Care', subcategory_icon: '🍼', amount_inr: 2800, notes: 'Monthly supplies', is_delete: false, created_at: '2026-04-10T10:00:00Z', updated_at: '2026-04-10T10:00:00Z' },
-  { expense_id: 26, month: 'May', year: 2026, category_id: 3, category_name: 'BB', category_icon: '👶', sub_category: 'Toys & Games', subcategory_icon: '🧸', amount_inr: 2500, notes: 'Birthday gifts', is_delete: false, created_at: '2026-05-05T10:00:00Z', updated_at: '2026-05-05T10:00:00Z' },
-  { expense_id: 27, month: 'June', year: 2026, category_id: 3, category_name: 'BB', category_icon: '👶', sub_category: 'Baby Care', subcategory_icon: '🍼', amount_inr: 3000, notes: 'Monthly supplies', is_delete: false, created_at: '2026-06-08T10:00:00Z', updated_at: '2026-06-08T10:00:00Z' },
+  { expense_id: 20, month: 'January', year: 2026, category_id: 3, category_name: 'Family', category_icon: '👶', sub_category: 'Baby Care', subcategory_icon: '🍼', amount_inr: 3000, notes: 'Diapers & formula', is_delete: false, created_at: '2026-01-10T10:00:00Z', updated_at: '2026-01-10T10:00:00Z' },
+  { expense_id: 21, month: 'January', year: 2026, category_id: 3, category_name: 'Family', category_icon: '👶', sub_category: 'Toys & Games', subcategory_icon: '🧸', amount_inr: 1500, notes: 'Educational toys', is_delete: false, created_at: '2026-01-18T10:00:00Z', updated_at: '2026-01-18T10:00:00Z' },
+  { expense_id: 22, month: 'February', year: 2026, category_id: 3, category_name: 'Family', category_icon: '👶', sub_category: 'Baby Care', subcategory_icon: '🍼', amount_inr: 3200, notes: 'Monthly supplies', is_delete: false, created_at: '2026-02-08T10:00:00Z', updated_at: '2026-02-08T10:00:00Z' },
+  { expense_id: 23, month: 'February', year: 2026, category_id: 3, category_name: 'Family', category_icon: '👶', sub_category: 'Clothing', subcategory_icon: '👕', amount_inr: 2000, notes: 'Baby clothes', is_delete: false, created_at: '2026-02-20T10:00:00Z', updated_at: '2026-02-20T10:00:00Z' },
+  { expense_id: 24, month: 'March', year: 2026, category_id: 3, category_name: 'Family', category_icon: '👶', sub_category: 'Medical', subcategory_icon: '💊', amount_inr: 1800, notes: 'Vaccination', is_delete: false, created_at: '2026-03-15T10:00:00Z', updated_at: '2026-03-15T10:00:00Z' },
+  { expense_id: 25, month: 'April', year: 2026, category_id: 3, category_name: 'Family', category_icon: '�', sub_category: 'Baby Care', subcategory_icon: '🍼', amount_inr: 2800, notes: 'Monthly supplies', is_delete: false, created_at: '2026-04-10T10:00:00Z', updated_at: '2026-04-10T10:00:00Z' },
+  { expense_id: 26, month: 'May', year: 2026, category_id: 3, category_name: 'Family', category_icon: '👶', sub_category: 'Toys & Games', subcategory_icon: '🧸', amount_inr: 2500, notes: 'Birthday gifts', is_delete: false, created_at: '2026-05-05T10:00:00Z', updated_at: '2026-05-05T10:00:00Z' },
+  { expense_id: 27, month: 'June', year: 2026, category_id: 3, category_name: 'Family', category_icon: '👶', sub_category: 'Baby Care', subcategory_icon: '🍼', amount_inr: 3000, notes: 'Monthly supplies', is_delete: false, created_at: '2026-06-08T10:00:00Z', updated_at: '2026-06-08T10:00:00Z' },
 
   // ============================================
   // INVESTMENT EXPENSES (for Investment Heatmap)
@@ -104,20 +104,20 @@ export const MOCK_CATEGORY_DATA = [
   { category_id: 4, category_name: 'Home', category_icon: '🏠', sub_category: 'Internet', subcategory_icon: '📡', notes: 'Broadband & Wi-Fi', is_active: true, created_at: '2024-01-01T10:00:00Z', updated_at: '2024-01-01T10:00:00Z' },
   { category_id: 5, category_name: 'Home', category_icon: '🏠', sub_category: 'Maintenance', subcategory_icon: '🔧', notes: 'Society maintenance', is_active: true, created_at: '2024-01-01T10:00:00Z', updated_at: '2024-01-01T10:00:00Z' },
   
-  // Abi categories (Personal)
-  { category_id: 6, category_name: 'Abi', category_icon: '�', sub_category: 'Personal Care', subcategory_icon: '💄', notes: 'Beauty & skincare', is_active: true, created_at: '2024-01-01T10:00:00Z', updated_at: '2024-01-01T10:00:00Z' },
-  { category_id: 7, category_name: 'Abi', category_icon: '👩', sub_category: 'Clothing', subcategory_icon: '👗', notes: 'Apparel shopping', is_active: true, created_at: '2024-01-01T10:00:00Z', updated_at: '2024-01-01T10:00:00Z' },
-  { category_id: 8, category_name: 'Abi', category_icon: '�', sub_category: 'Entertainment', subcategory_icon: '🎬', notes: 'Movies & events', is_active: true, created_at: '2024-01-01T10:00:00Z', updated_at: '2024-01-01T10:00:00Z' },
-  { category_id: 9, category_name: 'Abi', category_icon: '👩', sub_category: 'Food & Dining', subcategory_icon: '🍽️', notes: 'Restaurants', is_active: true, created_at: '2024-01-01T10:00:00Z', updated_at: '2024-01-01T10:00:00Z' },
-  { category_id: 10, category_name: 'Abi', category_icon: '👩', sub_category: 'Travel', subcategory_icon: '✈️', notes: 'Trips & vacations', is_active: true, created_at: '2024-01-01T10:00:00Z', updated_at: '2024-01-01T10:00:00Z' },
-  { category_id: 11, category_name: 'Abi', category_icon: '👩', sub_category: 'Health & Fitness', subcategory_icon: '�️', notes: 'Gym & wellness', is_active: true, created_at: '2024-01-01T10:00:00Z', updated_at: '2024-01-01T10:00:00Z' },
-  { category_id: 12, category_name: 'Abi', category_icon: '👩', sub_category: 'Education', subcategory_icon: '�', notes: 'Courses & learning', is_active: true, created_at: '2024-01-01T10:00:00Z', updated_at: '2024-01-01T10:00:00Z' },
+  // Personal categories
+  { category_id: 6, category_name: 'Personal', category_icon: '�', sub_category: 'Personal Care', subcategory_icon: '💄', notes: 'Beauty & skincare', is_active: true, created_at: '2024-01-01T10:00:00Z', updated_at: '2024-01-01T10:00:00Z' },
+  { category_id: 7, category_name: 'Personal', category_icon: '👩', sub_category: 'Clothing', subcategory_icon: '👗', notes: 'Apparel shopping', is_active: true, created_at: '2024-01-01T10:00:00Z', updated_at: '2024-01-01T10:00:00Z' },
+  { category_id: 8, category_name: 'Personal', category_icon: '�', sub_category: 'Entertainment', subcategory_icon: '🎬', notes: 'Movies & events', is_active: true, created_at: '2024-01-01T10:00:00Z', updated_at: '2024-01-01T10:00:00Z' },
+  { category_id: 9, category_name: 'Personal', category_icon: '👩', sub_category: 'Food & Dining', subcategory_icon: '🍽️', notes: 'Restaurants', is_active: true, created_at: '2024-01-01T10:00:00Z', updated_at: '2024-01-01T10:00:00Z' },
+  { category_id: 10, category_name: 'Personal', category_icon: '👩', sub_category: 'Travel', subcategory_icon: '✈️', notes: 'Trips & vacations', is_active: true, created_at: '2024-01-01T10:00:00Z', updated_at: '2024-01-01T10:00:00Z' },
+  { category_id: 11, category_name: 'Personal', category_icon: '👩', sub_category: 'Health & Fitness', subcategory_icon: '�️', notes: 'Gym & wellness', is_active: true, created_at: '2024-01-01T10:00:00Z', updated_at: '2024-01-01T10:00:00Z' },
+  { category_id: 12, category_name: 'Personal', category_icon: '👩', sub_category: 'Education', subcategory_icon: '�', notes: 'Courses & learning', is_active: true, created_at: '2024-01-01T10:00:00Z', updated_at: '2024-01-01T10:00:00Z' },
   
-  // BB categories (Family/Baby)
-  { category_id: 13, category_name: 'BB', category_icon: '👶', sub_category: 'Baby Care', subcategory_icon: '🍼', notes: 'Baby essentials', is_active: true, created_at: '2024-01-01T10:00:00Z', updated_at: '2024-01-01T10:00:00Z' },
-  { category_id: 14, category_name: 'BB', category_icon: '👶', sub_category: 'Toys & Games', subcategory_icon: '🧸', notes: 'Toys & educational', is_active: true, created_at: '2024-01-01T10:00:00Z', updated_at: '2024-01-01T10:00:00Z' },
-  { category_id: 15, category_name: 'BB', category_icon: '�', sub_category: 'Clothing', subcategory_icon: '👕', notes: 'Baby clothes', is_active: true, created_at: '2024-01-01T10:00:00Z', updated_at: '2024-01-01T10:00:00Z' },
-  { category_id: 16, category_name: 'BB', category_icon: '👶', sub_category: 'Medical', subcategory_icon: '💊', notes: 'Baby health', is_active: true, created_at: '2024-01-01T10:00:00Z', updated_at: '2024-01-01T10:00:00Z' },
+  // Family categories
+  { category_id: 13, category_name: 'Family', category_icon: '👶', sub_category: 'Baby Care', subcategory_icon: '🍼', notes: 'Baby essentials', is_active: true, created_at: '2024-01-01T10:00:00Z', updated_at: '2024-01-01T10:00:00Z' },
+  { category_id: 14, category_name: 'Family', category_icon: '👶', sub_category: 'Toys & Games', subcategory_icon: '🧸', notes: 'Toys & educational', is_active: true, created_at: '2024-01-01T10:00:00Z', updated_at: '2024-01-01T10:00:00Z' },
+  { category_id: 15, category_name: 'Family', category_icon: '�', sub_category: 'Clothing', subcategory_icon: '👕', notes: 'Baby clothes', is_active: true, created_at: '2024-01-01T10:00:00Z', updated_at: '2024-01-01T10:00:00Z' },
+  { category_id: 16, category_name: 'Family', category_icon: '👶', sub_category: 'Medical', subcategory_icon: '💊', notes: 'Baby health', is_active: true, created_at: '2024-01-01T10:00:00Z', updated_at: '2024-01-01T10:00:00Z' },
   
   // Investment categories
   { category_id: 17, category_name: 'Investment', category_icon: '📈', sub_category: 'MF - SIP', subcategory_icon: '📊', notes: 'Mutual fund SIP', is_active: true, created_at: '2024-01-01T10:00:00Z', updated_at: '2024-01-01T10:00:00Z' },
