@@ -133,7 +133,7 @@
   <!-- ============================== -->
   <div class="filter-section">
     <div class="filter-row">
-      <!-- Year Tabs -->
+      <!-- Year Tabs (Left) -->
       <div class="year-tabs">
         @for (year of availableYears(); track year) {
           <button
@@ -145,16 +145,16 @@
         }
       </div>
 
-      <!-- Month Buttons -->
-      <div class="month-tabs">
-        @for (month of availableMonths(); track month) {
-          <button
-            class="month-tab"
-            [class.active]="selectedMonth() === month"
-            (click)="changeMonth(month)">
-            {{ month.substring(0, 3) }}
-          </button>
-        }
+      <!-- Month Dropdown (Right) -->
+      <div class="month-dropdown-wrapper">
+        <select
+          class="month-dropdown"
+          [ngModel]="selectedMonth()"
+          (ngModelChange)="changeMonth($event)">
+          @for (month of months; track month) {
+            <option [value]="month">{{ month }}</option>
+          }
+        </select>
       </div>
     </div>
   </div>

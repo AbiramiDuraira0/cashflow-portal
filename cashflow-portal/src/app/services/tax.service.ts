@@ -38,6 +38,47 @@ export interface TaxSummary {
   pendingMonths: number;
 }
 
+// ============================================
+// Mock Data for QA/Demo environment
+// ============================================
+const MOCK_TAX_ENTRIES: TaxEntry[] = [
+  {
+    tax_id: 1, year: 2026, month: 1, tax_paid: 12500, taxable_income: 125000,
+    status: 'paid', payment_date: '2026-01-15', payment_mode: 'Online',
+    notes: 'January TDS', created_at: '2026-01-15T00:00:00Z', updated_at: '2026-01-15T00:00:00Z', is_deleted: false
+  },
+  {
+    tax_id: 2, year: 2026, month: 2, tax_paid: 12000, taxable_income: 120000,
+    status: 'paid', payment_date: '2026-02-15', payment_mode: 'Online',
+    notes: 'February TDS', created_at: '2026-02-15T00:00:00Z', updated_at: '2026-02-15T00:00:00Z', is_deleted: false
+  },
+  {
+    tax_id: 3, year: 2026, month: 3, tax_paid: 13000, taxable_income: 130000,
+    status: 'paid', payment_date: '2026-03-15', payment_mode: 'Online',
+    notes: 'March TDS', created_at: '2026-03-15T00:00:00Z', updated_at: '2026-03-15T00:00:00Z', is_deleted: false
+  },
+  {
+    tax_id: 4, year: 2026, month: 4, tax_paid: 12500, taxable_income: 125000,
+    status: 'pending', payment_mode: 'Online',
+    notes: 'April TDS - Due', created_at: '2026-04-01T00:00:00Z', updated_at: '2026-04-01T00:00:00Z', is_deleted: false
+  },
+  {
+    tax_id: 5, year: 2025, month: 10, tax_paid: 11500, taxable_income: 115000,
+    status: 'paid', payment_date: '2025-10-15', payment_mode: 'Online',
+    notes: 'October TDS', created_at: '2025-10-15T00:00:00Z', updated_at: '2025-10-15T00:00:00Z', is_deleted: false
+  },
+  {
+    tax_id: 6, year: 2025, month: 11, tax_paid: 11800, taxable_income: 118000,
+    status: 'paid', payment_date: '2025-11-15', payment_mode: 'Online',
+    notes: 'November TDS', created_at: '2025-11-15T00:00:00Z', updated_at: '2025-11-15T00:00:00Z', is_deleted: false
+  },
+  {
+    tax_id: 7, year: 2025, month: 12, tax_paid: 13000, taxable_income: 130000,
+    status: 'paid', payment_date: '2025-12-15', payment_mode: 'Online',
+    notes: 'December TDS with bonus', created_at: '2025-12-15T00:00:00Z', updated_at: '2025-12-15T00:00:00Z', is_deleted: false
+  }
+];
+
 @Injectable({
   providedIn: 'root'
 })
@@ -45,6 +86,11 @@ export class TaxService {
   private supabase = inject(SupabaseService);
   private taxEntries = signal<TaxEntry[]>([]);
   private loading = signal<boolean>(false);
+
+  // Toggle between mock data (QA) and real DB (Production)
+  private readonly USE_DB = false; // Set to false for QA environment with static demo data
+  
+  private nextMockId = 100; // For generating new IDs in mock mode
 
   constructor() {
     this.loadTaxEntries();
@@ -64,25 +110,23 @@ export class TaxService {
   async loadTaxEntries(): Promise<void> {
     this.loading.set(true);
     try {
-      // QA MOCK MODE: Return mock data instead of DB calls
-      if (this.supabase.isMockMode) {
-        console.log('🧪 [QA MODE] Loading MOCK tax data...');
-        await new Promise(resolve => setTimeout(resolve, 300));
-        this.taxEntries.set(MOCK_TAX_DATA as any);
-        console.log('✅ Loaded mock tax entries:', MOCK_TAX_DATA.length);
-        return;
+      if (this.USE_DB) {
+        const { data, error} = await this.supabase.db
+          .from('tax')
+          .select('*')
+          .eq('is_deleted', false)
+          .order('year', { ascending: false })
+          .order('month', { ascending: true });
+
+        if (error) throw error;
+
+        this.taxEntries.set(data || []);
+      } else {
+        // Use mock data for QA environment
+        console.log('📂 Loading mock tax data (QA mode)...');
+        this.taxEntries.set([...MOCK_TAX_ENTRIES]);
+        console.log('✅ Loaded mock tax entries:', MOCK_TAX_ENTRIES.length);
       }
-
-      const { data, error} = await this.supabase.db
-        .from('tax')
-        .select('*')
-        .eq('is_deleted', false)
-        .order('year', { ascending: false })
-        .order('month', { ascending: true });
-
-      if (error) throw error;
-
-      this.taxEntries.set(data || []);
     } catch (error) {
       console.error('Error loading tax entries:', error);
       throw error;
@@ -119,22 +163,37 @@ export class TaxService {
   async addTaxEntry(data: TaxFormData): Promise<void> {
     this.loading.set(true);
     try {
-      // QA MOCK MODE: Simulate add without DB
-      if (this.supabase.isMockMode) {
-        console.log('🧪 [QA MODE] Simulating tax entry add...');
-        await new Promise(resolve => setTimeout(resolve, 200));
-        const newEntry = { tax_id: Date.now(), ...data, is_deleted: false, created_at: new Date().toISOString(), updated_at: new Date().toISOString() } as any;
-        this.taxEntries.set([...this.taxEntries(), newEntry]);
-        return;
+      if (this.USE_DB) {
+        const { error } = await this.supabase.db
+          .from('tax')
+          .upsert([{ ...data, is_deleted: false }], { onConflict: 'year,month' });
+
+        if (error) throw error;
+
+        await this.loadTaxEntries();
+      } else {
+        // Mock mode - add to local data
+        const existingIndex = this.taxEntries().findIndex(
+          e => e.year === data.year && e.month === data.month
+        );
+        
+        const newEntry: TaxEntry = {
+          tax_id: existingIndex >= 0 ? this.taxEntries()[existingIndex].tax_id : this.nextMockId++,
+          ...data,
+          created_at: existingIndex >= 0 ? this.taxEntries()[existingIndex].created_at : new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          is_deleted: false
+        };
+        
+        if (existingIndex >= 0) {
+          const updated = [...this.taxEntries()];
+          updated[existingIndex] = newEntry;
+          this.taxEntries.set(updated);
+        } else {
+          this.taxEntries.set([...this.taxEntries(), newEntry]);
+        }
+        console.log('✅ Tax entry added (mock):', newEntry);
       }
-
-      const { error } = await this.supabase.db
-        .from('tax')
-        .upsert([{ ...data, is_deleted: false }], { onConflict: 'year,month' });
-
-      if (error) throw error;
-
-      await this.loadTaxEntries();
     } catch (error) {
       console.error('Error adding tax entry:', error);
       throw error;
@@ -147,22 +206,25 @@ export class TaxService {
   async updateTaxEntry(taxId: number, data: Partial<TaxFormData>): Promise<void> {
     this.loading.set(true);
     try {
-      // QA MOCK MODE: Simulate update without DB
-      if (this.supabase.isMockMode) {
-        console.log('🧪 [QA MODE] Simulating tax entry update...');
-        await new Promise(resolve => setTimeout(resolve, 200));
-        this.taxEntries.set(this.taxEntries().map(e => e.tax_id === taxId ? { ...e, ...data, updated_at: new Date().toISOString() } : e));
-        return;
+      if (this.USE_DB) {
+        const { error } = await this.supabase.db
+          .from('tax')
+          .update(data)
+          .eq('tax_id', taxId);
+
+        if (error) throw error;
+
+        await this.loadTaxEntries();
+      } else {
+        // Mock mode - update in local data
+        const updated = this.taxEntries().map(entry => 
+          entry.tax_id === taxId 
+            ? { ...entry, ...data, updated_at: new Date().toISOString() } 
+            : entry
+        );
+        this.taxEntries.set(updated);
+        console.log('✅ Tax entry updated (mock)');
       }
-
-      const { error } = await this.supabase.db
-        .from('tax')
-        .update(data)
-        .eq('tax_id', taxId);
-
-      if (error) throw error;
-
-      await this.loadTaxEntries();
     } catch (error) {
       console.error('Error updating tax entry:', error);
       throw error;
@@ -175,22 +237,21 @@ export class TaxService {
   async deleteTaxEntry(taxId: number): Promise<void> {
     this.loading.set(true);
     try {
-      // QA MOCK MODE: Simulate delete without DB
-      if (this.supabase.isMockMode) {
-        console.log('🧪 [QA MODE] Simulating tax entry delete...');
-        await new Promise(resolve => setTimeout(resolve, 200));
-        this.taxEntries.set(this.taxEntries().filter(e => e.tax_id !== taxId));
-        return;
+      if (this.USE_DB) {
+        const { error } = await this.supabase.db
+          .from('tax')
+          .update({ is_deleted: true })
+          .eq('tax_id', taxId);
+
+        if (error) throw error;
+
+        await this.loadTaxEntries();
+      } else {
+        // Mock mode - filter out the deleted entry
+        const updated = this.taxEntries().filter(entry => entry.tax_id !== taxId);
+        this.taxEntries.set(updated);
+        console.log('✅ Tax entry deleted (mock)');
       }
-
-      const { error } = await this.supabase.db
-        .from('tax')
-        .update({ is_deleted: true })
-        .eq('tax_id', taxId);
-
-      if (error) throw error;
-
-      await this.loadTaxEntries();
     } catch (error) {
       console.error('Error deleting tax entry:', error);
       throw error;

@@ -62,11 +62,82 @@ export interface InvestmentFormData {
   notes?: string;
 }
 
+// ============================================
+// Mock Data for QA/Demo environment
+// ============================================
+const MOCK_INVESTMENTS: InvestmentEntry[] = [
+  {
+    investment_id: 1, type: InvestmentType.PPF, status: InvestmentStatus.ACTIVE,
+    name: 'PPF Account', year: 2024, invested_amount: 150000, interest_earned: 12000,
+    notes: 'Annual PPF investment', is_deleted: false,
+    created_at: '2024-04-01T00:00:00Z', updated_at: '2024-04-01T00:00:00Z'
+  },
+  {
+    investment_id: 2, type: InvestmentType.PPF, status: InvestmentStatus.ACTIVE,
+    name: 'PPF Account', year: 2025, invested_amount: 150000, interest_earned: 11500,
+    notes: 'Annual PPF investment', is_deleted: false,
+    created_at: '2025-04-01T00:00:00Z', updated_at: '2025-04-01T00:00:00Z'
+  },
+  {
+    investment_id: 3, type: InvestmentType.MUTUAL_FUND_SIP, status: InvestmentStatus.ACTIVE,
+    name: 'HDFC Top 100 Fund', year: 2024, invested_amount: 60000, interest_earned: 8500,
+    notes: 'SIP @ 5000/month', is_deleted: false,
+    created_at: '2024-01-01T00:00:00Z', updated_at: '2024-12-31T00:00:00Z'
+  },
+  {
+    investment_id: 4, type: InvestmentType.MUTUAL_FUND_SIP, status: InvestmentStatus.ACTIVE,
+    name: 'HDFC Top 100 Fund', year: 2025, invested_amount: 60000, interest_earned: 7200,
+    notes: 'SIP @ 5000/month', is_deleted: false,
+    created_at: '2025-01-01T00:00:00Z', updated_at: '2025-12-31T00:00:00Z'
+  },
+  {
+    investment_id: 5, type: InvestmentType.PHYSICAL_GOLD, status: InvestmentStatus.ACTIVE,
+    name: 'Gold Coins', year: 2023, invested_amount: 100000, interest_earned: 15000,
+    notes: '10g gold coin purchase', is_deleted: false,
+    created_at: '2023-11-01T00:00:00Z', updated_at: '2023-11-01T00:00:00Z'
+  },
+  {
+    investment_id: 6, type: InvestmentType.PF, status: InvestmentStatus.ACTIVE,
+    name: 'Employee PF', year: 2024, invested_amount: 180000, interest_earned: 14400,
+    notes: 'EPF contribution', is_deleted: false,
+    created_at: '2024-04-01T00:00:00Z', updated_at: '2024-04-01T00:00:00Z'
+  },
+  {
+    investment_id: 7, type: InvestmentType.PF, status: InvestmentStatus.ACTIVE,
+    name: 'Employee PF', year: 2025, invested_amount: 195000, interest_earned: 15600,
+    notes: 'EPF contribution', is_deleted: false,
+    created_at: '2025-04-01T00:00:00Z', updated_at: '2025-04-01T00:00:00Z'
+  },
+  {
+    investment_id: 8, type: InvestmentType.RD, status: InvestmentStatus.PAST,
+    name: 'SBI RD', year: 2023, invested_amount: 36000, interest_earned: 2880,
+    notes: 'Completed RD', is_deleted: false,
+    created_at: '2023-01-01T00:00:00Z', updated_at: '2024-01-01T00:00:00Z'
+  },
+  {
+    investment_id: 9, type: InvestmentType.STOCKS, status: InvestmentStatus.ACTIVE,
+    name: 'Reliance Industries', year: 2024, invested_amount: 50000, interest_earned: 7500,
+    notes: '20 shares', is_deleted: false,
+    created_at: '2024-03-01T00:00:00Z', updated_at: '2024-03-01T00:00:00Z'
+  },
+  {
+    investment_id: 10, type: InvestmentType.NPS, status: InvestmentStatus.TODO,
+    name: 'National Pension Scheme', year: 2026, invested_amount: 50000, interest_earned: 0,
+    notes: 'Planning to start NPS', is_deleted: false,
+    created_at: '2026-01-01T00:00:00Z', updated_at: '2026-01-01T00:00:00Z'
+  }
+];
+
 @Injectable({
   providedIn: 'root'
 })
 export class InvestmentService {
   private supabase = inject(SupabaseService);
+  
+  // Toggle between mock data (QA) and real DB (Production)
+  private readonly USE_DB = false; // Set to false for QA environment with static demo data
+  
+  private nextMockId = 100; // For generating new IDs in mock mode
   
   // Signal-based state management
   private investmentData = signal<InvestmentEntry[]>([]);
@@ -181,31 +252,29 @@ export class InvestmentService {
     this.loadInvestmentData();
   }
 
-  // Load investment data from database
+  // Load investment data from database or mock data
   async loadInvestmentData(): Promise<void> {
     this.loading.set(true);
     this.error.set(null);
 
     try {
-      // QA MOCK MODE: Return mock data instead of DB calls
-      if (this.supabase.isMockMode) {
-        console.log('🧪 [QA MODE] Loading MOCK investment data...');
-        await new Promise(resolve => setTimeout(resolve, 300));
-        this.investmentData.set(MOCK_INVESTMENT_DATA as any);
-        console.log('✅ Loaded mock investments:', MOCK_INVESTMENT_DATA.length);
-        return;
+      if (this.USE_DB) {
+        const { data, error } = await this.supabase.db
+          .from('investment')
+          .select('*')
+          .eq('is_deleted', false)
+          .order('year', { ascending: false });
+
+        if (error) throw error;
+
+        this.investmentData.set(data || []);
+        console.log('✅ Loaded investments:', (data || []).length);
+      } else {
+        // Use mock data for QA environment
+        console.log('📊 Loading mock investment data (QA mode)...');
+        this.investmentData.set([...MOCK_INVESTMENTS]);
+        console.log('✅ Loaded mock investments:', MOCK_INVESTMENTS.length);
       }
-
-      const { data, error } = await this.supabase.db
-        .from('investment')
-        .select('*')
-        .eq('is_deleted', false)
-        .order('year', { ascending: false });
-
-      if (error) throw error;
-
-      this.investmentData.set(data || []);
-      console.log('✅ Loaded investments:', (data || []).length);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Unknown error';
       this.error.set(message);
@@ -220,26 +289,38 @@ export class InvestmentService {
   async addInvestment(data: InvestmentFormData): Promise<InvestmentEntry> {
     this.loading.set(true);
     try {
-      // QA MOCK MODE: Simulate add without DB
-      if (this.supabase.isMockMode) {
-        console.log('🧪 [QA MODE] Simulating investment add...');
-        await new Promise(resolve => setTimeout(resolve, 200));
-        const mockEntry = { investment_id: Date.now(), ...data, is_deleted: false, created_at: new Date().toISOString(), updated_at: new Date().toISOString() } as any;
-        this.investmentData.set([...this.investmentData(), mockEntry]);
-        return mockEntry;
+      if (this.USE_DB) {
+        const { data: insertedData, error } = await this.supabase.db
+          .from('investment')
+          .insert([data])
+          .select()
+          .single();
+
+        if (error) throw error;
+
+        await this.loadInvestmentData();
+        console.log('✅ Added investment');
+        return insertedData;
+      } else {
+        // Mock mode - add to local data
+        const newInvestment: InvestmentEntry = {
+          investment_id: this.nextMockId++,
+          type: data.type as InvestmentType,
+          status: data.status as InvestmentStatus,
+          name: data.name,
+          year: data.year,
+          invested_amount: data.invested_amount,
+          interest_earned: data.interest_earned || 0,
+          notes: data.notes,
+          is_deleted: false,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        };
+        
+        this.investmentData.set([...this.investmentData(), newInvestment]);
+        console.log('✅ Added investment (mock):', newInvestment);
+        return newInvestment;
       }
-
-      const { data: insertedData, error } = await this.supabase.db
-        .from('investment')
-        .insert([data])
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      await this.loadInvestmentData();
-      console.log('✅ Added investment');
-      return insertedData;
     } catch (err) {
       console.error('❌ Error adding investment:', err);
       throw err;
@@ -252,23 +333,26 @@ export class InvestmentService {
   async updateInvestment(investment_id: number, data: Partial<InvestmentFormData>): Promise<void> {
     this.loading.set(true);
     try {
-      // QA MOCK MODE: Simulate update without DB
-      if (this.supabase.isMockMode) {
-        console.log('🧪 [QA MODE] Simulating investment update...');
-        await new Promise(resolve => setTimeout(resolve, 200));
-        this.investmentData.set(this.investmentData().map(inv => (inv as any).investment_id === investment_id ? { ...inv, ...data } as InvestmentEntry : inv));
-        return;
+      if (this.USE_DB) {
+        const { error } = await this.supabase.db
+          .from('investment')
+          .update(data)
+          .eq('investment_id', investment_id);
+
+        if (error) throw error;
+
+        await this.loadInvestmentData();
+        console.log('✅ Updated investment:', investment_id);
+      } else {
+        // Mock mode - update in local data
+        const updated = this.investmentData().map(inv => 
+          inv.investment_id === investment_id 
+            ? { ...inv, ...data, updated_at: new Date().toISOString() } as InvestmentEntry
+            : inv
+        );
+        this.investmentData.set(updated);
+        console.log('✅ Updated investment (mock):', investment_id);
       }
-
-      const { error } = await this.supabase.db
-        .from('investment')
-        .update(data)
-        .eq('investment_id', investment_id);
-
-      if (error) throw error;
-
-      await this.loadInvestmentData();
-      console.log('✅ Updated investment:', investment_id);
     } catch (err) {
       console.error('❌ Error updating investment:', err);
       throw err;
@@ -281,23 +365,22 @@ export class InvestmentService {
   async deleteInvestment(investment_id: number): Promise<void> {
     this.loading.set(true);
     try {
-      // QA MOCK MODE: Simulate delete without DB
-      if (this.supabase.isMockMode) {
-        console.log('🧪 [QA MODE] Simulating investment delete...');
-        await new Promise(resolve => setTimeout(resolve, 200));
-        this.investmentData.set(this.investmentData().filter(inv => (inv as any).investment_id !== investment_id));
-        return;
+      if (this.USE_DB) {
+        const { error } = await this.supabase.db
+          .from('investment')
+          .update({ is_deleted: true })
+          .eq('investment_id', investment_id);
+
+        if (error) throw error;
+
+        await this.loadInvestmentData();
+        console.log('✅ Deleted investment:', investment_id);
+      } else {
+        // Mock mode - filter out the deleted entry
+        const updated = this.investmentData().filter(inv => inv.investment_id !== investment_id);
+        this.investmentData.set(updated);
+        console.log('✅ Deleted investment (mock):', investment_id);
       }
-
-      const { error } = await this.supabase.db
-        .from('investment')
-        .update({ is_deleted: true })
-        .eq('investment_id', investment_id);
-
-      if (error) throw error;
-
-      await this.loadInvestmentData();
-      console.log('✅ Deleted investment:', investment_id);
     } catch (err) {
       console.error('❌ Error deleting investment:', err);
       throw err;

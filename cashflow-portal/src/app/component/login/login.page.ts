@@ -53,151 +53,26 @@ export class LoginPage implements OnDestroy {
   }
 
   onSubmit() {
-    if (this.passcode === 'demo123') {
-      if (this.is2FAEnabled) {
-        // Move to OTP verification step
-        this.isLoading = true;
-        this.sendOtp();
-      } else {
-        // Local development: Direct login without OTP
-        this.completeLogin();
-      }
-    } else {
-      this.showPasscodeError('Incorrect passcode. Please try again.');
-    }
-  }
-
-  async sendOtp() {
-    // Generate OTP first (this sets the expiry time)
-    this.otpService.generateOtp();
-    
-    // Show OTP screen IMMEDIATELY - don't wait for email
-    this.currentStep = 'otp';
-    this.otpSent = true;
-    this.isLoading = false;
-    this.isSendingOtp = false;
-    this.startTimer();
-
-    // Send email in background (uses the already generated OTP)
-    try {
-      await this.otpService.sendOtpViaEmailAsync({
-        email: environment.otpConfig.recipientEmail,
-        userName: environment.otpConfig.recipientName
+    if (this.passcode === 'login') {
+      // Show loading state
+      this.isLoading = true;
+      
+      // Store authentication state
+      sessionStorage.setItem('isAuthenticated', 'true');
+      
+      // Navigate to dashboard
+      this.router.navigate(['/dashboard']).then(() => {
+        // Reset loading state after navigation
+        this.isLoading = false;
       });
-    } catch (error) {
-      console.error('Failed to send OTP:', error);
-    }
-  }
-
-  onOtpDigitInput(index: number, event: Event) {
-    const input = event.target as HTMLInputElement;
-    const value = input.value;
-
-    // Only allow single digit
-    if (value.length > 1) {
-      input.value = value.charAt(value.length - 1);
-      this.otpDigits[index] = input.value;
     } else {
-      this.otpDigits[index] = value;
-    }
-
-    // Auto-focus next input
-    if (value && index < 3) {
-      const nextInput = document.getElementById(`otp-${index + 1}`) as HTMLInputElement;
-      if (nextInput) {
-        nextInput.focus();
-      }
-    }
-
-    // Don't auto-submit - user must click Verify button
-
-    this.showOtpError = false;
-  }
-
-  onOtpKeyDown(index: number, event: KeyboardEvent) {
-    // Handle backspace to move to previous input
-    if (event.key === 'Backspace' && !this.otpDigits[index] && index > 0) {
-      const prevInput = document.getElementById(`otp-${index - 1}`) as HTMLInputElement;
-      if (prevInput) {
-        prevInput.focus();
-      }
-    }
-  }
-
-  onOtpPaste(event: ClipboardEvent) {
-    event.preventDefault();
-    const pastedData = event.clipboardData?.getData('text') || '';
-    const digits = pastedData.replace(/\D/g, '').slice(0, 4);
-    
-    for (let i = 0; i < 4; i++) {
-      this.otpDigits[i] = digits[i] || '';
-      const input = document.getElementById(`otp-${i}`) as HTMLInputElement;
-      if (input) {
-        input.value = this.otpDigits[i];
-      }
-    }
-
-    // Don't auto-submit on paste - user must click Verify button
-  }
-
-  verifyOtp() {
-    const enteredOtp = this.otpDigits.join('');
-    
-    if (enteredOtp.length !== 4) {
-      this.showOtpErrorMessage('Please enter all 4 digits.');
-      return;
-    }
-
-    this.isVerifyingOtp = true;
-    
-    const result = this.otpService.verifyOtp(enteredOtp);
-    
-    if (result.valid) {
-      this.completeLogin();
-    } else {
-      this.showOtpErrorMessage(result.message);
-      this.isVerifyingOtp = false;
-      this.clearOtpInputs();
-    }
-  }
-
-  resendOtp() {
-    this.clearOtpInputs();
-    this.clearTimer();
-    this.otpService.clearOtp();
-    this.sendOtp();
-  }
-
-  goBackToPasscode() {
-    this.currentStep = 'passcode';
-    this.clearOtpInputs();
-    this.clearTimer();
-    this.otpService.clearOtp();
-    this.passcode = '';
-  }
-
-  private completeLogin() {
-    this.isLoading = true;
-    
-    // Store authentication state
-    sessionStorage.setItem('isAuthenticated', 'true');
-    
-    // Navigate to dashboard
-    this.router.navigate(['/dashboard']).then(() => {
-      this.isLoading = false;
-      this.isVerifyingOtp = false;
-    });
-  }
-
-  private showPasscodeError(message: string) {
-    this.errorMessage = message;
-    this.showError = true;
-    this.isShaking = true;
-    this.isLoading = false;
-    
-    setTimeout(() => {
-      this.isShaking = false;
-    }, 500);
+      this.showError = true;
+      this.isShaking = true;
+      
+      // Reset shake animation
+      setTimeout(() => {
+        this.isShaking = false;
+      }, 500);
 
     setTimeout(() => {
       this.showError = false;

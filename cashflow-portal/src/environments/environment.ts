@@ -1,34 +1,14 @@
 export const environment = {
   production: false,
-  // ============================================================
-  // QA BRANCH - MOCK MODE ENABLED
-  // All connection strings are placeholders for demo/reference use.
-  // Replace with your own Supabase project credentials to connect.
-  // ============================================================
-  supabaseUrl: 'https://YOUR_SUPABASE_PROJECT_ID.supabase.co',
-  supabaseAnonKey: 'YOUR_SUPABASE_ANON_KEY_HERE',
-  // Direct PostgreSQL connection details (for backend use only - cannot use in browser)
+  // Demo environment - using mock data, no real database connection needed
+  supabaseUrl: 'https://demo-project.supabase.co',
+  supabaseAnonKey: 'demo-key-not-real',
+  // PostgreSQL connection not used in QA/Demo mode
   postgres: {
-    host: 'db.YOUR_SUPABASE_PROJECT_ID.supabase.co',
+    host: 'demo-db.supabase.co',
     port: 5432,
     database: 'postgres',
     user: 'postgres',
-    // password: stored in DATABASE_URL environment variable
-  },
-  // 2FA Configuration
-  // Set to false for local development (passcode only)
-  // Set to true for deployed environments (passcode + OTP)
-  enable2FA: false, // disabled for QA/demo
-  // Email configuration for OTP delivery
-  otpConfig: {
-    recipientEmail: 'demo@example.com', // Replace with your email
-    recipientName: 'Demo User',
-    // EmailJS configuration (free service - https://www.emailjs.com/)
-    // Sign up and get your credentials from EmailJS dashboard
-    emailJsServiceId: 'YOUR_EMAILJS_SERVICE_ID',
-    emailJsTemplateId: 'YOUR_EMAILJS_TEMPLATE_ID',
-    emailJsPublicKey: 'YOUR_EMAILJS_PUBLIC_KEY'
-  },
-  // QA Mode flag - when true, services return mock data instead of DB calls
-  useMockData: true
+    // password: not needed for demo mode
+  }
 };

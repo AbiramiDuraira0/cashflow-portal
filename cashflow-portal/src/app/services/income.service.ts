@@ -35,6 +35,80 @@ export type IncomeEntry = {
   updated_at: string;
 };
 
+// Mock data for QA/Demo environment
+const MOCK_INCOME_DATA: IncomeEntry[] = [
+  {
+    id: 1,
+    month: 'March',
+    year: 2026,
+    amount: 125000,
+    source: 'Salary',
+    mncCompany: 'Tech Corp',
+    notes: 'Regular monthly salary',
+    date: '2026-03-01',
+    created_at: '2026-03-01T00:00:00Z',
+    updated_at: '2026-03-01T00:00:00Z'
+  },
+  {
+    id: 2,
+    month: 'February',
+    year: 2026,
+    amount: 120000,
+    source: 'Salary',
+    mncCompany: 'Tech Corp',
+    notes: 'February salary',
+    date: '2026-02-01',
+    created_at: '2026-02-01T00:00:00Z',
+    updated_at: '2026-02-01T00:00:00Z'
+  },
+  {
+    id: 3,
+    month: 'January',
+    year: 2026,
+    amount: 150000,
+    source: 'Salary',
+    mncCompany: 'Tech Corp',
+    notes: 'January salary with bonus',
+    date: '2026-01-01',
+    created_at: '2026-01-01T00:00:00Z',
+    updated_at: '2026-01-01T00:00:00Z'
+  },
+  {
+    id: 4,
+    month: 'December',
+    year: 2025,
+    amount: 130000,
+    source: 'Salary',
+    mncCompany: 'Tech Corp',
+    notes: 'December salary',
+    date: '2025-12-01',
+    created_at: '2025-12-01T00:00:00Z',
+    updated_at: '2025-12-01T00:00:00Z'
+  },
+  {
+    id: 5,
+    month: 'November',
+    year: 2025,
+    amount: 118000,
+    source: 'Salary',
+    mncCompany: 'Tech Corp',
+    date: '2025-11-01',
+    created_at: '2025-11-01T00:00:00Z',
+    updated_at: '2025-11-01T00:00:00Z'
+  },
+  {
+    id: 6,
+    month: 'October',
+    year: 2025,
+    amount: 122000,
+    source: 'Freelance',
+    notes: 'Consulting project payment',
+    date: '2025-10-01',
+    created_at: '2025-10-01T00:00:00Z',
+    updated_at: '2025-10-01T00:00:00Z'
+  }
+];
+
 @Injectable({
   providedIn: 'root'
 })
@@ -44,6 +118,11 @@ export class IncomeService {
   private loading = signal<boolean>(false);
   private error = signal<string | null>(null);
 
+  // Toggle between mock data (QA) and real DB (Production)
+  private readonly USE_DB = false; // Set to false for QA environment with static demo data
+
+  private nextMockId = 100; // For generating new IDs in mock mode
+
   constructor() {
     // Auto-load on service initialization
     this.loadIncomeData();
@@ -51,23 +130,13 @@ export class IncomeService {
 
 
   /**
-   * Load all income entries from Supabase (excluding soft-deleted)
+   * Load all income entries from Supabase or use mock data
    */
   async loadIncomeData(): Promise<void> {
     this.loading.set(true);
     this.error.set(null);
     
     try {
-      // QA MOCK MODE: Return mock data instead of DB calls
-      if (this.supabase.isMockMode) {
-        console.log('🧪 [QA MODE] Loading MOCK income data...');
-        await new Promise(resolve => setTimeout(resolve, 300)); // simulate network delay
-        const entries: IncomeEntry[] = MOCK_INCOME_DATA.map(this.transformDbToApp);
-        this.incomeData.set(entries);
-        console.log('✅ Loaded mock income entries:', entries.length);
-        return;
-      }
-
       console.log('📂 Loading income data from database...');
       
       const { data, error } = await this.supabase.db
@@ -77,21 +146,32 @@ export class IncomeService {
         .order('year', { ascending: false })
         .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error('❌ Database error:', error.message);
-        throw error;
-      }
+        if (error) {
+          console.error('❌ Database error:', error.message);
+          throw error;
+        }
 
-      // Transform DB format to App format
-      const entries: IncomeEntry[] = (data || []).map(this.transformDbToApp);
-      
-      this.incomeData.set(entries);
-      console.log('✅ Loaded income entries:', entries.length);
+        // Transform DB format to App format
+        const entries: IncomeEntry[] = (data || []).map(this.transformDbToApp);
+        
+        this.incomeData.set(entries);
+        console.log('✅ Loaded income entries from DB:', entries.length);
+      } else {
+        // Use mock data for QA/Demo
+        console.log('📊 Loading income mock data for QA environment...');
+        this.incomeData.set(MOCK_INCOME_DATA);
+        console.log('✅ Loaded mock income entries:', MOCK_INCOME_DATA.length);
+      }
     } catch (err: any) {
       const errorMsg = err.message || 'Failed to load income data';
       this.error.set(errorMsg);
       console.error('❌ Income load error:', err);
-      throw err;
+      
+      // Fallback to mock data on error
+      if (this.USE_DB) {
+        console.warn('⚠️ Falling back to mock data due to error');
+        this.incomeData.set(MOCK_INCOME_DATA);
+      }
     } finally {
       this.loading.set(false);
     }
@@ -186,69 +266,72 @@ export class IncomeService {
   }
 
   /**
-   * Add new income entry to database
+   * Add new income entry to database or mock data
    */
   async addEntry(entry: Omit<IncomeEntry, 'id' | 'created_at' | 'updated_at'>): Promise<IncomeEntry> {
     this.loading.set(true);
     this.error.set(null);
 
     try {
-      // QA MOCK MODE: Simulate add without DB
-      if (this.supabase.isMockMode) {
-        console.log('🧪 [QA MODE] Simulating income entry add...');
-        await new Promise(resolve => setTimeout(resolve, 200));
-        const mockEntry: IncomeEntry = {
-          id: Date.now(),
+      // Use provided date or calculate default (1st of month)
+      const date = entry.date || new Date(entry.year, this.getMonthIndex(entry.month), 1).toISOString().split('T')[0];
+
+        const newEntry = {
+          year: entry.year,
+          month: entry.month,
+          date: date,
+          amount_inr: entry.amount,
+          source: entry.source,
+          mnc_company: entry.mncCompany || null,
+          notes: entry.notes || null,
+          is_delete: false
+        };
+
+        console.log('➕ Adding new entry to DB:', newEntry);
+
+        const { data, error } = await this.supabase.db
+          .from('income')
+          .insert([newEntry])
+          .select()
+          .single();
+
+        if (error) {
+          console.error('❌ Database error:', error.message);
+          throw error;
+        }
+
+        const addedEntry = this.transformDbToApp(data);
+        
+        // Update local state
+        this.incomeData.set([...this.incomeData(), addedEntry]);
+        
+        console.log('✅ Income entry added to DB successfully. Total:', this.incomeData().length);
+        
+        return addedEntry;
+      } else {
+        // Mock data mode
+        const newEntry: IncomeEntry = {
+          id: this.nextMockId++,
           month: entry.month,
           year: entry.year,
           amount: entry.amount,
           source: entry.source,
           mncCompany: entry.mncCompany,
           notes: entry.notes,
-          date: entry.date || new Date().toISOString().split('T')[0],
+          date: entry.date || new Date(entry.year, this.getMonthIndex(entry.month), 1).toISOString().split('T')[0],
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         };
-        this.incomeData.set([...this.incomeData(), mockEntry]);
-        console.log('✅ [QA MODE] Mock income entry added');
-        return mockEntry;
+
+        console.log('➕ Adding new mock entry:', newEntry);
+
+        // Add to mock data
+        this.incomeData.update(current => [newEntry, ...current]);
+        
+        console.log('✅ Mock income entry added successfully. Total:', this.incomeData().length);
+        
+        return newEntry;
       }
-
-      // Use provided date or calculate default (1st of month)
-      const date = entry.date || new Date(entry.year, this.getMonthIndex(entry.month), 1).toISOString().split('T')[0];
-
-      const newEntry = {
-        year: entry.year,
-        month: entry.month,
-        date: date,
-        amount_inr: entry.amount,
-        source: entry.source,
-        mnc_company: entry.mncCompany || null,
-        notes: entry.notes || null,
-        is_delete: false
-      };
-
-      console.log('➕ Adding new entry:', newEntry);
-
-      const { data, error } = await this.supabase.db
-        .from('income')
-        .insert([newEntry])
-        .select()
-        .single();
-
-      if (error) {
-        console.error('❌ Database error:', error.message);
-        throw error;
-      }
-
-      const addedEntry = this.transformDbToApp(data);
-      
-      // Update local state
-      this.incomeData.set([...this.incomeData(), addedEntry]);
-      
-      console.log('✅ Income entry added successfully. Total:', this.incomeData().length);
-      
-      return addedEntry;
     } catch (err: any) {
       const errorMsg = err.message || 'Failed to add income entry';
       this.error.set(errorMsg);
@@ -267,23 +350,6 @@ export class IncomeService {
     this.error.set(null);
 
     try {
-      // QA MOCK MODE: Simulate update without DB
-      if (this.supabase.isMockMode) {
-        console.log('🧪 [QA MODE] Simulating income entry update...');
-        await new Promise(resolve => setTimeout(resolve, 200));
-        const currentEntries = this.incomeData();
-        const index = currentEntries.findIndex(e => e.id === id);
-        if (index !== -1) {
-          const updated = { ...currentEntries[index], ...updates, updated_at: new Date().toISOString() };
-          const newEntries = [...currentEntries];
-          newEntries[index] = updated;
-          this.incomeData.set(newEntries);
-          console.log('✅ [QA MODE] Mock income entry updated');
-          return updated;
-        }
-        throw new Error('Entry not found');
-      }
-
       // Calculate date if month or year changed
       let dbUpdates: any = this.transformAppToDb(updates);
       
@@ -294,39 +360,64 @@ export class IncomeService {
         dbUpdates.date = new Date(year, this.getMonthIndex(month), 1).toISOString().split('T')[0];
       }
 
-      console.log('✏️ Updating entry:', id, dbUpdates);
+        console.log('✏️ Updating entry in DB:', id, dbUpdates);
 
-      const { data, error } = await this.supabase.db
-        .from('income')
-        .update(dbUpdates)
-        .eq('income_id', id)
-        .eq('is_delete', false)
-        .select()
-        .single();
+        const { data, error } = await this.supabase.db
+          .from('income')
+          .update(dbUpdates)
+          .eq('income_id', id)
+          .eq('is_delete', false)
+          .select()
+          .single();
 
-      if (error) {
-        console.error('❌ Database error:', error.message);
-        throw error;
-      }
+        if (error) {
+          console.error('❌ Database error:', error.message);
+          throw error;
+        }
 
-      if (!data) {
-        throw new Error('Entry not found or already deleted');
-      }
+        if (!data) {
+          throw new Error('Entry not found or already deleted');
+        }
 
-      const updatedEntry = this.transformDbToApp(data);
-      
-      // Update local state
-      const currentEntries = this.incomeData();
-      const index = currentEntries.findIndex(e => e.id === id);
-      if (index !== -1) {
+        const updatedEntry = this.transformDbToApp(data);
+        
+        // Update local state
+        const currentEntries = this.incomeData();
+        const index = currentEntries.findIndex(e => e.id === id);
+        if (index !== -1) {
+          const newEntries = [...currentEntries];
+          newEntries[index] = updatedEntry;
+          this.incomeData.set(newEntries);
+        }
+        
+        console.log('✅ Income entry updated in DB successfully');
+        
+        return updatedEntry;
+      } else {
+        // Mock data mode
+        console.log('✏️ Updating mock entry:', id, updates);
+
+        const currentEntries = this.incomeData();
+        const index = currentEntries.findIndex(e => e.id === id);
+        
+        if (index === -1) {
+          throw new Error('Entry not found');
+        }
+
+        const updatedEntry: IncomeEntry = {
+          ...currentEntries[index],
+          ...updates,
+          updated_at: new Date().toISOString()
+        };
+
         const newEntries = [...currentEntries];
         newEntries[index] = updatedEntry;
         this.incomeData.set(newEntries);
+        
+        console.log('✅ Mock income entry updated successfully');
+        
+        return updatedEntry;
       }
-      
-      console.log('✅ Income entry updated successfully');
-      
-      return updatedEntry;
     } catch (err: any) {
       const errorMsg = err.message || 'Failed to update income entry';
       this.error.set(errorMsg);
@@ -345,34 +436,27 @@ export class IncomeService {
     this.error.set(null);
 
     try {
-      // QA MOCK MODE: Simulate delete without DB
-      if (this.supabase.isMockMode) {
-        console.log('🧪 [QA MODE] Simulating income entry delete...');
-        await new Promise(resolve => setTimeout(resolve, 200));
-        const filtered = this.incomeData().filter(e => e.id !== id);
-        this.incomeData.set(filtered);
-        console.log('✅ [QA MODE] Mock income entry deleted');
-        return true;
-      }
-
       console.log('🗑️ Soft deleting entry:', id);
 
-      const { error } = await this.supabase.db
-        .from('income')
-        .update({ is_delete: true })
-        .eq('income_id', id);
+      if (this.USE_DB) {
+        // Database mode - soft delete
+        const { error } = await this.supabase.db
+          .from('income')
+          .update({ is_delete: true })
+          .eq('income_id', id);
 
-      if (error) {
-        console.error('❌ Database error:', error.message);
-        throw error;
+        if (error) {
+          console.error('❌ Database error:', error.message);
+          throw error;
+        }
       }
 
-      // Remove from local state
+      // Remove from local state (both DB and mock mode)
       const currentEntries = this.incomeData();
       const filtered = currentEntries.filter(e => e.id !== id);
       this.incomeData.set(filtered);
       
-      console.log('✅ Income entry soft deleted successfully. Remaining:', filtered.length);
+      console.log('✅ Income entry deleted successfully. Remaining:', filtered.length);
       
       return true;
     } catch (err: any) {
