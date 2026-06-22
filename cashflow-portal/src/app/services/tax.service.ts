@@ -1,5 +1,6 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { SupabaseService } from './supabase.service';
+import { MOCK_TAX_DATA } from './mock-data';
 
 export type TaxStatus = 'paid' | 'pending' | 'overdue';
 
@@ -63,6 +64,15 @@ export class TaxService {
   async loadTaxEntries(): Promise<void> {
     this.loading.set(true);
     try {
+      // QA MOCK MODE: Return mock data instead of DB calls
+      if (this.supabase.isMockMode) {
+        console.log('🧪 [QA MODE] Loading MOCK tax data...');
+        await new Promise(resolve => setTimeout(resolve, 300));
+        this.taxEntries.set(MOCK_TAX_DATA as any);
+        console.log('✅ Loaded mock tax entries:', MOCK_TAX_DATA.length);
+        return;
+      }
+
       const { data, error} = await this.supabase.db
         .from('tax')
         .select('*')
@@ -109,6 +119,15 @@ export class TaxService {
   async addTaxEntry(data: TaxFormData): Promise<void> {
     this.loading.set(true);
     try {
+      // QA MOCK MODE: Simulate add without DB
+      if (this.supabase.isMockMode) {
+        console.log('🧪 [QA MODE] Simulating tax entry add...');
+        await new Promise(resolve => setTimeout(resolve, 200));
+        const newEntry = { tax_id: Date.now(), ...data, is_deleted: false, created_at: new Date().toISOString(), updated_at: new Date().toISOString() } as any;
+        this.taxEntries.set([...this.taxEntries(), newEntry]);
+        return;
+      }
+
       const { error } = await this.supabase.db
         .from('tax')
         .upsert([{ ...data, is_deleted: false }], { onConflict: 'year,month' });
@@ -128,6 +147,14 @@ export class TaxService {
   async updateTaxEntry(taxId: number, data: Partial<TaxFormData>): Promise<void> {
     this.loading.set(true);
     try {
+      // QA MOCK MODE: Simulate update without DB
+      if (this.supabase.isMockMode) {
+        console.log('🧪 [QA MODE] Simulating tax entry update...');
+        await new Promise(resolve => setTimeout(resolve, 200));
+        this.taxEntries.set(this.taxEntries().map(e => e.tax_id === taxId ? { ...e, ...data, updated_at: new Date().toISOString() } : e));
+        return;
+      }
+
       const { error } = await this.supabase.db
         .from('tax')
         .update(data)
@@ -148,6 +175,14 @@ export class TaxService {
   async deleteTaxEntry(taxId: number): Promise<void> {
     this.loading.set(true);
     try {
+      // QA MOCK MODE: Simulate delete without DB
+      if (this.supabase.isMockMode) {
+        console.log('🧪 [QA MODE] Simulating tax entry delete...');
+        await new Promise(resolve => setTimeout(resolve, 200));
+        this.taxEntries.set(this.taxEntries().filter(e => e.tax_id !== taxId));
+        return;
+      }
+
       const { error } = await this.supabase.db
         .from('tax')
         .update({ is_deleted: true })

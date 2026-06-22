@@ -53,7 +53,7 @@ export class LoginPage implements OnDestroy {
   }
 
   onSubmit() {
-    if (this.passcode === 'Abibee') {
+    if (this.passcode === 'demo123') {
       if (this.is2FAEnabled) {
         // Move to OTP verification step
         this.isLoading = true;

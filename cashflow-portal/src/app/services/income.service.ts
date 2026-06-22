@@ -1,5 +1,6 @@
 import { Injectable, signal, inject } from '@angular/core';
 import { SupabaseService } from './supabase.service';
+import { MOCK_INCOME_DATA } from './mock-data';
 
 /**
  * Database Income Entry Type (matches DB schema)
@@ -57,6 +58,16 @@ export class IncomeService {
     this.error.set(null);
     
     try {
+      // QA MOCK MODE: Return mock data instead of DB calls
+      if (this.supabase.isMockMode) {
+        console.log('🧪 [QA MODE] Loading MOCK income data...');
+        await new Promise(resolve => setTimeout(resolve, 300)); // simulate network delay
+        const entries: IncomeEntry[] = MOCK_INCOME_DATA.map(this.transformDbToApp);
+        this.incomeData.set(entries);
+        console.log('✅ Loaded mock income entries:', entries.length);
+        return;
+      }
+
       console.log('📂 Loading income data from database...');
       
       const { data, error } = await this.supabase.db
@@ -182,6 +193,27 @@ export class IncomeService {
     this.error.set(null);
 
     try {
+      // QA MOCK MODE: Simulate add without DB
+      if (this.supabase.isMockMode) {
+        console.log('🧪 [QA MODE] Simulating income entry add...');
+        await new Promise(resolve => setTimeout(resolve, 200));
+        const mockEntry: IncomeEntry = {
+          id: Date.now(),
+          month: entry.month,
+          year: entry.year,
+          amount: entry.amount,
+          source: entry.source,
+          mncCompany: entry.mncCompany,
+          notes: entry.notes,
+          date: entry.date || new Date().toISOString().split('T')[0],
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        };
+        this.incomeData.set([...this.incomeData(), mockEntry]);
+        console.log('✅ [QA MODE] Mock income entry added');
+        return mockEntry;
+      }
+
       // Use provided date or calculate default (1st of month)
       const date = entry.date || new Date(entry.year, this.getMonthIndex(entry.month), 1).toISOString().split('T')[0];
 
@@ -235,6 +267,23 @@ export class IncomeService {
     this.error.set(null);
 
     try {
+      // QA MOCK MODE: Simulate update without DB
+      if (this.supabase.isMockMode) {
+        console.log('🧪 [QA MODE] Simulating income entry update...');
+        await new Promise(resolve => setTimeout(resolve, 200));
+        const currentEntries = this.incomeData();
+        const index = currentEntries.findIndex(e => e.id === id);
+        if (index !== -1) {
+          const updated = { ...currentEntries[index], ...updates, updated_at: new Date().toISOString() };
+          const newEntries = [...currentEntries];
+          newEntries[index] = updated;
+          this.incomeData.set(newEntries);
+          console.log('✅ [QA MODE] Mock income entry updated');
+          return updated;
+        }
+        throw new Error('Entry not found');
+      }
+
       // Calculate date if month or year changed
       let dbUpdates: any = this.transformAppToDb(updates);
       
@@ -296,6 +345,16 @@ export class IncomeService {
     this.error.set(null);
 
     try {
+      // QA MOCK MODE: Simulate delete without DB
+      if (this.supabase.isMockMode) {
+        console.log('🧪 [QA MODE] Simulating income entry delete...');
+        await new Promise(resolve => setTimeout(resolve, 200));
+        const filtered = this.incomeData().filter(e => e.id !== id);
+        this.incomeData.set(filtered);
+        console.log('✅ [QA MODE] Mock income entry deleted');
+        return true;
+      }
+
       console.log('🗑️ Soft deleting entry:', id);
 
       const { error } = await this.supabase.db

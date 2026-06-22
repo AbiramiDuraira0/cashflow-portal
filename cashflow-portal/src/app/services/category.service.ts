@@ -1,5 +1,6 @@
 import { Injectable, signal, inject } from '@angular/core';
 import { SupabaseService } from './supabase.service';
+import { MOCK_CATEGORY_DATA } from './mock-data';
 
 export type Category = {
   category_id: number;
@@ -51,6 +52,15 @@ export class CategoryService {
     this.error.set(null);
     
     try {
+      // QA MOCK MODE: Return mock data instead of DB calls
+      if (this.supabase.isMockMode) {
+        console.log('🧪 [QA MODE] Loading MOCK category data...');
+        await new Promise(resolve => setTimeout(resolve, 200));
+        this.categories.set(MOCK_CATEGORY_DATA as any);
+        console.log('✅ Loaded mock categories:', MOCK_CATEGORY_DATA.length);
+        return;
+      }
+
       console.log('📂 Loading categories from database...');
       
       const { data, error } = await this.supabase.db
@@ -100,6 +110,14 @@ export class CategoryService {
     notes?: string
   ): Promise<Category> {
     try {
+      // QA MOCK MODE: Simulate add without DB
+      if (this.supabase.isMockMode) {
+        console.log('🧪 [QA MODE] Simulating category add...');
+        const mockCat: Category = { category_id: Date.now(), category_name: name, category_icon: categoryIcon || null, sub_category: subCategory || null, subcategory_icon: subcategoryIcon || null, notes: notes || null, is_active: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() };
+        this.categories.set([...this.categories(), mockCat]);
+        return mockCat;
+      }
+
       console.log('➕ Adding new category:', name, subCategory || '(no subcategory)');
       
       const { data, error } = await this.supabase.db

@@ -16,7 +16,7 @@ Angular 20 personal finance tracking application using standalone components, zo
 src/app/
 ├── component/        # Feature pages (*.page.ts) and shared UI (*.component.ts)
 │   ├── home/        # Dashboard with pre-initialized widget data
-│   ├── login/       # Passcode auth ('Abibee'), sessionStorage
+│   ├── login/       # Passcode auth ('demo123'), sessionStorage
 │   ├── side-menu/   # Collapsible nav with Material tooltips
 │   └── loading-spinner/
 ├── services/        # Singleton services with `providedIn: 'root'`

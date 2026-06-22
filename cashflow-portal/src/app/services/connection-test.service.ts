@@ -17,7 +17,7 @@ export class ConnectionTestService {
   }> {
     try {
       console.log('🔍 Testing Supabase connection...');
-      console.log('📍 URL:', 'https://bbaxjrihnfnpqmlttioh.supabase.co');
+      console.log('📍 URL:', 'https://YOUR_SUPABASE_PROJECT_ID.supabase.co');
       
       // Test 1: Basic health check
       const { data: healthData, error: healthError } = await this.supabase.db

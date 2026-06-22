@@ -3,6 +3,7 @@ import { SupabaseService } from './supabase.service';
 import { CategoryService, Category } from './category.service';
 import { IncomeService } from './income.service';
 import { ExpenseAuditService } from './expense-audit.service';
+import { MOCK_EXPENSE_DATA } from './mock-data';
 
 // ============================================
 // Database Expense Entry Type (matches DB schema)
@@ -315,6 +316,16 @@ export class ExpenseService {
     this.error.set(null);
 
     try {
+      // QA MOCK MODE: Return mock data instead of DB calls
+      if (this.supabase.isMockMode) {
+        console.log('🧪 [QA MODE] Loading MOCK expense data...');
+        await new Promise(resolve => setTimeout(resolve, 300));
+        const entries = MOCK_EXPENSE_DATA.map(this.transformDbToApp.bind(this));
+        this.expenseData.set(entries);
+        console.log('✅ Loaded mock expense entries:', entries.length);
+        return;
+      }
+
       if (this.USE_DB) {
         console.log('📂 Loading expense data from year-based tables...');
 
@@ -385,6 +396,30 @@ export class ExpenseService {
     try {
       // Lookup category details from CategoryService
       const category = this.categoryService.getCategoryById(data.categoryId);
+
+      // QA MOCK MODE: Simulate add without DB
+      if (this.supabase.isMockMode) {
+        console.log('🧪 [QA MODE] Simulating expense add...');
+        await new Promise(resolve => setTimeout(resolve, 200));
+        const mockEntry: ExpenseEntry = {
+          id: Date.now(),
+          month: data.month,
+          year: data.year,
+          categoryId: data.categoryId,
+          categoryName: category?.category_name || 'Unknown',
+          categoryIcon: category?.category_icon || '📁',
+          subcategory: category?.sub_category || undefined,
+          subcategoryIcon: category?.subcategory_icon || undefined,
+          amount: data.amount,
+          notes: data.notes || undefined,
+          isDeleted: false,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        };
+        this.expenseData.set([...this.expenseData(), mockEntry]);
+        console.log('✅ [QA MODE] Mock expense added');
+        return mockEntry;
+      }
 
       if (this.USE_DB) {
         // Determine which table to insert into based on year
@@ -765,6 +800,16 @@ export class ExpenseService {
     this.error.set(null);
 
     try {
+      // QA MOCK MODE: Simulate delete without DB
+      if (this.supabase.isMockMode) {
+        console.log('🧪 [QA MODE] Simulating expense delete...');
+        await new Promise(resolve => setTimeout(resolve, 200));
+        const filtered = this.expenseData().filter(e => e.id !== id);
+        this.expenseData.set(filtered);
+        console.log('✅ [QA MODE] Mock expense deleted');
+        return true;
+      }
+
       if (this.USE_DB) {
         // Find the existing entry to determine which table it's in
         const existingEntry = this.expenseData().find(e => e.id === id);

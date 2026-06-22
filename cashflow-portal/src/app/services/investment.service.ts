@@ -1,5 +1,6 @@
 import { Injectable, signal, computed, inject } from '@angular/core';
 import { SupabaseService } from './supabase.service';
+import { MOCK_INVESTMENT_DATA } from './mock-data';
 
 // Investment types enum
 export enum InvestmentType {
@@ -186,6 +187,15 @@ export class InvestmentService {
     this.error.set(null);
 
     try {
+      // QA MOCK MODE: Return mock data instead of DB calls
+      if (this.supabase.isMockMode) {
+        console.log('🧪 [QA MODE] Loading MOCK investment data...');
+        await new Promise(resolve => setTimeout(resolve, 300));
+        this.investmentData.set(MOCK_INVESTMENT_DATA as any);
+        console.log('✅ Loaded mock investments:', MOCK_INVESTMENT_DATA.length);
+        return;
+      }
+
       const { data, error } = await this.supabase.db
         .from('investment')
         .select('*')
@@ -210,6 +220,15 @@ export class InvestmentService {
   async addInvestment(data: InvestmentFormData): Promise<InvestmentEntry> {
     this.loading.set(true);
     try {
+      // QA MOCK MODE: Simulate add without DB
+      if (this.supabase.isMockMode) {
+        console.log('🧪 [QA MODE] Simulating investment add...');
+        await new Promise(resolve => setTimeout(resolve, 200));
+        const mockEntry = { investment_id: Date.now(), ...data, is_deleted: false, created_at: new Date().toISOString(), updated_at: new Date().toISOString() } as any;
+        this.investmentData.set([...this.investmentData(), mockEntry]);
+        return mockEntry;
+      }
+
       const { data: insertedData, error } = await this.supabase.db
         .from('investment')
         .insert([data])
@@ -233,6 +252,14 @@ export class InvestmentService {
   async updateInvestment(investment_id: number, data: Partial<InvestmentFormData>): Promise<void> {
     this.loading.set(true);
     try {
+      // QA MOCK MODE: Simulate update without DB
+      if (this.supabase.isMockMode) {
+        console.log('🧪 [QA MODE] Simulating investment update...');
+        await new Promise(resolve => setTimeout(resolve, 200));
+        this.investmentData.set(this.investmentData().map(inv => (inv as any).investment_id === investment_id ? { ...inv, ...data } as InvestmentEntry : inv));
+        return;
+      }
+
       const { error } = await this.supabase.db
         .from('investment')
         .update(data)
@@ -254,6 +281,14 @@ export class InvestmentService {
   async deleteInvestment(investment_id: number): Promise<void> {
     this.loading.set(true);
     try {
+      // QA MOCK MODE: Simulate delete without DB
+      if (this.supabase.isMockMode) {
+        console.log('🧪 [QA MODE] Simulating investment delete...');
+        await new Promise(resolve => setTimeout(resolve, 200));
+        this.investmentData.set(this.investmentData().filter(inv => (inv as any).investment_id !== investment_id));
+        return;
+      }
+
       const { error } = await this.supabase.db
         .from('investment')
         .update({ is_deleted: true })

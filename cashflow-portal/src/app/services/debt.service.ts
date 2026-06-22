@@ -1,6 +1,7 @@
 import { Injectable, signal, inject } from '@angular/core';
 import { SupabaseService } from './supabase.service';
 import { DebtCalculatorService } from './debt-calculator.service';
+import { MOCK_DEBT_DATA } from './mock-data';
 
 export enum LoanName {
   BOB_EDUCATION_LOAN = 'Education Loan',
@@ -159,6 +160,16 @@ export class DebtService {
     this.loading.set(true);
     this.error.set(null);
     try {
+      // QA MOCK MODE: Return mock data instead of DB calls
+      if (this.supabase.isMockMode) {
+        console.log('🧪 [QA MODE] Loading MOCK debt data...');
+        await new Promise(resolve => setTimeout(resolve, 300));
+        const entries: DebtEntry[] = MOCK_DEBT_DATA.map(this.transformDbToApp.bind(this));
+        this.debtData.set(entries);
+        console.log('✅ Loaded mock debt entries:', entries.length);
+        return;
+      }
+
       if (this.USE_DB) {
         // Load ALL records including deleted ones (soft delete)
         const { data, error } = await this.supabase.db.from('debts').select('*').order('is_delete', { ascending: true }).order('status', { ascending: true }).order('created_at', { ascending: false });
@@ -177,6 +188,21 @@ export class DebtService {
   async addDebt(data: DebtFormData): Promise<DebtEntry> {
     this.loading.set(true);
     try {
+      // QA MOCK MODE: Simulate add without DB
+      if (this.supabase.isMockMode) {
+        console.log('🧪 [QA MODE] Simulating debt add...');
+        await new Promise(resolve => setTimeout(resolve, 200));
+        const mockEntry: DebtEntry = {
+          id: Date.now(), type: data.type, loanName: data.loanName, bankOrPerson: data.bankOrPerson,
+          principalAmount: data.principalAmount, interestRate: data.interestRate, emiAmount: data.emiAmount,
+          emiStartDate: data.emiStartDate, emiEndDate: data.emiEndDate, outstandingAmount: data.outstandingAmount,
+          amountPaid: data.amountPaid, status: data.status, notes: data.notes,
+          isDeleted: false, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString()
+        };
+        this.debtData.set([...this.debtData(), mockEntry]);
+        return mockEntry;
+      }
+
       const newEntry = { debt_type: data.type, loan_name: data.loanName, bank_or_person: data.bankOrPerson, principal_amount: data.principalAmount, interest_rate: data.interestRate || null, emi_amount: data.emiAmount || null, emi_start_date: data.emiStartDate || null, emi_end_date: data.emiEndDate || null, outstanding_amount: data.outstandingAmount, amount_paid: data.amountPaid, status: data.status, notes: data.notes || null, is_delete: false };
       const { data: dbData, error } = await this.supabase.db.from('debts').insert([newEntry]).select().single();
       if (error) throw error;
@@ -212,6 +238,14 @@ export class DebtService {
   async deleteDebt(id: number): Promise<boolean> {
     this.loading.set(true);
     try {
+      // QA MOCK MODE: Simulate delete without DB
+      if (this.supabase.isMockMode) {
+        console.log('🧪 [QA MODE] Simulating debt delete...');
+        await new Promise(resolve => setTimeout(resolve, 200));
+        this.debtData.set(this.debtData().map(debt => debt.id === id ? { ...debt, isDeleted: true } : debt));
+        return true;
+      }
+
       const { error } = await this.supabase.db.from('debts').update({ is_delete: true }).eq('debt_id', id);
       if (error) throw error;
       

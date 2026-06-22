@@ -1,5 +1,6 @@
 import { Injectable, signal, inject } from '@angular/core';
 import { SupabaseService } from './supabase.service';
+import { MOCK_LIFELINE_DATA } from './mock-data';
 
 /**
  * Database Lifeline Entry Type (matches DB schema)
@@ -78,6 +79,16 @@ export class LifelineService {
     this.error.set(null);
     
     try {
+      // QA MOCK MODE: Return mock data instead of DB calls
+      if (this.supabase.isMockMode) {
+        console.log('🧪 [QA MODE] Loading MOCK lifeline data...');
+        await new Promise(resolve => setTimeout(resolve, 300));
+        const entries: LifelineEntry[] = MOCK_LIFELINE_DATA.map(this.transformDbToApp);
+        this.lifelineData.set(entries);
+        console.log('✅ Loaded mock lifeline entries:', entries.length);
+        return;
+      }
+
       console.log('📂 Loading lifeline data from database...');
       
       const { data, error } = await this.supabase.db
@@ -139,6 +150,15 @@ export class LifelineService {
     this.error.set(null);
 
     try {
+      // QA MOCK MODE: Simulate add without DB
+      if (this.supabase.isMockMode) {
+        console.log('🧪 [QA MODE] Simulating lifeline entry add...');
+        await new Promise(resolve => setTimeout(resolve, 200));
+        const mockEntry: LifelineEntry = { id: Date.now(), date: entry.date, amount: entry.amount, notes: entry.notes, created_at: new Date().toISOString(), updated_at: new Date().toISOString() };
+        this.lifelineData.update(entries => [mockEntry, ...entries]);
+        return mockEntry;
+      }
+
       console.log('➕ Adding new lifeline entry:', entry);
       
       const dbEntry = this.transformAppToDb(entry);
@@ -179,6 +199,15 @@ export class LifelineService {
     this.error.set(null);
 
     try {
+      // QA MOCK MODE: Simulate update without DB
+      if (this.supabase.isMockMode) {
+        console.log('🧪 [QA MODE] Simulating lifeline entry update...');
+        await new Promise(resolve => setTimeout(resolve, 200));
+        const updated: LifelineEntry = { id, date: entry.date, amount: entry.amount, notes: entry.notes, created_at: new Date().toISOString(), updated_at: new Date().toISOString() };
+        this.lifelineData.update(entries => entries.map(e => e.id === id ? updated : e));
+        return updated;
+      }
+
       console.log('📝 Updating lifeline entry:', id, entry);
       
       const dbEntry = this.transformAppToDb(entry);
@@ -222,6 +251,14 @@ export class LifelineService {
     this.error.set(null);
 
     try {
+      // QA MOCK MODE: Simulate delete without DB
+      if (this.supabase.isMockMode) {
+        console.log('🧪 [QA MODE] Simulating lifeline entry delete...');
+        await new Promise(resolve => setTimeout(resolve, 200));
+        this.lifelineData.update(entries => entries.filter(e => e.id !== id));
+        return;
+      }
+
       console.log('🗑️ Deleting lifeline entry:', id);
       
       const { error } = await this.supabase.db
