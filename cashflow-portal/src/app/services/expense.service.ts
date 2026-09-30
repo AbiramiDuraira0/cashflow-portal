@@ -795,10 +795,13 @@ export class ExpenseService {
           'SUCCESS'
         );
 
-        const { error } = await this.supabase.db
+        const { data: dbData, error } = await this.supabase.db
           .from(tableName)
           .update({ is_delete: true })
-          .eq('expense_id', id);
+          .eq('expense_id', id)
+          .eq('is_delete', false)
+          .select()
+          .maybeSingle();
 
         if (error) {
           // 🔍 AUDIT: Log SOFT_DELETE error
@@ -818,7 +821,27 @@ export class ExpenseService {
           throw error;
         }
 
-        // Remove from local state
+        // Without .select(), Supabase silently "succeeds" even when RLS/filters block
+        // every row from being updated (0 rows affected, no error) — verify a row actually came back
+        if (!dbData) {
+          const noRowErrorMsg = 'Delete failed: no matching row was updated (check RLS policy or entry may already be deleted)';
+          await this.auditService.logOperation(
+            'SOFT_DELETE',
+            tableName,
+            id,
+            existingEntry.year,
+            existingEntry.month,
+            { action: 'soft_delete', expense_id: id },
+            null,
+            beforeState,
+            'ERROR',
+            noRowErrorMsg
+          );
+          console.error('❌', noRowErrorMsg);
+          throw new Error(noRowErrorMsg);
+        }
+
+        // Remove from local state only after the DB confirms the row was updated
         const filtered = this.expenseData().filter(e => !(e.id === id && e.year === year));
         this.expenseData.set(filtered);
 
