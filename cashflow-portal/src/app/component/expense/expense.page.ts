@@ -660,9 +660,10 @@ export class ExpensePage implements OnInit {
 
       // Use the captured editingId for the check
       if (editingId && editingId > 0) {
-        // Update existing entry
-        console.log('✏️ Updating expense ID:', editingId, 'with data:', formData);
-        await this.expenseService.updateExpense(editingId, formData);
+        // Update existing entry (pass the original year to disambiguate ids that collide across year tables)
+        const originalYear = this.editingEntry()?.year ?? this.selectedYear();
+        console.log('✏️ Updating expense ID:', editingId, 'year:', originalYear, 'with data:', formData);
+        await this.expenseService.updateExpense(editingId, formData, originalYear);
         this.showToastNotification('Expense updated successfully!', 'success');
       } else {
         // Add new entry
@@ -710,7 +711,7 @@ export class ExpensePage implements OnInit {
 
     this.isLoading.set(true);
     try {
-      await this.expenseService.deleteExpense(entry.id);
+      await this.expenseService.deleteExpense(entry.id, entry.year);
       this.showToastNotification('Expense deleted successfully!', 'success');
       this.closeDeleteConfirm();
     } catch (error) {

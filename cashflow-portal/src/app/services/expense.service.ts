@@ -499,7 +499,7 @@ export class ExpenseService {
    * Note: If year changes, deletes from old table and inserts into new table.
    * This is necessary because of year constraints on each table.
    */
-  async updateExpense(id: number, data: ExpenseFormData): Promise<ExpenseEntry> {
+  async updateExpense(id: number, data: ExpenseFormData, originalYear: number): Promise<ExpenseEntry> {
     this.loading.set(true);
     this.error.set(null);
 
@@ -507,8 +507,9 @@ export class ExpenseService {
       const category = this.categoryService.getCategoryById(data.categoryId);
 
       if (this.USE_DB) {
-        // Find the existing entry to determine which table it's in
-        const existingEntry = this.expenseData().find(e => e.id === id);
+        // Find the existing entry using id + year (expense_id is only unique per year-table,
+        // so id alone can collide with a different entry in another year)
+        const existingEntry = this.expenseData().find(e => e.id === id && e.year === originalYear);
         if (!existingEntry) {
           throw new Error('Expense entry not found');
         }
@@ -620,7 +621,7 @@ export class ExpenseService {
 
           // Update local state (replace old entry with new one)
           const currentEntries = this.expenseData();
-          const index = currentEntries.findIndex(e => e.id === id);
+          const index = currentEntries.findIndex(e => e.id === id && e.year === originalYear);
           if (index !== -1) {
             const newEntries = [...currentEntries];
             newEntries[index] = updatedEntry;
@@ -705,7 +706,7 @@ export class ExpenseService {
 
           // Update local state
           const currentEntries = this.expenseData();
-          const index = currentEntries.findIndex(e => e.id === id);
+          const index = currentEntries.findIndex(e => e.id === id && e.year === originalYear);
           if (index !== -1) {
             const newEntries = [...currentEntries];
             newEntries[index] = updatedEntry;
@@ -720,7 +721,7 @@ export class ExpenseService {
         await new Promise(resolve => setTimeout(resolve, 200));
 
         const currentEntries = this.expenseData();
-        const index = currentEntries.findIndex(e => e.id === id);
+        const index = currentEntries.findIndex(e => e.id === id && e.year === originalYear);
 
         if (index === -1) {
           throw new Error('Expense entry not found');
@@ -760,14 +761,15 @@ export class ExpenseService {
   /**
    * Soft delete expense entry (same as IncomeService pattern)
    */
-  async deleteExpense(id: number): Promise<boolean> {
+  async deleteExpense(id: number, year: number): Promise<boolean> {
     this.loading.set(true);
     this.error.set(null);
 
     try {
       if (this.USE_DB) {
-        // Find the existing entry to determine which table it's in
-        const existingEntry = this.expenseData().find(e => e.id === id);
+        // Find the existing entry using id + year (expense_id is only unique per year-table,
+        // so id alone can collide with a different entry in another year)
+        const existingEntry = this.expenseData().find(e => e.id === id && e.year === year);
         if (!existingEntry) {
           throw new Error('Expense entry not found');
         }
@@ -793,10 +795,13 @@ export class ExpenseService {
           'SUCCESS'
         );
 
-        const { error } = await this.supabase.db
+        const { data: dbData, error } = await this.supabase.db
           .from(tableName)
           .update({ is_delete: true })
-          .eq('expense_id', id);
+          .eq('expense_id', id)
+          .eq('is_delete', false)
+          .select()
+          .maybeSingle();
 
         if (error) {
           // 🔍 AUDIT: Log SOFT_DELETE error
@@ -816,8 +821,28 @@ export class ExpenseService {
           throw error;
         }
 
-        // Remove from local state
-        const filtered = this.expenseData().filter(e => e.id !== id);
+        // Without .select(), Supabase silently "succeeds" even when RLS/filters block
+        // every row from being updated (0 rows affected, no error) — verify a row actually came back
+        if (!dbData) {
+          const noRowErrorMsg = 'Delete failed: no matching row was updated (check RLS policy or entry may already be deleted)';
+          await this.auditService.logOperation(
+            'SOFT_DELETE',
+            tableName,
+            id,
+            existingEntry.year,
+            existingEntry.month,
+            { action: 'soft_delete', expense_id: id },
+            null,
+            beforeState,
+            'ERROR',
+            noRowErrorMsg
+          );
+          console.error('❌', noRowErrorMsg);
+          throw new Error(noRowErrorMsg);
+        }
+
+        // Remove from local state only after the DB confirms the row was updated
+        const filtered = this.expenseData().filter(e => !(e.id === id && e.year === year));
         this.expenseData.set(filtered);
 
         // 🔍 AUDIT: Log successful SOFT_DELETE
@@ -839,7 +864,7 @@ export class ExpenseService {
         await new Promise(resolve => setTimeout(resolve, 200));
 
         const updated = this.expenseData().map(e =>
-          e.id === id ? { ...e, isDeleted: true, updatedAt: new Date().toISOString() } : e
+          (e.id === id && e.year === year) ? { ...e, isDeleted: true, updatedAt: new Date().toISOString() } : e
         );
         this.expenseData.set(updated);
 
