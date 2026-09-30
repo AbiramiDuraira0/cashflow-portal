@@ -23,14 +23,62 @@ export class PayslipPage implements OnInit {
   protected payslips = this.payslipService.getPayslipsSignal();
   protected isLoading = this.payslipService.getLoadingSignal();
 
+  protected searchQuery = signal<string>('');
+
+  // Year & month filter (same pattern as Expense/Income pages)
+  protected selectedYear = signal<number>(new Date().getFullYear());
+  protected selectedMonth = signal<string>('All');
+
   protected availableYears = computed(() => {
-    const years: number[] = [];
+    const years = new Set<number>();
     const currentYear = new Date().getFullYear();
     for (let year = currentYear - 5; year <= currentYear; year++) {
-      years.push(year);
+      years.add(year);
     }
-    return years.reverse();
+    // Also include any year that already has an uploaded payslip
+    this.payslips().forEach(p => years.add(p.year));
+    return Array.from(years).sort((a, b) => b - a);
   });
+
+  // Months that already have an uploaded payslip for the selected year (for the dot indicator)
+  protected uploadedMonthsForYear = computed(() => {
+    const year = this.selectedYear();
+    return new Set(this.payslips().filter(p => p.year === year).map(p => p.month));
+  });
+
+  protected filteredPayslips = computed(() => {
+    const year = this.selectedYear();
+    const month = this.selectedMonth();
+    const query = this.searchQuery().toLowerCase();
+
+    let filtered = this.payslips().filter(p => p.year === year);
+    if (month !== 'All') {
+      filtered = filtered.filter(p => p.month === month);
+    }
+    if (query) {
+      filtered = filtered.filter(p =>
+        p.fileName.toLowerCase().includes(query) ||
+        p.month.toLowerCase().includes(query) ||
+        (p.notes || '').toLowerCase().includes(query)
+      );
+    }
+
+    return filtered.sort((a, b) => this.months.indexOf(b.month) - this.months.indexOf(a.month));
+  });
+
+  // Summary card values
+  protected totalForYear = computed(() => this.payslips().filter(p => p.year === this.selectedYear()).length);
+  protected missingMonthsCount = computed(() => this.months.length - this.uploadedMonthsForYear().size);
+  protected latestPayslip = computed(() => {
+    const sorted = [...this.payslips()].sort((a, b) => {
+      if (a.year !== b.year) return b.year - a.year;
+      return this.months.indexOf(b.month) - this.months.indexOf(a.month);
+    });
+    return sorted[0] ?? null;
+  });
+  protected totalStorageUsed = computed(() =>
+    this.payslips().reduce((sum, p) => sum + (p.fileSize || 0), 0)
+  );
 
   // Upload form state
   protected showUploadModal = signal(false);
@@ -49,22 +97,33 @@ export class PayslipPage implements OnInit {
   protected toastMessage = signal('');
   protected toastType = signal<'success' | 'error' | 'info'>('success');
 
-  protected sortedPayslips = computed(() => {
-    return [...this.payslips()].sort((a, b) => {
-      if (a.year !== b.year) return b.year - a.year;
-      return this.months.indexOf(b.month) - this.months.indexOf(a.month);
-    });
-  });
-
   ngOnInit(): void {
     this.payslipService.loadPayslips().catch(() => {
       this.showToastNotification('Failed to load payslips', 'error');
     });
   }
 
-  protected openUploadModal(): void {
-    this.uploadMonth.set(this.months[new Date().getMonth()]);
-    this.uploadYear.set(new Date().getFullYear());
+  protected refreshData(): void {
+    this.payslipService.loadPayslips().catch(() => {
+      this.showToastNotification('Failed to refresh payslips', 'error');
+    });
+  }
+
+  protected onSearchChange(value: string): void {
+    this.searchQuery.set(value);
+  }
+
+  protected changeYear(year: number): void {
+    this.selectedYear.set(year);
+  }
+
+  protected changeMonth(month: string): void {
+    this.selectedMonth.set(this.selectedMonth() === month ? 'All' : month);
+  }
+
+  protected openUploadModal(prefillMonth?: string): void {
+    this.uploadMonth.set(prefillMonth ?? (this.selectedMonth() !== 'All' ? this.selectedMonth() : this.months[new Date().getMonth()]));
+    this.uploadYear.set(this.selectedYear());
     this.uploadNotes.set('');
     this.selectedFile.set(null);
     this.showUploadModal.set(true);

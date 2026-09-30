@@ -1,5 +1,7 @@
 <section class="payslip-page">
-  <!-- Page Header -->
+  <!-- ============================== -->
+  <!-- Page Header                    -->
+  <!-- ============================== -->
   <header class="page-header">
     <div class="header-content">
       <div class="title-section">
@@ -7,33 +9,140 @@
         <p class="subtitle">Upload and manage your monthly payslip PDFs</p>
       </div>
       <div class="header-actions">
+        <!-- Search Bar -->
+        <div class="search-bar-compact">
+          <span class="search-icon">🔎</span>
+          <input
+            type="text"
+            placeholder="Search payslips..."
+            [value]="searchQuery()"
+            (input)="onSearchChange($any($event.target).value)"
+            class="search-input" />
+        </div>
+
+        <button class="btn-refresh" (click)="refreshData()" [disabled]="isLoading()" data-tooltip="Refresh Data">
+          <span class="icon" [class.spinning]="isLoading()">🔄</span>
+        </button>
+
         <button class="btn-add" (click)="openUploadModal()">
-          <span class="text">+ Upload Payslip</span>
+          <span class="icon">+</span>
+          Upload Payslip
         </button>
       </div>
     </div>
   </header>
 
-  <!-- Loading State -->
-  @if (isLoading()) {
-    <div class="loading-overlay">
-      <div class="loading-spinner"></div>
-      <p>Loading...</p>
+  <!-- ============================== -->
+  <!-- Summary Cards                  -->
+  <!-- ============================== -->
+  <div class="summary-cards">
+    <div class="summary-card total">
+      <div class="card-icon">📁</div>
+      <div class="card-content">
+        <p class="card-label">Payslips in {{ selectedYear() }}</p>
+        <h2 class="card-value">{{ totalForYear() }}</h2>
+        <p class="card-subtitle">out of 12 months</p>
+      </div>
     </div>
-  }
 
-  <!-- Payslips Table -->
-  <div class="entries-container">
-    @if (sortedPayslips().length === 0) {
+    <div class="summary-card missing">
+      <div class="card-icon">⏳</div>
+      <div class="card-content">
+        <p class="card-label">Missing Months</p>
+        <h2 class="card-value">{{ missingMonthsCount() }}</h2>
+        <p class="card-subtitle">in {{ selectedYear() }}</p>
+      </div>
+    </div>
+
+    <div class="summary-card latest">
+      <div class="card-icon">🕒</div>
+      <div class="card-content">
+        <p class="card-label">Latest Upload</p>
+        <h2 class="card-value">
+          @if (latestPayslip(); as latest) {
+            {{ latest.month.substring(0, 3) }} {{ latest.year }}
+          } @else {
+            —
+          }
+        </h2>
+        <p class="card-subtitle">Most recent payslip</p>
+      </div>
+    </div>
+
+    <div class="summary-card storage">
+      <div class="card-icon">💾</div>
+      <div class="card-content">
+        <p class="card-label">Storage Used</p>
+        <h2 class="card-value">{{ formatFileSize(totalStorageUsed()) }}</h2>
+        <p class="card-subtitle">Across all payslips</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================== -->
+  <!-- Year & Month Filter            -->
+  <!-- ============================== -->
+  <div class="filter-section">
+    <div class="filter-row">
+      <!-- Year Tabs -->
+      <div class="year-tabs">
+        @for (year of availableYears(); track year) {
+          <button
+            class="year-tab"
+            [class.active]="selectedYear() === year"
+            (click)="changeYear(year)">
+            {{ year }}
+          </button>
+        }
+      </div>
+
+      <!-- Month Buttons -->
+      <div class="month-tabs">
+        @for (month of months; track month) {
+          <button
+            class="month-tab"
+            [class.active]="selectedMonth() === month"
+            [class.has-upload]="uploadedMonthsForYear().has(month)"
+            (click)="changeMonth(month)">
+            {{ month.substring(0, 3) }}
+            @if (uploadedMonthsForYear().has(month)) {
+              <span class="upload-dot"></span>
+            }
+          </button>
+        }
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================== -->
+  <!-- Payslip Table                  -->
+  <!-- ============================== -->
+  <div class="table-section">
+    @if (isLoading()) {
+      <div class="loading-state">
+        <div class="spinner">⏳</div>
+        <p>Loading payslips...</p>
+      </div>
+    } @else if (filteredPayslips().length === 0) {
+      <!-- Empty State -->
       <div class="empty-state">
         <div class="empty-icon">📄</div>
-        <h3>No payslips uploaded yet</h3>
-        <p>Upload your first monthly payslip PDF to keep it organized here</p>
-        <button class="btn-primary" (click)="openUploadModal()">Upload First Payslip</button>
+        <h3>
+          @if (selectedMonth() !== 'All') {
+            No payslip for {{ selectedMonth() }} {{ selectedYear() }}
+          } @else {
+            No payslips for {{ selectedYear() }}
+          }
+        </h3>
+        <p>Upload the PDF to keep it organized here</p>
+        <button class="btn-primary" (click)="openUploadModal()">
+          <span class="icon">+</span>
+          Upload Payslip
+        </button>
       </div>
     } @else {
-      <div class="table-wrapper">
-        <table class="entries-table">
+      <div class="table-container">
+        <table class="payslip-table">
           <thead>
             <tr>
               <th class="col-month">Month</th>
@@ -44,7 +153,7 @@
             </tr>
           </thead>
           <tbody>
-            @for (entry of sortedPayslips(); track entry.id) {
+            @for (entry of filteredPayslips(); track entry.id) {
               <tr class="entry-row">
                 <td class="col-month">
                   <span class="date-badge">📅 {{ entry.month }} {{ entry.year }}</span>
