@@ -1,0 +1,169 @@
+<section class="payslip-page">
+  <!-- Page Header -->
+  <header class="page-header">
+    <div class="header-content">
+      <div class="title-section">
+        <h1>📄 Payslips</h1>
+        <p class="subtitle">Upload and manage your monthly payslip PDFs</p>
+      </div>
+      <div class="header-actions">
+        <button class="btn-add" (click)="openUploadModal()">
+          <span class="text">+ Upload Payslip</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Loading State -->
+  @if (isLoading()) {
+    <div class="loading-overlay">
+      <div class="loading-spinner"></div>
+      <p>Loading...</p>
+    </div>
+  }
+
+  <!-- Payslips Table -->
+  <div class="entries-container">
+    @if (sortedPayslips().length === 0) {
+      <div class="empty-state">
+        <div class="empty-icon">📄</div>
+        <h3>No payslips uploaded yet</h3>
+        <p>Upload your first monthly payslip PDF to keep it organized here</p>
+        <button class="btn-primary" (click)="openUploadModal()">Upload First Payslip</button>
+      </div>
+    } @else {
+      <div class="table-wrapper">
+        <table class="entries-table">
+          <thead>
+            <tr>
+              <th class="col-month">Month</th>
+              <th class="col-file">File</th>
+              <th class="col-size">Size</th>
+              <th class="col-notes">Notes</th>
+              <th class="col-actions">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (entry of sortedPayslips(); track entry.id) {
+              <tr class="entry-row">
+                <td class="col-month">
+                  <span class="date-badge">📅 {{ entry.month }} {{ entry.year }}</span>
+                </td>
+                <td class="col-file">
+                  <span class="file-name" [title]="entry.fileName">📎 {{ entry.fileName }}</span>
+                </td>
+                <td class="col-size">
+                  <span>{{ formatFileSize(entry.fileSize) }}</span>
+                </td>
+                <td class="col-notes">
+                  @if (entry.notes) {
+                    <span class="notes-text" [title]="entry.notes">{{ entry.notes }}</span>
+                  } @else {
+                    <span class="no-notes">—</span>
+                  }
+                </td>
+                <td class="col-actions">
+                  <div class="action-buttons">
+                    <button class="action-btn view" (click)="downloadPayslip(entry)" data-tooltip="View / Download">
+                      <span class="icon">⬇️</span>
+                    </button>
+                    <button class="action-btn delete" (click)="openDeleteConfirm(entry)" data-tooltip="Delete">
+                      <span class="icon">🗑️</span>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+
+  <!-- Upload Modal -->
+  @if (showUploadModal()) {
+    <div class="modal-overlay" (click)="closeUploadModal()">
+      <div class="modal-content" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2>Upload Payslip</h2>
+          <button class="modal-close" (click)="closeUploadModal()">✕</button>
+        </div>
+
+        <div class="modal-body">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="uploadMonth">Month</label>
+              <select id="uploadMonth" [ngModel]="uploadMonth()" (ngModelChange)="uploadMonth.set($event)">
+                @for (m of months; track m) {
+                  <option [value]="m">{{ m }}</option>
+                }
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="uploadYear">Year</label>
+              <select id="uploadYear" [ngModel]="uploadYear()" (ngModelChange)="uploadYear.set(+$event)">
+                @for (y of availableYears(); track y) {
+                  <option [value]="y">{{ y }}</option>
+                }
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="payslipFile">Payslip PDF</label>
+            @if (!selectedFile()) {
+              <input #fileInput id="payslipFile" type="file" accept="application/pdf" (change)="onFileSelected($event)" />
+            } @else {
+              <div class="selected-file">
+                <span>📎 {{ selectedFile()!.name }}</span>
+                <button type="button" class="btn-remove-file" (click)="removeSelectedFile()">✕</button>
+              </div>
+            }
+            <p class="field-hint">PDF only, max 10 MB. Uploading again for the same month replaces the previous file.</p>
+          </div>
+
+          <div class="form-group">
+            <label for="uploadNotes">Notes (optional)</label>
+            <textarea id="uploadNotes" rows="2" [ngModel]="uploadNotes()" (ngModelChange)="uploadNotes.set($event)"></textarea>
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button class="btn-secondary" (click)="closeUploadModal()" [disabled]="isUploading()">Cancel</button>
+          <button class="btn-primary" (click)="submitUpload()" [disabled]="isUploading()">
+            {{ isUploading() ? 'Uploading...' : 'Upload' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Delete Confirm Modal -->
+  @if (showDeleteConfirm()) {
+    <div class="modal-overlay" (click)="closeDeleteConfirm()">
+      <div class="modal-content small" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2>Delete Payslip</h2>
+          <button class="modal-close" (click)="closeDeleteConfirm()">✕</button>
+        </div>
+        <div class="modal-body">
+          <p>
+            Are you sure you want to delete the payslip for
+            <strong>{{ deletingEntry()?.month }} {{ deletingEntry()?.year }}</strong>?
+          </p>
+        </div>
+        <div class="modal-actions">
+          <button class="btn-secondary" (click)="closeDeleteConfirm()">Cancel</button>
+          <button class="btn-danger" (click)="confirmDelete()">Delete</button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Toast Notification -->
+  @if (showToast()) {
+    <div class="toast" [class]="toastType()">
+      {{ toastMessage() }}
+    </div>
+  }
+</section>
