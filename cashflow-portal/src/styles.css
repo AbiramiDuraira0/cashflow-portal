@@ -37,14 +37,102 @@ app-login {
 
 /* Mobile optimization - smooth scrolling */
 @media (max-width: 768px) {
+  html {
+    zoom: 1;
+  }
+
   html, body {
     -webkit-overflow-scrolling: touch;
-    overflow-x: auto; /* Enable horizontal scroll on mobile */
+    overflow-x: hidden;
   }
 
   /* Improve touch interactions */
   * {
     -webkit-tap-highlight-color: transparent;
+  }
+
+  button,
+  input:not([type='checkbox']):not([type='radio']),
+  select,
+  textarea {
+    max-width: 100%;
+    min-height: 44px;
+  }
+
+  button,
+  a,
+  input,
+  select,
+  textarea {
+    touch-action: manipulation;
+  }
+
+  .table-container,
+  .table-wrapper,
+  .schedule-table-container,
+  .consolidated-table-container,
+  .heatmap-table-wrapper,
+  .yearly-table-wrapper,
+  .fy-table-container,
+  .breakdown-table-container {
+    max-width: 100%;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+@media (max-width: 640px) {
+  body .app-shell .page-content .pagination-container,
+  body .app-shell .page-content .pagination-section {
+    width: 100%;
+    min-width: 0;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    padding: 12px;
+  }
+
+  body .app-shell .page-content .pagination-info {
+    width: 100%;
+    justify-content: center;
+    text-align: center;
+    font-size: 13px;
+  }
+
+  body .app-shell .page-content .page-size-selector,
+  body .app-shell .page-content .page-size-control {
+    width: 100%;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  body .app-shell .page-content .pagination-controls {
+    width: 100%;
+    max-width: 100%;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  body .app-shell .page-content .page-btn,
+  body .app-shell .page-content .pagination-btn {
+    min-width: 40px;
+    min-height: 40px;
+    height: 40px;
+    padding: 0 10px;
+  }
+
+  body .app-shell .page-content .modal-footer,
+  body .app-shell .page-content .popup-footer {
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 16px;
+  }
+
+  body .app-shell .page-content .modal-footer > button,
+  body .app-shell .page-content .popup-footer > button {
+    flex: 1 1 120px;
   }
 }
 
