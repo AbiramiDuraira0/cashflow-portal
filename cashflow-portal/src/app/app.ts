@@ -15,6 +15,7 @@ export class App implements OnInit {
   protected title = 'cashflow-portal';
   // Use null initially to distinguish "not set yet" from "explicitly false"
   protected showMenu = signal<boolean | null>(null);
+  protected isMobileMenuOpen = signal(false);
   private router = inject(Router);
 
   constructor() {
@@ -24,7 +25,16 @@ export class App implements OnInit {
     ).subscribe((event: any) => {
       const isLoginPage = event.url === '/' || event.url.includes('/login');
       this.showMenu.set(!isLoginPage);
+      this.isMobileMenuOpen.set(false);
     });
+  }
+
+  protected toggleMobileMenu(): void {
+    this.isMobileMenuOpen.update(isOpen => !isOpen);
+  }
+
+  protected closeMobileMenu(): void {
+    this.isMobileMenuOpen.set(false);
   }
 
   ngOnInit(): void {

@@ -712,6 +712,122 @@
   }
 }
 
+@media (max-width: 640px) {
+  .entries-container {
+    overflow: visible;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .table-wrapper {
+    overflow: visible;
+  }
+
+  .entries-table {
+    display: block;
+
+    thead {
+      display: none;
+    }
+
+    tbody,
+    tfoot {
+      display: block;
+    }
+
+    .entry-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      grid-template-areas:
+        'date actions'
+        'amount amount'
+        'notes notes';
+      gap: 8px 12px;
+      margin-bottom: 12px;
+      padding: 14px;
+      background: #ffffff;
+      border: 1px solid #e0f2fe;
+      border-radius: 10px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+    }
+
+    td {
+      display: block;
+      padding: 0;
+      border: 0;
+    }
+
+    .col-date {
+      grid-area: date;
+      width: auto;
+    }
+
+    .col-amount {
+      grid-area: amount;
+      width: auto;
+    }
+
+    .col-notes {
+      grid-area: notes;
+      min-width: 0;
+    }
+
+    .col-actions {
+      grid-area: actions;
+      width: auto;
+    }
+
+    .date-badge {
+      padding: 5px 8px;
+      font-size: 12px;
+    }
+
+    .amount-value {
+      font-size: 18px;
+    }
+
+    .notes-text {
+      max-width: none;
+      white-space: normal;
+      overflow-wrap: anywhere;
+      font-size: 13px;
+      line-height: 1.4;
+    }
+
+    .action-buttons {
+      gap: 4px;
+    }
+
+    .action-btn {
+      width: 30px;
+      height: 30px;
+
+      .icon {
+        font-size: 14px;
+      }
+    }
+
+    tfoot .total-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px;
+      background: #e0f2fe;
+      border-radius: 10px;
+    }
+
+    tfoot .total-row .col-notes,
+    tfoot .total-row .col-actions {
+      display: none;
+    }
+
+    tfoot .total-row td {
+      padding: 0;
+      border: 0;
+    }
+  }
+}
+
 // ============================================
 // Modal Styles
 // ============================================

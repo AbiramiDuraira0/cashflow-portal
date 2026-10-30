@@ -4,7 +4,28 @@
   
   <!-- Side Menu Component - Only show when explicitly true (not null or false) -->
   @if (showMenu() === true) {
-    <app-side-menu></app-side-menu>
+    <button
+      class="mobile-menu-trigger"
+      type="button"
+      aria-label="Open navigation menu"
+      [attr.aria-expanded]="isMobileMenuOpen()"
+      (click)="toggleMobileMenu()">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+    @if (isMobileMenuOpen()) {
+      <button
+        class="mobile-menu-backdrop"
+        type="button"
+        aria-label="Close navigation menu"
+        (click)="closeMobileMenu()">
+      </button>
+    }
+    <app-side-menu
+      [mobileOpen]="isMobileMenuOpen()"
+      (mobileMenuClosed)="closeMobileMenu()">
+    </app-side-menu>
   }
 
   <!-- Main Content Area -->
