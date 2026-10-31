@@ -1,4 +1,4 @@
-import { afterNextRender, Component, EventEmitter, Input, Output, signal } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, RouterLinkActive, Router } from '@angular/router';
 
@@ -10,18 +10,10 @@ import { RouterLink, RouterLinkActive, Router } from '@angular/router';
   styleUrl: './side-menu.component.scss'
 })
 export class SideMenuComponent {
-  @Input() mobileOpen = false;
-  @Output() mobileMenuClosed = new EventEmitter<void>();
-  protected isMenuCollapsed = signal(false);
+  protected isMenuCollapsed = signal(true);
   protected isMenuHovered = signal(false);
 
-  constructor(private router: Router) {
-    afterNextRender(() => {
-      if (window.innerWidth < 768) {
-        this.isMenuCollapsed.set(false);
-      }
-    });
-  }
+  constructor(private router: Router) {}
 
   toggleMenu() {
     this.isMenuCollapsed.set(!this.isMenuCollapsed());
@@ -36,7 +28,8 @@ export class SideMenuComponent {
   }
 
   onMenuItemClick() {
-    this.mobileMenuClosed.emit();
+    // Collapse menu when any menu item is clicked
+    this.isMenuCollapsed.set(true);
   }
 
   navigateTo(route: string, event?: MouseEvent) {
@@ -50,7 +43,6 @@ export class SideMenuComponent {
 
   logout() {
     sessionStorage.removeItem('isAuthenticated');
-    this.mobileMenuClosed.emit();
     this.router.navigate(['/login']);
   }
 }

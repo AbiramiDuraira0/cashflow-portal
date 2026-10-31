@@ -164,8 +164,8 @@
         border: 1px solid rgba(255, 255, 255, 0.8);
 
         @media (max-width: 640px) {
-          width: min(290px, calc(100vw - 24px));
-          right: 0;
+          width: 290px;
+          right: -50px;
           padding: 16px;
         }
 
@@ -768,13 +768,8 @@
     }
 
     @media (max-width: 768px) {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 10px;
-    }
-
-    @media (max-width: 640px) {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 10px;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 6px;
     }
   }
 
@@ -809,14 +804,6 @@
       height: 105px;
     }
 
-    @media (max-width: 640px) {
-      flex-direction: row;
-      text-align: left;
-      gap: 10px;
-      min-height: 92px;
-      height: 92px;
-    }
-
     &:hover {
       transform: translateY(-4px);
       box-shadow: 0 8px 24px rgba(0,0,0,0.1);
@@ -832,10 +819,6 @@
 
       @media (max-width: 768px) {
         font-size: 24px;
-      }
-
-      @media (max-width: 640px) {
-        font-size: 26px;
       }
     }
 
@@ -1577,11 +1560,6 @@
     &.two-columns {
       grid-template-columns: repeat(2, 1fr);
     }
-
-    &.abi-bb-row {
-      grid-template-columns: 1fr;
-      gap: 16px;
-    }
     
     // Asymmetric layout: Heatmap narrower, Abi wider
     &.heatmap-abi-row {
@@ -2097,17 +2075,6 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 8px;
-
-      .income-total-badge {
-        font-size: 11px;
-        font-weight: 700;
-        color: #15803d;
-        background: #dcfce7;
-        padding: 3px 10px;
-        border-radius: 999px;
-        white-space: nowrap;
-      }
 
       .click-hint {
         font-size: 11px;
@@ -3937,7 +3904,7 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
-  height: auto;
+  height: 100%;
   
   .bb-heatmap-card,
   .investment-heatmap-card {
