@@ -44,43 +44,23 @@
       </div>
     </div>
 
-    <!-- Investment Total Card -->
-    <div class="summary-card investment clickable" (click)="showTypePopup('investment')">
+    <!-- Saved Card (Investment + Money To Get) -->
+    <div class="summary-card investment clickable" (click)="showTypePopup('saved')">
       <div class="card-icon">🎯</div>
       <div class="card-content">
-        <p class="card-label">Investment</p>
-        <h2 class="card-value">{{ formatCurrency(investmentTotal()) }}</h2>
-        <p class="card-subtitle">Total invested</p>
+        <p class="card-label">Saved</p>
+        <h2 class="card-value">{{ formatCurrency(savedTotal()) }}</h2>
+        <p class="card-subtitle">Investment + Money To Get</p>
       </div>
     </div>
 
-    <!-- Debt Total Card -->
-    <div class="summary-card debt clickable" (click)="showTypePopup('debt')">
-      <div class="card-icon">💎</div>
-      <div class="card-content">
-        <p class="card-label">Money To Get</p>
-        <h2 class="card-value">{{ formatCurrency(debtTotal()) }}</h2>
-        <p class="card-subtitle">Total debt paid</p>
-      </div>
-    </div>
-
-    <!-- Family Total Card -->
-    <div class="summary-card family clickable" (click)="showTypePopup('family')">
-      <div class="card-icon">👨‍👩‍👧‍👦</div>
-      <div class="card-content">
-        <p class="card-label">Family</p>
-        <h2 class="card-value">{{ formatCurrency(familyTotal()) }}</h2>
-        <p class="card-subtitle">Family expenses</p>
-      </div>
-    </div>
-
-    <!-- Expense Total Card -->
-    <div class="summary-card expense clickable" (click)="showTypePopup('expense')">
+    <!-- Discarded Card (Family + Expense) -->
+    <div class="summary-card expense clickable" (click)="showTypePopup('discarded')">
       <div class="card-icon">🌍</div>
       <div class="card-content">
-        <p class="card-label">Expense</p>
-        <h2 class="card-value">{{ formatCurrency(expenseTotal()) }}</h2>
-        <p class="card-subtitle">Total expenses</p>
+        <p class="card-label">Discarded</p>
+        <h2 class="card-value">{{ formatCurrency(discardedTotal()) }}</h2>
+        <p class="card-subtitle">Family + Expense</p>
       </div>
     </div>
   </div>

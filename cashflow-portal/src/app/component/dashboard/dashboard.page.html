@@ -123,6 +123,19 @@
             </div>
             <span class="card-click-hint">📊</span>
           </div>
+        } @else if (widget.id === '5') {
+          <!-- Active Debts widget - opens Pending Installments popup -->
+          <div class="card clickable-card" [class]="widget.id" (click)="openPendingInstallmentsPopup()">
+            <div class="icon">{{ widget.icon }}</div>
+            <div class="content">
+              <p class="label">{{ widget.title }}</p>
+              <h2>{{ widget.value }}</h2>
+              @if (widget.subtitle) {
+                <p class="sub">{{ widget.subtitle }}</p>
+              }
+            </div>
+            <span class="card-click-hint">📅</span>
+          </div>
         } @else {
           <!-- Other widgets - navigate to their routes -->
           <div class="card" [class]="widget.id" [routerLink]="widget.route">
@@ -157,7 +170,7 @@
         <div class="chart-card heatmap-card heatmap-table-card">
           <div class="chart-card-header">
             <h4>Heatmap</h4>
-            <span class="click-hint">Click row for details</span>
+            <span class="click-hint total-hint">Total: {{ formatCurrency(totalCategorySpending()) }}</span>
           </div>
           <div class="heatmap-table-wrapper">
             <table class="heatmap-table">
@@ -393,10 +406,13 @@
               </thead>
               <tbody>
                 @for (sub of selectedCategoryData()!.subcategories; track sub.name; let i = $index) {
-                  <tr class="subcategory-row" [style.animation-delay]="(i * 0.05) + 's'">
+                  <tr class="subcategory-row" [style.animation-delay]="(i * 0.05) + 's'" [title]="sub.includedNames || ''">
                     <td class="td-subcategory">
                       <span class="sub-icon">{{ sub.icon }}</span>
                       <span class="sub-name">{{ sub.name }}</span>
+                      @if (sub.includedNames) {
+                        <span class="sub-info-icon" [title]="sub.includedNames">ℹ️</span>
+                      }
                     </td>
                     <td class="td-amount">{{ formatCurrency(sub.total) }}</td>
                     <td class="td-percent">
@@ -647,7 +663,7 @@
               <thead>
                 <tr>
                   <th class="th-year">Year</th>
-                  <th class="th-month">Month</th>
+                  <th class="th-month">Name</th>
                   <th class="th-notes">Notes</th>
                   <th class="th-amount">Amount</th>
                 </tr>
@@ -679,6 +695,53 @@
         
         <div class="popup-footer">
           <button class="btn btn-secondary" (click)="closeInvestmentBreakdownPopup()">Close</button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Pending Installments Popup (Repayment Schedule - Personal Loan - Top Up) -->
+  @if (selectedPendingInstallments()) {
+    <div class="popup-overlay category-breakdown-popup-overlay" (click)="closePendingInstallmentsPopup()">
+      <div class="popup-card category-breakdown-popup" (click)="$event.stopPropagation()">
+        <div class="popup-header category-breakdown-header pending-installments-header" style="background: #f59e0b">
+          <div class="popup-title-section">
+            <span class="popup-icon">📅</span>
+            <div class="popup-title-info">
+              <h3>Repayment Schedule</h3>
+              <span class="popup-subtitle">{{ selectedPendingInstallments()!.loanName }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="popup-body category-breakdown-body">
+          @if (loadingPendingInstallments()) {
+            <div class="loading-schedule">Loading schedule...</div>
+          } @else {
+            <div class="schedule-summary pending-only">
+              <div class="summary-card pending">
+                <div class="summary-header">
+                  <span class="summary-label">Pending Installments</span>
+                  <span class="summary-count">{{ selectedPendingInstallments()!.pendingCount }}</span>
+                </div>
+                <div class="summary-main-amount">{{ formatCurrency(selectedPendingInstallments()!.totalPending) }}</div>
+                <div class="summary-breakdown">
+                  <div class="breakdown-row">
+                    <span class="breakdown-label">Interest:</span>
+                    <span class="breakdown-value">{{ formatCurrency(selectedPendingInstallments()!.interestPending) }}</span>
+                  </div>
+                  <div class="breakdown-row">
+                    <span class="breakdown-label">Principal:</span>
+                    <span class="breakdown-value">{{ formatCurrency(selectedPendingInstallments()!.principalPending) }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+
+        <div class="popup-footer">
+          <button class="btn btn-secondary" (click)="closePendingInstallmentsPopup()">Close</button>
         </div>
       </div>
     </div>

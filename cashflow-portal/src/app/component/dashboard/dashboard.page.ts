@@ -29,6 +29,7 @@ type HeatmapItem = {
   percentage: number;
   isConsolidated: boolean;
   color: string;
+  includedNames?: string;
 };
 
 type ConsolidationPattern = {
@@ -449,25 +450,27 @@ export class DashboardPage implements OnInit {
   // ============================================
   // Computed Values - Investments
   // ============================================
-  protected totalInvestments = computed(() => {
-    return this.investmentData()
-      .filter(inv => inv.status === InvestmentStatus.ACTIVE && !inv.is_deleted)
-      .reduce((sum, inv) => sum + inv.invested_amount + (inv.interest_earned || 0), 0);
-  });
+  // Delegate to InvestmentService so the value matches the Investment screen exactly
+  protected totalInvestments = computed(() => this.investmentService.totalCurrentValue());
 
-  protected totalInvestmentReturns = computed(() => {
-    return this.investmentData()
-      .filter(inv => inv.status === InvestmentStatus.ACTIVE && !inv.is_deleted)
-      .reduce((sum, inv) => sum + (inv.interest_earned || 0), 0);
-  });
+  protected totalInvestmentReturns = computed(() => this.investmentService.totalReturns());
 
   // ============================================
   // Computed Values - Debts
   // ============================================
+  // CSV-calculated outstanding for Personal Loan - Top Up (overrides stale DB value, like Debts page)
+  protected personalLoanCSVOutstanding = signal<number | null>(null);
+
   protected totalOutstandingDebts = computed(() => {
+    const csvOutstanding = this.personalLoanCSVOutstanding();
     return this.debtData()
       .filter(d => d.type === 'debt' && d.status === 'open' && !d.isDeleted)
-      .reduce((sum, d) => sum + d.outstandingAmount, 0);
+      .reduce((sum, d) => {
+        const outstanding = (d.loanName === 'Personal Loan - Top Up' && csvOutstanding !== null)
+          ? csvOutstanding
+          : d.outstandingAmount;
+        return sum + outstanding;
+      }, 0);
   });
 
   // ============================================
@@ -506,10 +509,11 @@ export class DashboardPage implements OnInit {
     });
     
     // Convert to array and sort by total (descending)
+    // Override Investment category total with the Investment screen's current value
     return Array.from(categoryMap.entries())
       .map(([name, data]) => ({
         name,
-        total: data.total,
+        total: name === 'Investment' ? this.investmentService.totalCurrentValue() : data.total,
         icon: data.icon,
         color: data.color
       }))
@@ -632,11 +636,11 @@ export class DashboardPage implements OnInit {
     if (!category) return [];
     
     const combinedMap = new Map<string, { name: string; icon: string; total: number }>();
-    const consolidatedTotals = new Map<string, { total: number; icon: string }>();
+    const consolidatedTotals = new Map<string, { total: number; icon: string; names: string[] }>();
     
     // Initialize consolidated totals
     config.patterns.forEach(p => {
-      consolidatedTotals.set(p.name, { total: 0, icon: p.defaultIcon });
+      consolidatedTotals.set(p.name, { total: 0, icon: p.defaultIcon, names: [] });
     });
     
     category.subcategories.forEach(sub => {
@@ -647,6 +651,7 @@ export class DashboardPage implements OnInit {
         if (pattern.pattern.test(sub.name)) {
           const consolidated = consolidatedTotals.get(pattern.name)!;
           consolidated.total += sub.total;
+          consolidated.names.push(sub.name);
           if (consolidated.icon === pattern.defaultIcon && sub.icon !== '📎') {
             consolidated.icon = sub.icon;
           }
@@ -678,10 +683,12 @@ export class DashboardPage implements OnInit {
       }
     });
     
+    const consolidatedNames = new Map<string, string>();
     // Add consolidated items with totals > 0
     consolidatedTotals.forEach((data, name) => {
       if (data.total > 0) {
         combinedMap.set(name, { name, icon: data.icon, total: data.total });
+        consolidatedNames.set(name, data.names.join(', '));
       }
     });
     
@@ -694,7 +701,8 @@ export class DashboardPage implements OnInit {
         icon: sub.icon,
         total: sub.total,
         percentage: categoryTotal > 0 ? Math.round((sub.total / categoryTotal) * 100) : 0,
-        isConsolidated: config.consolidatedCategories.has(sub.name)
+        isConsolidated: config.consolidatedCategories.has(sub.name),
+        includedNames: consolidatedNames.get(sub.name)
       }))
       .sort((a, b) => b.total - a.total);
     
@@ -738,15 +746,15 @@ export class DashboardPage implements OnInit {
   }
 
   // ============================================
-  // Computed Values - Investment Breakdown Heatmap (from Expense table)
+  // Computed Values - Investment Breakdown Heatmap (from Investment screen data)
   // ============================================
   protected investmentBreakdownHeatmap = computed(() => {
-    // Filter expenses for Investment category only
-    const investmentExpenses = this.expenseData()
-      .filter(exp => !exp.isDeleted && exp.categoryName === 'Investment');
-    
-    if (investmentExpenses.length === 0) return [];
-    
+    // Use active, non-deleted investment entries from the Investment screen
+    const activeInvestments = this.investmentData()
+      .filter(inv => inv.status === InvestmentStatus.ACTIVE && !inv.is_deleted);
+
+    if (activeInvestments.length === 0) return [];
+
     // Define row-based colors for Investment types (shades of green)
     const rowColors = [
       '#15803d',  // Row 1 - Dark green
@@ -775,7 +783,7 @@ export class DashboardPage implements OnInit {
       'FD': '🏦'
     };
     
-    // Group expenses by subcategory (investment type)
+    // Group investments by type, current value = invested amount + interest earned
     const investmentMap = new Map<string, { 
       name: string; 
       icon: string; 
@@ -783,10 +791,10 @@ export class DashboardPage implements OnInit {
       count: number 
     }>();
     
-    investmentExpenses.forEach(exp => {
-      const investmentType = exp.subcategory || 'Other Investment';
+    activeInvestments.forEach(inv => {
+      const investmentType = inv.type || 'Other Investment';
       const existing = investmentMap.get(investmentType);
-      const amount = exp.amount || 0;
+      const amount = (inv.invested_amount || 0) + (inv.interest_earned || 0);
       
       if (existing) {
         existing.total += amount;
@@ -794,7 +802,7 @@ export class DashboardPage implements OnInit {
       } else {
         investmentMap.set(investmentType, {
           name: investmentType,
-          icon: exp.subcategoryIcon || investmentIcons[investmentType] || '�',
+          icon: investmentIcons[investmentType] || '💵',
           total: amount,
           count: 1
         });
@@ -823,7 +831,7 @@ export class DashboardPage implements OnInit {
     }));
   });
 
-  // Get total investment value from expense data
+  // Get total investment value from Investment screen data
   protected investmentTotalValue = computed(() => {
     return this.investmentBreakdownHeatmap()
       .reduce((sum, item) => sum + item.total, 0);
@@ -840,22 +848,22 @@ export class DashboardPage implements OnInit {
 
   // Open Investment breakdown popup
   protected openInvestmentBreakdownPopup(investmentType: string): void {
-    // Filter expenses for Investment category and the specific subcategory (investment type)
-    const expenses = this.expenseData()
-      .filter(exp => !exp.isDeleted && exp.categoryName === 'Investment' && (exp.subcategory === investmentType || (!exp.subcategory && investmentType === 'Other Investment')));
+    // Filter active investment entries for the specific type
+    const matchingInvestments = this.investmentData()
+      .filter(inv => inv.status === InvestmentStatus.ACTIVE && !inv.is_deleted && (inv.type === investmentType || (!inv.type && investmentType === 'Other Investment')));
     
     // Get the heatmap item for color and icon
     const heatmapItem = this.investmentBreakdownHeatmap().find(item => item.name === investmentType);
     
-    const matchingExpenses = expenses.map(exp => ({
-      year: exp.year,
-      month: exp.month,
-      notes: exp.notes,
-      amount: exp.amount || 0
+    const matchingEntries = matchingInvestments.map(inv => ({
+      year: inv.year,
+      month: inv.name,
+      notes: inv.notes,
+      amount: (inv.invested_amount || 0) + (inv.interest_earned || 0)
     }));
     
     // Sort by year desc, then by amount desc
-    matchingExpenses.sort((a, b) => {
+    matchingEntries.sort((a, b) => {
       if (b.year !== a.year) return b.year - a.year;
       return b.amount - a.amount;
     });
@@ -865,7 +873,7 @@ export class DashboardPage implements OnInit {
       icon: heatmapItem?.icon || '💵',
       total: heatmapItem?.total || 0,
       color: heatmapItem?.color || '#22c55e',
-      investments: matchingExpenses
+      investments: matchingEntries
     });
   }
 
@@ -1102,15 +1110,83 @@ export class DashboardPage implements OnInit {
       total: number;
       percentage: number;
       globalPercentage: number;
+      includedNames?: string;
     }[];
   } | null>(null);
 
   // Open category popup with subcategory details
   protected openCategoryPopup(categoryName: string): void {
     const categoryData = this.subcategoryStats().find(c => c.categoryName === categoryName);
-    if (categoryData) {
-      this.selectedCategoryData.set(categoryData);
+    const totalSpending = this.totalCategorySpending();
+    const MAX_ROWS = 10;
+
+    // Investment row must reflect live Investment-screen data, not stale Expense records
+    if (categoryName === 'Investment') {
+      const investmentItems = this.investmentBreakdownHeatmap();
+      const categoryTotal = this.investmentService.totalCurrentValue();
+
+      const sorted = [...investmentItems].sort((a, b) => b.total - a.total);
+      let displayItems: { name: string; icon: string; total: number; includedNames?: string }[] = sorted;
+      if (sorted.length > MAX_ROWS) {
+        const top = sorted.slice(0, MAX_ROWS - 1);
+        const others = sorted.slice(MAX_ROWS - 1);
+        const othersTotal = others.reduce((sum, item) => sum + item.total, 0);
+        displayItems = [...top, { name: 'Others', icon: '📦', total: othersTotal, includedNames: others.map(o => o.name).join(', ') }];
+      }
+
+      const subcategories = displayItems.map(item => ({
+        name: item.name,
+        icon: item.icon,
+        total: item.total,
+        percentage: categoryTotal > 0 ? Math.round((item.total / categoryTotal) * 100) : 0,
+        globalPercentage: totalSpending > 0 ? Math.round((item.total / totalSpending) * 100) : 0,
+        includedNames: item.includedNames
+      }));
+
+      this.selectedCategoryData.set({
+        categoryName: 'Investment',
+        categoryIcon: categoryData?.categoryIcon || '📈',
+        categoryTotal,
+        categoryColor: categoryData?.categoryColor || this.CATEGORY_COLORS['Investment'] || '#16a34a',
+        subcategories
+      });
+      return;
     }
+
+    if (!categoryData) return;
+
+    // Use the already-consolidated heatmap items for categories with a consolidation config (Abi/BB/Home)
+    const hasConfig = !!this.CONSOLIDATION_CONFIGS[categoryName];
+    const sourceItems: { name: string; icon: string; total: number; includedNames?: string }[] = hasConfig
+      ? this.buildCategoryHeatmap(categoryName)
+      : categoryData.subcategories;
+
+    const sorted = [...sourceItems].sort((a, b) => b.total - a.total);
+    let displayItems: { name: string; icon: string; total: number; includedNames?: string }[] = sorted;
+
+    if (sorted.length > MAX_ROWS) {
+      const top = sorted.slice(0, MAX_ROWS - 1);
+      const others = sorted.slice(MAX_ROWS - 1);
+      const othersTotal = others.reduce((sum, item) => sum + item.total, 0);
+      displayItems = [...top, { name: 'Others', icon: '📦', total: othersTotal, includedNames: others.map(o => o.name).join(', ') }];
+    }
+
+    const subcategories = displayItems.map(item => ({
+      name: item.name,
+      icon: item.icon,
+      total: item.total,
+      percentage: categoryData.categoryTotal > 0 ? Math.round((item.total / categoryData.categoryTotal) * 100) : 0,
+      globalPercentage: totalSpending > 0 ? Math.round((item.total / totalSpending) * 100) : 0,
+      includedNames: item.includedNames
+    }));
+
+    this.selectedCategoryData.set({
+      categoryName: categoryData.categoryName,
+      categoryIcon: categoryData.categoryIcon,
+      categoryTotal: categoryData.categoryTotal,
+      categoryColor: categoryData.categoryColor,
+      subcategories
+    });
   }
 
   // Close category popup
@@ -1323,7 +1399,9 @@ export class DashboardPage implements OnInit {
       this.debtData.set(this.debtService.getDebtsSignal()());
       this.investmentData.set(this.investmentService.investments());
       this.categoryData.set(this.categoryService.getCategoriesSignal()());
-      
+
+      await this.loadPersonalLoanCSVOutstanding();
+
       console.log('📊 Dashboard data loaded:', {
         income: this.incomeData().length,
         expenses: this.expenseData().length,
@@ -1336,6 +1414,61 @@ export class DashboardPage implements OnInit {
     } finally {
       this.loading.set(false);
     }
+  }
+
+  // Load CSV-based outstanding amount for Personal Loan - Top Up
+  private async loadPersonalLoanCSVOutstanding(): Promise<void> {
+    try {
+      const personalLoan = this.debtData().find(d => d.loanName === 'Personal Loan - Top Up' && !d.isDeleted);
+      if (personalLoan) {
+        const summary = await this.debtService.getCSVSummary(personalLoan.id);
+        this.personalLoanCSVOutstanding.set(summary?.outstanding ?? null);
+      }
+    } catch (error) {
+      console.error('Failed to load Personal Loan CSV summary:', error);
+    }
+  }
+
+  // ============================================
+  // Pending Installments Popup (Repayment Schedule - Personal Loan - Top Up)
+  // ============================================
+  protected loadingPendingInstallments = signal<boolean>(false);
+  protected selectedPendingInstallments = signal<{
+    loanName: string;
+    pendingCount: number;
+    totalPending: number;
+    interestPending: number;
+    principalPending: number;
+  } | null>(null);
+
+  protected async openPendingInstallmentsPopup(): Promise<void> {
+    const personalLoan = this.debtData().find(d => d.loanName === 'Personal Loan - Top Up' && !d.isDeleted);
+    if (!personalLoan) return;
+
+    this.loadingPendingInstallments.set(true);
+    try {
+      const schedules = await this.debtService.getRepaymentSchedule(personalLoan.id);
+      const summary = this.debtService.getScheduleSummary(schedules);
+      const pendingInstallments = schedules.filter(s => !s.isPaid);
+      const principalPending = pendingInstallments.reduce((sum, s) => sum + s.principalAmount, 0);
+      const interestPending = pendingInstallments.reduce((sum, s) => sum + s.interestAmount, 0);
+
+      this.selectedPendingInstallments.set({
+        loanName: personalLoan.loanName,
+        pendingCount: summary.pendingCount,
+        totalPending: summary.totalPending,
+        interestPending,
+        principalPending
+      });
+    } catch (error) {
+      console.error('Failed to load pending installments:', error);
+    } finally {
+      this.loadingPendingInstallments.set(false);
+    }
+  }
+
+  protected closePendingInstallmentsPopup(): void {
+    this.selectedPendingInstallments.set(null);
   }
 
   // ============================================

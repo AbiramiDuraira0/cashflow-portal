@@ -5,8 +5,9 @@ import { FormsModule } from '@angular/forms';
 import { PaginationHelper, SortingHelper, SortDirection } from '../../shared';
 import { ExpenseService, ExpenseEntry } from '../../services/expense.service';
 import { DebtService, DebtEntry } from '../../services/debt.service';
-import { InvestmentService, InvestmentEntry } from '../../services/investment.service';
+import { InvestmentService, InvestmentEntry, InvestmentStatus } from '../../services/investment.service';
 import { IncomeService } from '../../services/income.service';
+import { LifelineService } from '../../services/lifeline.service';
 
 type HlaRecord = {
   id: number;
@@ -26,13 +27,14 @@ type HlaCategoryConfig = {
   icon: string;
   type: 'debt' | 'investment' | 'expense' | 'family' | 'asset' | 'subscription';
   status: 'active' | 'pending' | 'completed';
-  dataSource: 'expense' | 'debt' | 'investment' | 'fixed';
+  dataSource: 'expense' | 'debt' | 'investment' | 'fixed' | 'lifeline';
   fixedAmount?: number;
   categoryPatterns?: string[];
   subcategoryPatterns?: RegExp[];
   includeAllFromCategories?: string[];  // Categories where ALL expenses should be included
   debtLoanName?: string;
   investmentNamePattern?: RegExp;
+  investmentTypePattern?: RegExp;
 };
 
 @Component({
@@ -47,15 +49,16 @@ export class HlaViewPage {
   private debtService = inject(DebtService);
   private investmentService = inject(InvestmentService);
   private incomeService = inject(IncomeService);
+  private lifelineService = inject(LifelineService);
   
   protected loading = signal<boolean>(false);
   protected pageTitle = 'High Level Allocation Overview';
   protected currentDate: string;
 
   private readonly hlaConfigs: HlaCategoryConfig[] = [
-    { id: 1, name: 'BB EMI - Debts', icon: '💳', type: 'debt', status: 'active', dataSource: 'expense', categoryPatterns: ['BB'], subcategoryPatterns: [/^(emi|kadan|hault)/i] },
+    { id: 1, name: 'BB EMI - Debts', icon: '💳', type: 'debt', status: 'active', dataSource: 'lifeline' },
     { id: 2, name: 'Gold Loan + BOB Edu Loan', icon: '🥇', type: 'expense', status: 'completed', dataSource: 'fixed', fixedAmount: 570000 },
-    { id: 3, name: 'Stock + MF + PPF + RD + NPS', icon: '📈', type: 'investment', status: 'active', dataSource: 'expense', categoryPatterns: ['Investment'], subcategoryPatterns: [/stock|mf|sip|mutual|ppf|rd|recurring|nps/i] },
+    { id: 3, name: 'Stock + MF + PPF + RD + NPS', icon: '📈', type: 'investment', status: 'active', dataSource: 'investment', investmentTypePattern: /stock|mf|sip|mutual|ppf|rd|nps/i },
     { id: 4, name: 'Crypto Lost', icon: '₿', type: 'expense', status: 'completed', dataSource: 'fixed', fixedAmount: 150000 },
     { id: 5, name: 'Gold Ring', icon: '💍', type: 'investment', status: 'completed', dataSource: 'fixed', fixedAmount: 60000 },
     { id: 6, name: 'Furniture', icon: '🪑', type: 'family', status: 'completed', dataSource: 'expense', categoryPatterns: ['Home'], subcategoryPatterns: [/^(sofa\s*cupboard|ac|dress\s*plast|furniture)/i] },
@@ -67,7 +70,6 @@ export class HlaViewPage {
     { id: 12, name: 'Appa', icon: '👨‍🦳', type: 'family', status: 'active', dataSource: 'fixed', fixedAmount: 30000 },
     { id: 13, name: 'Dhanush', icon: '👦', type: 'family', status: 'active', dataSource: 'fixed', fixedAmount: 10000 },
     { id: 14, name: 'Scooty', icon: '🛵', type: 'expense', status: 'active', dataSource: 'expense', categoryPatterns: ['Abi'], subcategoryPatterns: [/scooty/i] },
-    { id: 15, name: 'Pratheek - Debts', icon: '👨', type: 'debt', status: 'active', dataSource: 'fixed', fixedAmount: 9000 },
     { id: 16, name: 'Medical', icon: '🏥', type: 'expense', status: 'active', dataSource: 'expense', categoryPatterns: ['BB', 'Abi'], subcategoryPatterns: [/medical|hospital|doctor/i] },
     { id: 17, name: 'Abi', icon: '🧿', type: 'family', status: 'active', dataSource: 'fixed', fixedAmount: 100000 },
     { id: 18, name: 'God', icon: '🛕', type: 'family', status: 'active', dataSource: 'fixed', fixedAmount: 12000 },
@@ -77,6 +79,7 @@ export class HlaViewPage {
   private expenseData = this.expenseService.getExpensesSignal();
   private debtData = this.debtService.getDebtsSignal();
   private investmentData = this.investmentService.investments;
+  private lifelineData = this.lifelineService.getEntriesSignal();
 
   protected hlaRecords = computed<HlaRecord[]>(() => {
     const expenses = this.expenseData().filter((e: ExpenseEntry) => !e.isDeleted);
@@ -109,8 +112,13 @@ export class HlaViewPage {
         const matchingDebts = debts.filter((debt: DebtEntry) => debt.loanName === config.debtLoanName);
         totalAmount = matchingDebts.reduce((sum: number, debt: DebtEntry) => sum + debt.amountPaid, 0);
       } else if (config.dataSource === 'investment') {
-        const matchingInvestments = investments.filter((inv: InvestmentEntry) => config.investmentNamePattern?.test(inv.name));
+        const matchingInvestments = investments.filter((inv: InvestmentEntry) =>
+          inv.status === InvestmentStatus.ACTIVE &&
+          (config.investmentTypePattern?.test(inv.type || '') || config.investmentNamePattern?.test(inv.name))
+        );
         totalAmount = matchingInvestments.reduce((sum: number, inv: InvestmentEntry) => sum + inv.invested_amount + (inv.interest_earned || 0), 0);
+      } else if (config.dataSource === 'lifeline') {
+        totalAmount = this.lifelineData().reduce((sum: number, entry) => sum + entry.amount, 0);
       } else if (config.dataSource === 'fixed') {
         totalAmount = config.fixedAmount || 0;
       }
@@ -137,20 +145,33 @@ export class HlaViewPage {
   protected debtTotal = computed(() => this.hlaRecords().filter(r => r.type === 'debt').reduce((sum, r) => sum + r.amount, 0));
   protected familyTotal = computed(() => this.hlaRecords().filter(r => r.type === 'family').reduce((sum, r) => sum + r.amount, 0));
   protected expenseTotal = computed(() => this.hlaRecords().filter(r => r.type === 'expense').reduce((sum, r) => sum + r.amount, 0));
+  protected savedTotal = computed(() => this.investmentTotal() + this.debtTotal());
+  protected discardedTotal = computed(() => this.familyTotal() + this.expenseTotal());
 
   // Popup state
   protected showPopup = signal<boolean>(false);
   protected popupType = signal<string>('');
+  private readonly popupGroupTypes: Record<string, HlaRecord['type'][]> = {
+    saved: ['investment', 'debt'],
+    discarded: ['family', 'expense']
+  };
   protected popupTitle = computed(() => {
     const typeMap: Record<string, string> = {
       'investment': 'Investment',
       'debt': 'Debts',
       'family': 'Family',
-      'expense': 'Expense'
+      'expense': 'Expense',
+      'saved': 'Saved',
+      'discarded': 'Discarded'
     };
     return typeMap[this.popupType()] || '';
   });
-  protected popupRecords = computed(() => this.hlaRecords().filter(r => r.type === this.popupType()));
+  protected popupRecords = computed(() => {
+    const groupTypes = this.popupGroupTypes[this.popupType()];
+    return groupTypes
+      ? this.hlaRecords().filter(r => groupTypes.includes(r.type))
+      : this.hlaRecords().filter(r => r.type === this.popupType());
+  });
   protected popupTotal = computed(() => this.popupRecords().reduce((sum, r) => sum + r.amount, 0));
 
   constructor() {
