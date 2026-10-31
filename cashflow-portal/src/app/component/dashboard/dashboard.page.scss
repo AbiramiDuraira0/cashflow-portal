@@ -768,7 +768,7 @@
     }
 
     @media (max-width: 768px) {
-      grid-template-columns: repeat(6, minmax(0, 1fr));
+      grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 6px;
     }
   }
@@ -2613,9 +2613,22 @@
             padding: 4px 8px;
             font-size: 0.75rem;
             min-width: 40px;
+            // Override inline background color so the % text stays readable on small screens
+            background: rgba(15, 23, 42, 0.06) !important;
+            color: #0f172a !important;
+            text-shadow: none;
+            border: 1.5px solid rgba(15, 23, 42, 0.12);
           }
         }
       }
+    }
+  }
+
+  @media (max-width: 768px) and (prefers-color-scheme: dark) {
+    .heatmap-table-card .heatmap-table tbody .heatmap-row .td-percent .percent-badge {
+      background: rgba(226, 232, 240, 0.12) !important;
+      color: #f1f5f9 !important;
+      border-color: rgba(226, 232, 240, 0.25);
     }
   }
 

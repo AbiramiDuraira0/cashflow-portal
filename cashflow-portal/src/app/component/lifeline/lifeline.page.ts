@@ -43,7 +43,7 @@ export class LifelinePage implements OnInit {
 
   // Pagination state
   protected currentPage = signal<number>(1);
-  protected pageSize = signal<number>(10);
+  protected pageSize = signal<number>(typeof window !== 'undefined' && window.innerWidth <= 768 ? 25 : 10);
   protected readonly pageSizeOptions = PaginationHelper.PAGE_SIZE_OPTIONS;
 
   // Computed values
